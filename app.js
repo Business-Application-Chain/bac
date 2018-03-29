@@ -25,6 +25,15 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', index);
 app.use('/users', users);
 
+var log15 = require('./src/utils/log15.js');
+
+var log = new log15({echo: 'Trace', recLevel: 'Warn'});
+
+log.Info('Maximum peer count', 'ETH', 25, 'LES', 0, 'total', 25);
+log.Info('Starting peer-to-peer node', 'instance', 'Geth/v1.8.2-stable-b8b9f7f4/darwin-amd64/go1.9.4');
+log.Info('Allocated cache and file handles', 'database', '/Users/xiongzhend/Library/Ethereum/geth/chaindata cache=768 handles=1024');
+log.Warn("Disk storage enabled for ethash DAGs", "dir", "/Users/xiongzhend/.ethash count=2");
+
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   var err = new Error('Not Found');
