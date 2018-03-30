@@ -1,55 +1,80 @@
 var express = require('express');
+var expressDomainMiddleware = require('express-domain-middleware');
+var expressQueryInt = require('express-query-int');
 var path = require('path');
 var favicon = require('serve-favicon');
-var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var methodOverride = require('method-override');
+var config = require('./config.json');
 
 var index = require('./routes/index');
-var users = require('./routes/users');
 
 var app = express();
+
+app.engine('html', require('ejs').renderFile);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
-// uncomment after placing your favicon in /public
-//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-app.use(logger('dev'));
+app.use(expressDomainMiddleware);
+app.use(favicon(path.join(__dirname, 'public', 'entu.ico')));
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({ extended: true, parameterLimit: 5000 }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(methodOverride());
+
+var ignorelist = ['id', 'publicKey', 'address', 'timestamp', 'bits', 'hash', 'previoushash'];
+app.use(expressQueryInt({
+    parser: function (value, redix, name) {
+      if (ignorelist.indexOf(name) >= 0) {
+        return value;
+      }
+
+      if (isNaN(value) || parseInt(value) != value || isNan(parseInt(value, radix))) {
+        return value;
+      }
+
+      return parseInt(value);
+    }
+}));
+
+// checking blank list
+app.use(function(req, res, next) {
+    var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    if (config.peers.blankList.length && config.peers.blankList.indexOf(ip) >= 0) {
+        if (req.method == 'POST' && req.body.method.substring(0, 5) == 'peer_') {
+            var err = new Error('Forbidden');
+            err.status = 403;
+            next(err);
+        } else {
+            next();
+        }
+    } else {
+        next();
+    }
+});
 
 app.use('/', index);
-app.use('/users', users);
-
-var log15 = require('./src/utils/log15.js');
-
-var log = new log15({echo: 'Trace', recLevel: 'Warn'});
-
-log.Info('Maximum peer count', 'ETH', 25, 'LES', 0, 'total', 25);
-log.Info('Starting peer-to-peer node', 'instance', 'Geth/v1.8.2-stable-b8b9f7f4/darwin-amd64/go1.9.4');
-log.Info('Allocated cache and file handles', 'database', '/Users/xiongzhend/Library/Ethereum/geth/chaindata cache=768 handles=1024');
-log.Warn("Disk storage enabled for ethash DAGs", "dir", "/Users/xiongzhend/.ethash count=2");
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
-  var err = new Error('Not Found');
-  err.status = 404;
-  next(err);
+    var err = new Error('Not Found');
+    err.status = 404;
+    next(err);
 });
 
 // error handler
 app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+    // set locals, only providing error in development
+    res.locals.message = err.message;
+    res.locals.error = process.env.DEBUG && process.env.DEBUG.toUpperCase() == 'TRUE' ? err : {};
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
+    // render the error page
+    res.status(err.status || 500);
+    res.render('404');
 });
 
 module.exports = app;

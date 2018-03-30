@@ -1,0 +1,16 @@
+{
+  "host": "0.0.0.0",
+  "port": 9000,
+  "outputLogLevel": "info",
+  "sharePort": true,
+  "version": "0.0.1",
+  "peers": {
+    "default": [
+      {"host": "192.168.18.101", "port": 9000}
+    ],
+    "blankList": [],
+    "optional": {
+      "timeout": 4000
+    }
+  }
+}

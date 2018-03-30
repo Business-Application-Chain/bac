@@ -1,7 +1,7 @@
 var strftime = require('strftime');
 var gray = require('ansi-gray');
 var blue = require('ansi-blue');
-var cyan = require('ansi-cyan');
+var green = require('ansi-green');
 var yellow = require('ansi-yellow');
 var red = require('ansi-red');
 var fs = require('fs');
@@ -25,7 +25,7 @@ module.exports = function (config) {
     config.colors = config.colors || {
         'Trace':    gray,
         'Debug':    blue,
-        'Info':     cyan,
+        'Info':     green,
         'Warn':     yellow,
         'Error':    red,
         'Fatal':    red
