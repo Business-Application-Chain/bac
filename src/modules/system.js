@@ -2,7 +2,7 @@ var os = require('os');
 var sandboxHelper = require('../utils/sandbox.js');
 
 // private objects
-var modules, library, self, privated = {}, shared = {};
+var library, self, privated = {}, shared = {};
 
 privated.version, privated.osName, privated.port, privated.sharePort;
 
@@ -25,28 +25,27 @@ function System(cb, scope) {
 // public methods
 System.prototype.getOS = function () {
     return privated.osName;
-}
+};
 
 System.prototype.getVersion = function () {
     return privated.version;
-}
+};
 
 System.prototype.getPort = function () {
     return privated.port;
-}
+};
 
 System.prototype.getSharePort = function () {
     return privated.sharePort;
-}
+};
 
 System.prototype.sandboxApi = function (call, args, cb) {
     sandboxHelper.callMethod(shared, call, args, cb);
-}
+};
 
 // events
-System.prototype.onInit = function (modules) {
-    modules = modules;
-}
+System.prototype.onInit = function () {
+};
 
 // export
 module.exports = System;

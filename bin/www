@@ -110,7 +110,7 @@ d.run(function () {
         }],
 
         ready: ['network', 'modules', 'notification_center', function (scope, cb) {
-            scope.notification_center.notify('init', scope.modules);
+            scope.notification_center.notify('init');
             cb();
         }]
     }, function (err, scope) {

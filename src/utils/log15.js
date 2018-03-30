@@ -49,7 +49,7 @@ module.exports = function (config) {
         function log() {
             var messages = [], messages_orig = [];
 
-            var firstmsg = arguments[0] + '                                        ';
+            var firstmsg = arguments[0] + Array(40).join(' ');
 
             messages.push(firstmsg.substring(0, 40));
             messages_orig.push(arguments[0]);
