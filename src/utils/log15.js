@@ -4,6 +4,8 @@ var blue = require('ansi-blue');
 var green = require('ansi-green');
 var yellow = require('ansi-yellow');
 var red = require('ansi-red');
+var path = require('path');
+var root = require('app-root-path');
 var fs = require('fs');
 
 function getTimestamp(){
@@ -31,7 +33,7 @@ module.exports = function (config) {
         'Fatal':    red
     }
 
-    config.filepath = config.filepath || './default.log';
+    config.filepath = config.filepath || root + '/default.log';
 
     config.recLevel = config.recLevel || 'Warn';
 

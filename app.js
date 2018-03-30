@@ -1,5 +1,4 @@
 var express = require('express');
-var expressDomainMiddleware = require('express-domain-middleware');
 var expressQueryInt = require('express-query-int');
 var path = require('path');
 var favicon = require('serve-favicon');
@@ -18,7 +17,7 @@ app.engine('html', require('ejs').renderFile);
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
-app.use(expressDomainMiddleware);
+app.use(require('express-domain-middleware'));
 app.use(favicon(path.join(__dirname, 'public', 'entu.ico')));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true, parameterLimit: 5000 }));
