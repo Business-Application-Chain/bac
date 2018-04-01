@@ -13,6 +13,7 @@ var path = require('path');
 var fs = require('fs');
 var Log15 = require('../src/utils/log15.js');
 var changeCase = require('change-case');
+var WorkQueue = require('../src/utils/workqueue.js');
 
 process.stdin.resume();
 
@@ -23,6 +24,7 @@ var log = new Log15({echo: appConfig.echoLogLevel, recLevel: appConfig.outputLog
 var params = {
     "db": appConfig.db.uri,
     "modules": {
+        "server": "../src/modules/server.js",
         //"peer": "../src/modules/peer.js",
         "system": "../src/modules/system.js"
     }
@@ -59,13 +61,41 @@ d.run(function () {
             cb(null, path.join(__dirname, '../public'));
         },
 
-        network: ['config', 'log', 'build', 'public', function (scope, cb) {
+        dbWorkQueue: ['log', function (scope, cb) {
+            var queue = new WorkQueue({
+                onWarning: function (current, limit) {
+                    scope.log.Info('DB queue', 'current', current, 'limit', limit);
+                }
+            });
+            cb(null, queue);
+        }],
+
+        mainWorkQueue: ['log', function (scope, cb) {
+            var queue = new WorkQueue({
+                onWarning: function (current, limit) {
+                    scope.log.Info('Main queue', 'current', current, 'limit', limit);
+                }
+            });
+            cb(null, queue);
+        }],
+
+        balancesWorkQueue: ['log', function (scope, cb) {
+            var queue = new WorkQueue({
+                onWarning: function (current, limit) {
+                    scope.log.Info('balances queue', 'current', current, 'limit', limit);
+                }
+            });
+            cb(null, queue);
+        }],
+
+        network: ['config', 'log', 'dbWorkQueue', 'mainWorkQueue', 'balancesWorkQueue', function (scope, cb) {
             var server = http.createServer(app);
             server.on('error', onError);
             server.listen(scope.config.port, scope.config.host, function (err) {
                 scope.log.Info('Entu is listening', 'version', scope.config.version, 'host', scope.config.host, 'port', scope.config.port);
 
                 cb(err, {
+                    app: app,
                     server: server
                 });
             });
@@ -88,7 +118,7 @@ d.run(function () {
             cb(null, new ncenter);
         },
 
-        modules: ['network', 'notification_center', function (scope, cb) {
+        modules: ['network', 'notification_center', 'build', 'public', function (scope, cb) {
             var __modules = {};
             Object.keys(params.modules).forEach(function (module_name) {
                 __modules[module_name] = function (cb) {

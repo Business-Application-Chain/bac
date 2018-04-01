@@ -2,7 +2,7 @@ var os = require('os');
 var sandboxHelper = require('../utils/sandbox.js');
 
 // private objects
-var library, self, privated = {}, shared = {};
+var modules_loaded, library, self, privated = {}, shared = {};
 
 privated.version, privated.osName, privated.port, privated.sharePort;
 
@@ -44,7 +44,8 @@ System.prototype.sandboxApi = function (call, args, cb) {
 };
 
 // events
-System.prototype.onInit = function () {
+System.prototype.onInit = function (scope) {
+    modules_loaded = scope && scope != undefined ? true : false;
 };
 
 // export

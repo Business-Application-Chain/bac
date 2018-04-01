@@ -5,8 +5,8 @@ var green = require('ansi-green');
 var yellow = require('ansi-yellow');
 var red = require('ansi-red');
 var path = require('path');
-var root = require('app-root-path');
 var fs = require('fs');
+var root = require('app-root-path');
 
 function getTimestamp(){
     return '['+strftime('%m-%d|%H:%M:%S', new Date())+']';

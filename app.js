@@ -7,8 +7,6 @@ var bodyParser = require('body-parser');
 var methodOverride = require('method-override');
 var config = require('./config.json');
 
-var index = require('./routes/index');
-
 var app = express();
 
 app.engine('html', require('ejs').renderFile);
@@ -54,26 +52,6 @@ app.use(function(req, res, next) {
     } else {
         next();
     }
-});
-
-app.use('/', index);
-
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-    var err = new Error('Not Found');
-    err.status = 404;
-    next(err);
-});
-
-// error handler
-app.use(function(err, req, res, next) {
-    // set locals, only providing error in development
-    res.locals.message = err.message;
-    res.locals.error = process.env.DEBUG && process.env.DEBUG.toUpperCase() == 'TRUE' ? err : {};
-
-    // render the error page
-    res.status(err.status || 500);
-    res.render('404');
 });
 
 module.exports = app;
