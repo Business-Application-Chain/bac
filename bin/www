@@ -205,7 +205,7 @@ d.run(function () {
 
 function onError(error) {
   if (error.syscall !== 'listen') {
-    throw error;
+    throw new Error(error);
   }
 
   // handle specific listen errors with friendly messages
@@ -219,6 +219,6 @@ function onError(error) {
           process.exit(1);
           break;
     default:
-        throw error;
+        throw new Error(error);
   }
 }
