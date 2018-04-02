@@ -23,7 +23,27 @@ function Peer(cb, scope) {
 // private methods
 
 // public methods
-Peer.prototype.handleRequest = function (method, params, id) {
+Peer.prototype.sandboxApi = function (call, args, cb) {
+    sandboxHelper.callMethod(shared, call, args, cb);
+};
+
+// events
+Peer.prototype.onInit = function (scope) {
+    modules_loaded = scope && scope != undefined ? true : false;
+};
+
+Peer.prototype.onBlockchainReady = function () {
+
+};
+
+Peer.prototype.onEnd = function (cb) {
+
+    cb();
+};
+
+// shared
+Peer.prototype.callApi = function (method, params, id) {
+    console.log('call api');
     return new Promise((resolve, reject) => {
         if (method == 'peer_test') {
             resolve('yes, correct');
@@ -31,11 +51,6 @@ Peer.prototype.handleRequest = function (method, params, id) {
             reject('no, incorrect');
         }
     })
-};
-
-// events
-Peer.prototype.onInit = function (scope) {
-    modules_loaded = scope && scope != undefined ? true : false;
 };
 
 // export

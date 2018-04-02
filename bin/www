@@ -24,8 +24,9 @@ var log = new Log15({echo: appConfig.echoLogLevel, recLevel: appConfig.outputLog
 var params = {
     "db": appConfig.db.uri,
     "modules": {
+        "loader": "../src/modules/loader.js",
+        "peer": "../src/modules/peer.js",
         "server": "../src/modules/server.js",
-        //"peer": "../src/modules/peer.js",
         "system": "../src/modules/system.js"
     }
 }

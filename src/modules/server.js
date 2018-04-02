@@ -9,6 +9,8 @@ var index = require('../../routes/index.js');
 // private objects
 var modules_loaded, library, self, privated = {}, shared = {};
 
+privated.loaded = false;
+
 // constructor
 function Server(cb, scope) {
     library = scope;
@@ -21,12 +23,12 @@ function Server(cb, scope) {
 
 // private methods
 privated.attachApi = function () {
-    library.network.app.use(function(req, res, next) {
-        if (modules_loaded) return next();
-        res.status(500).send({success: false, error: "Blockchain is loading"});
-    });
+    // library.network.app.use(function(req, res, next) {
+    //     if (modules_loaded) return next();
+    //     res.status(500).send({success: false, error: "Blockchain is loading"});
+    // });
 
-    library.network.app.use('/', index);
+    index(library);
 
     // catch 404 and forward to error handler
     library.network.app.use(function(req, res, next) {
@@ -48,10 +50,22 @@ privated.attachApi = function () {
 };
 
 // public methods
+Server.prototype.sandboxApi = function (call, args, cb) {
+    sandboxHelper.callMethod(shared, call, args, cb);
+};
 
 // events
 Server.prototype.onInit = function (scope) {
     modules_loaded = scope && scope != undefined ? true : false;
+};
+
+Server.prototype.onBlockchainReady = function () {
+    privated.loaded = true;
+};
+
+Server.prototype.onEnd = function (cb) {
+    privated.loaded = false;
+    cb();
 };
 
 // export
