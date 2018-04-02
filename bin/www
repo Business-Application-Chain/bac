@@ -90,20 +90,21 @@ d.run(function () {
             cb(null, queue);
         }],
 
-        dbclient: ['config', 'log', function (scope, cb) {
+        dbClient: ['config', 'log', function (scope, cb) {
             var sequelize = new Sequelize(scope.config.db.name, scope.config.db.user, scope.config.db.password, {
                 host: scope.config.db.host,
                 dialect: 'mysql',
                 pool: {
                     max: 10,
                     min: 0,
+                    acquire: 30000,
                     idle: 30000
                 }
             });
             cb(null, sequelize);
         }],
 
-        network: ['config', 'log', 'dbWorkQueue', 'mainWorkQueue', 'balancesWorkQueue', 'dbclient', function (scope, cb) {
+        network: ['config', 'log', 'dbWorkQueue', 'mainWorkQueue', 'balancesWorkQueue', 'dbClient', function (scope, cb) {
             var server = http.createServer(app);
             server.on('error', onError);
             server.listen(scope.config.port, scope.config.address, function (err) {
@@ -133,7 +134,23 @@ d.run(function () {
             cb(null, new ncenter);
         },
 
-        modules: ['network', 'notification_center', 'build', 'public', function (scope, cb) {
+        base: ['config', 'log', 'dbClient', 'build', 'public', function (scope, cb) {
+            var Account = require('../src/base/Account.js');
+
+            async.auto({
+                dbClient: function (cb) {
+                    cb(null, scope.dbClient);
+                },
+                notification_center: function (cb) {
+                    cb(null, scope.notification_center);
+                },
+                account: ['dbClient', 'notification_center', function (scope, cb) {
+                    new Account(scope, cb);
+                }]
+            }, cb);
+        }],
+
+        modules: ['network', 'notification_center', 'base', function (scope, cb) {
             var __modules = {};
             Object.keys(params.modules).forEach(function (module_name) {
                 __modules[module_name] = function (cb) {
