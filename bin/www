@@ -141,7 +141,7 @@ d.run(function () {
         }],
 
         ready: ['network', 'modules', 'notification_center', function (scope, cb) {
-            scope.notification_center.notify('init');
+            scope.notification_center.notify('init', scope.modules);
             cb();
         }]
     }, function (err, scope) {

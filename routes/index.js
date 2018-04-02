@@ -23,6 +23,7 @@ module.exports = function (scope) {
                         return res.json({
                             'jsonrpc': body['jsonrpc'] || '1.0',
                             'id': body['id'] || 0,
+                            'result': null,
                             'error': err.toString()
                         });
                     }
@@ -30,7 +31,8 @@ module.exports = function (scope) {
                     return res.json({
                         'jsonrpc': body['jsonrpc'] || '1.0',
                         'id': body['id'] || 0,
-                        'result': data
+                        'result': data,
+                        'error': null
                     });
                 });
 

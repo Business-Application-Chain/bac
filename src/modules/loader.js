@@ -21,10 +21,19 @@ function Loader(cb, scope) {
 }
 
 // private methods
+privated.loadApp = function () {
+    library.notification_center.notify('blockchainReady');
+};
 
 // public methods
 Loader.prototype.sandboxApi = function (call, args, cb) {
     sandboxHelper.callMethod(shared, call, args, cb);
+};
+
+Loader.prototype.callApi = function (call, args, cb) {
+    var callArgs = [args, cb];
+    // execute
+    shared[call].apply(null, callArgs);
 };
 
 Loader.prototype.callApi = function (args) {
@@ -34,6 +43,8 @@ Loader.prototype.callApi = function (args) {
 // events
 Loader.prototype.onInit = function (scope) {
     modules_loaded = scope && scope != undefined ? true : false;
+
+    privated.loadApp();
 };
 
 Loader.prototype.onBlockchainReady = function () {
@@ -43,6 +54,15 @@ Loader.prototype.onBlockchainReady = function () {
 Loader.prototype.onEnd = function (cb) {
     privated.loaded = false;
     cb();
+};
+
+// shared
+shared.status = function (req, cb) {
+
+};
+
+shared.status_sync = function (req, cb) {
+
 };
 
 // export

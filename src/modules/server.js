@@ -23,10 +23,10 @@ function Server(cb, scope) {
 
 // private methods
 privated.attachApi = function () {
-    // library.network.app.use(function(req, res, next) {
-    //     if (modules_loaded) return next();
-    //     res.status(500).send({success: false, error: "Blockchain is loading"});
-    // });
+    library.network.app.use(function(req, res, next) {
+        if (modules_loaded) return next();
+        res.status(500).send({success: false, error: "Blockchain is loading"});
+    });
 
     index(library);
 
