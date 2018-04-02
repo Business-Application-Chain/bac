@@ -4,6 +4,7 @@ var async = require('async');
 var path = require('path');
 var fs = require('fs');
 var sandboxHelper = require('../utils/sandbox.js');
+var sequelize = require('sequelize');
 var ip = require('ip');
 
 // private objects
@@ -22,6 +23,17 @@ function Loader(cb, scope) {
 
 // private methods
 privated.loadApp = function () {
+    // Try sql
+    var uid = 'abcd-uuid';
+    library.dbclient.transaction(function (tx) {
+        return library.dbclient.query('INSERT INTO accounts (uid) VALUES (?)', {
+            type: sequelize.QueryTypes.INSERT,
+            replacements: [uid],
+            transaction: tx
+        }).catch(function (err) {
+                library.log.Warn("loadApp", "Error", err.toString());
+            });
+    })
     library.notification_center.notify('blockchainReady');
 };
 

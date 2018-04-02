@@ -4,6 +4,7 @@ var async = require('async');
 var path = require('path');
 var fs = require('fs');
 var sandboxHelper = require('../utils/sandbox.js');
+var sequelize = require('sequelize');
 var ip = require('ip');
 
 require('array.prototype.find'); // Old node fix

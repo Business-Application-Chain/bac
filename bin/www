@@ -14,6 +14,7 @@ var fs = require('fs');
 var Log15 = require('../src/utils/log15.js');
 var changeCase = require('change-case');
 var WorkQueue = require('../src/utils/workqueue.js');
+var Sequelize = require('sequelize');
 
 process.stdin.resume();
 
@@ -89,11 +90,24 @@ d.run(function () {
             cb(null, queue);
         }],
 
-        network: ['config', 'log', 'dbWorkQueue', 'mainWorkQueue', 'balancesWorkQueue', function (scope, cb) {
+        dbclient: ['config', 'log', function (scope, cb) {
+            var sequelize = new Sequelize(scope.config.db.name, scope.config.db.user, scope.config.db.password, {
+                host: scope.config.db.host,
+                dialect: 'mysql',
+                pool: {
+                    max: 10,
+                    min: 0,
+                    idle: 30000
+                }
+            });
+            cb(null, sequelize);
+        }],
+
+        network: ['config', 'log', 'dbWorkQueue', 'mainWorkQueue', 'balancesWorkQueue', 'dbclient', function (scope, cb) {
             var server = http.createServer(app);
             server.on('error', onError);
-            server.listen(scope.config.port, scope.config.host, function (err) {
-                scope.log.Info('Entu is listening', 'version', scope.config.version, 'host', scope.config.host, 'port', scope.config.port);
+            server.listen(scope.config.port, scope.config.address, function (err) {
+                scope.log.Info('Entu is listening', 'version', scope.config.version, 'address', scope.config.address, 'port', scope.config.port);
 
                 cb(err, {
                     app: app,
