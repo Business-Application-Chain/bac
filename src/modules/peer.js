@@ -27,6 +27,12 @@ Peer.prototype.sandboxApi = function (call, args, cb) {
     sandboxHelper.callMethod(shared, call, args, cb);
 };
 
+Peer.prototype.callApi = function (call, args, cb) {
+    var callArgs = [args, cb];
+    // execute
+    shared[call].apply(null, callArgs);
+};
+
 // events
 Peer.prototype.onInit = function (scope) {
     modules_loaded = scope && scope != undefined ? true : false;
@@ -42,15 +48,8 @@ Peer.prototype.onEnd = function (cb) {
 };
 
 // shared
-Peer.prototype.callApi = function (method, params, id) {
-    console.log('call api');
-    return new Promise((resolve, reject) => {
-        if (method == 'peer_test') {
-            resolve('yes, correct');
-        } else {
-            reject('no, incorrect');
-        }
-    })
+shared.peer_test = function (req, cb) {
+    cb(null, 'successed');
 };
 
 // export

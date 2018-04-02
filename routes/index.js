@@ -18,21 +18,21 @@ module.exports = function (scope) {
 
             // distinguish router by name keywords
             if (body.method.substring(0, 4) == 'peer') {
-                scope.modules.peer.callApi(body['method'], body['params'], body['id'])
-                    .then((data) => {
-                        res.json({
-                            'jsonrpc': body['jsonrpc'] || '1.0',
-                            'id': body['id'] || 0,
-                            'result': data
-                        });
-                    })
-                    .catch(function(err) {
-                        res.json({
+                scope.modules.peer.callApi(body['method'], body['params'], function (err, data) {
+                    if (err) {
+                        return res.json({
                             'jsonrpc': body['jsonrpc'] || '1.0',
                             'id': body['id'] || 0,
                             'error': err.toString()
                         });
+                    }
+
+                    return res.json({
+                        'jsonrpc': body['jsonrpc'] || '1.0',
+                        'id': body['id'] || 0,
+                        'result': data
                     });
+                });
 
             } else {
 

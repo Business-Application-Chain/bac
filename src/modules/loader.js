@@ -21,13 +21,14 @@ function Loader(cb, scope) {
 }
 
 // private methods
-privated.attachApi = function () {
-
-};
 
 // public methods
 Loader.prototype.sandboxApi = function (call, args, cb) {
     sandboxHelper.callMethod(shared, call, args, cb);
+};
+
+Loader.prototype.callApi = function (args) {
+
 };
 
 // events
