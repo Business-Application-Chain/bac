@@ -1,4 +1,4 @@
-var contants = require('../utils/contants.js');
+var constants = require('./constants.js');
 
 function BlockStatus() {
     var milestones = [

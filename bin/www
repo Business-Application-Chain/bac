@@ -138,13 +138,16 @@ d.run(function () {
             var Account = require('../src/base/Account.js');
 
             async.auto({
+                log: function (cb) {
+                    cb(null, scope.log);
+                },
                 dbClient: function (cb) {
                     cb(null, scope.dbClient);
                 },
                 notification_center: function (cb) {
                     cb(null, scope.notification_center);
                 },
-                account: ['dbClient', 'notification_center', function (scope, cb) {
+                account: ['log', 'dbClient', 'notification_center', function (scope, cb) {
                     new Account(scope, cb);
                 }]
             }, cb);

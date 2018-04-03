@@ -27,6 +27,17 @@ privated.loadApp = function () {
         if (err) {
             throw new Error(err.toString());
         } else {
+            library.base.account.removeTables(function (err) {
+                if (err) {
+                    throw new Error(err.toString());
+                } else {
+                    library.base.account.createTables(function (err) {
+                        if (err) {
+                            throw new Error(err.toString());
+                        }
+                    });
+                }
+            });
             library.notification_center.notify('blockchainReady');
         }
     })

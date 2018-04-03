@@ -1,5 +1,5 @@
 var async = require('async');
-var contants = require('../utils/contants.js');
+var constants = require('../utils/constants.js');
 
 var privated = {};
 
