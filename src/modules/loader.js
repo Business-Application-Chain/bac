@@ -22,17 +22,49 @@ function Loader(cb, scope) {
 
 // private methods
 privated.loadApp = function () {
-    library.notification_center.notify('blockchainReady');
-    // console.log('loadApp');
+
     // library.base.account.createTables(function (err) {
     //     if (err) {
-    //         console.log('blockchainReady err');
     //         throw new Error(err.toString());
     //     } else {
-    //         console.log('blockchainReady');
+    //         library.base.account.removeTables(function (err) {
+    //             if (err) {
+    //                 throw new Error(err.toString());
+    //             } else {
+    //                 library.base.account.createTables(function (err) {
+    //                     if (err) {
+    //                         throw new Error(err.toString());
+    //                     }
+    //                 });
+    //             }
+    //         });
     //         library.notification_center.notify('blockchainReady');
     //     }
-    // })
+    // });
+
+    // library.base.account.createTables(function (err) {
+    //     if (err) {
+    //         throw new Error(err.toString());
+    //     } else {
+    //         library.base.account.findAll({uid: 'abcd'}, function (err, data) {
+    //             console.log(JSON.stringify(data));
+    //         });
+    //     }
+    // });
+
+    library.base.account.createTables(function (err) {
+        if (err) {
+            throw new Error(err.toString());
+        } else {
+            library.base.account.insertOrUpdate('1234', {
+                uid: 'abcdefg-hijk-lmnopqrst-uvwxyz',
+                master_pub: 'xxxxxxxx-xxxx-xxxxxxxx-xxxxxxxxxxxx',
+                username: 'alex222'
+            }, function (err, data) {
+                console.log(">>>>> output: " + data);
+            });
+        }
+    });
 };
 
 // public methods
