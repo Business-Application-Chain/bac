@@ -46,6 +46,7 @@ Account.prototype.createTables = function (cb) {
                 },
                 master_pub: {
                     type: Sequelize.STRING(66),
+                    unique: true,
                     filter: {
                         type: "string"
                     },
@@ -54,6 +55,7 @@ Account.prototype.createTables = function (cb) {
                 },
                 master_address: {
                     type: Sequelize.STRING(21),
+                    unique: true,
                     filter: {
                         type: "string"
                     },
@@ -286,6 +288,8 @@ Account.prototype.createTables = function (cb) {
                     conv: Number
                 }
             }, {
+                freezeTableName: true,
+
                 // no createAt, updateAt properties
                 timestamps: false,
 
@@ -293,35 +297,44 @@ Account.prototype.createTables = function (cb) {
                 tableName: 'accounts'
             });
 
-            this.fields = [];
+            that.fields = [];
             Object.keys(accounts.attributes).forEach(function (key) {
                 var _tmp = {};
                 if (accounts.attributes[key].type)
-                this.fields.push({
-                     field: key
-                });
-            }.bind(this));
+                    that.fields.push({
+                         field: key
+                    });
+            }.bind(that));
 
-            this.filter = {};
+            that.filter = {};
             Object.keys(accounts.attributes).forEach(function (key) {
-                this.filter[key] = accounts.attributes[key].filter;
-            }.bind(this));
+                that.filter[key] = accounts.attributes[key].filter;
+            }.bind(that));
 
-            this.conv = {};
+            that.binary = [];
             Object.keys(accounts.attributes).forEach(function (key) {
-                this.conv[key] = accounts.attributes[key].conv;
-            }.bind(this));
+                if (accounts.attributes[key].type == "Binary") {
+                    that.binary.push(key);
+                }
+            }.bind(that));
 
-            this.editable = [];
+            that.conv = {};
+            Object.keys(accounts.attributes).forEach(function (key) {
+                that.conv[key] = accounts.attributes[key].conv;
+            }.bind(that));
+
+            that.editable = [];
             Object.keys(accounts.attributes).forEach(function (key) {
                 if (!accounts.attributes[key].constante) {
-                    this.editable.push(key);
+                    that.editable.push(key);
                 }
-            }.bind(this));
+            }.bind(that));
 
-            accounts.sync();
-
-            cb(null, accounts);
+            accounts.sync().then(function () {
+                cb(null, accounts);
+            }, function (err) {
+                that.scope.log.Warn("Account create table if not exists 'accounts'", "Error", err.toString());
+            });
         },
         model_accounts2delegates: ['model_accounts', function (scope, cb) {
             var accounts2delegates = that.scope.dbClient.define('accounts2delegates', {
@@ -343,6 +356,8 @@ Account.prototype.createTables = function (cb) {
                     allowNull: false
                 }
             }, {
+                freezeTableName: true,
+
                 // no createAt, updateAt properties
                 timestamps: false,
 
@@ -350,9 +365,11 @@ Account.prototype.createTables = function (cb) {
                 tableName: 'accounts2delegates'
             });
 
-            accounts2delegates.sync();
-
-            cb(null, accounts2delegates);
+            accounts2delegates.sync().then(function () {
+                cb(null, accounts2delegates);
+            }, function (err) {
+                that.scope.log.Warn("Account create table if not exists 'accounts2delegates'", "Error", err.toString());
+            });
         }],
         model_accounts2delegates_unconfirmed: ['model_accounts', 'model_accounts2delegates', function (scope, cb) {
             var accounts2delegates_unconfirmed = that.scope.dbClient.define('accounts2delegates_unconfirmed', {
@@ -374,6 +391,8 @@ Account.prototype.createTables = function (cb) {
                     allowNull: false
                 }
             }, {
+                freezeTableName: true,
+
                 // no createAt, updateAt properties
                 timestamps: false,
 
@@ -381,9 +400,11 @@ Account.prototype.createTables = function (cb) {
                 tableName: 'accounts2delegates_unconfirmed'
             });
 
-            accounts2delegates_unconfirmed.sync();
-
-            cb(null, accounts2delegates_unconfirmed);
+            accounts2delegates_unconfirmed.sync().then(function () {
+                cb(null, accounts2delegates_unconfirmed);
+            }, function (err) {
+                that.scope.log.Warn("Account create table if not exists 'accounts2delegates_unconfirmed'", "Error", err.toString());
+            });
         }],
         model_accounts2multisignatues: ['model_accounts', function (scope, cb) {
             var accounts2multisignatues = that.scope.dbClient.define('accounts2multisignatues', {
@@ -405,6 +426,8 @@ Account.prototype.createTables = function (cb) {
                     allowNull: false
                 }
             }, {
+                freezeTableName: true,
+
                 // no createAt, updateAt properties
                 timestamps: false,
 
@@ -412,9 +435,11 @@ Account.prototype.createTables = function (cb) {
                 tableName: 'accounts2multisignatues'
             });
 
-            accounts2multisignatues.sync();
-
-            cb(null, accounts2multisignatues);
+            accounts2multisignatues.sync().then(function () {
+                cb(null, accounts2multisignatues);
+            }, function (err) {
+                that.scope.log.Warn("Account create table if not exists 'accounts2multisignatues'", "Error", err.toString());
+            });
         }],
         model_accounts2multisignatues_unconfirmed: ['model_accounts', 'model_accounts2multisignatues', function (scope, cb) {
             var accounts2multisignatues_unconfirmed = that.scope.dbClient.define('accounts2multisignatues_unconfirmed', {
@@ -436,6 +461,8 @@ Account.prototype.createTables = function (cb) {
                     allowNull: false
                 }
             }, {
+                freezeTableName: true,
+
                 // no createAt, updateAt properties
                 timestamps: false,
 
@@ -443,9 +470,11 @@ Account.prototype.createTables = function (cb) {
                 tableName: 'accounts2multisignatues_unconfirmed'
             });
 
-            accounts2multisignatues_unconfirmed.sync();
-
-            cb(null, accounts2multisignatues_unconfirmed);
+            accounts2multisignatues_unconfirmed.sync().then(function () {
+                cb(null, accounts2multisignatues_unconfirmed);
+            }, function (err) {
+                that.scope.log.Warn("Account create table if not exists 'accounts2multisignatues_unconfirmed'", "Error", err.toString());
+            });
         }],
         model_accounts_round: ['model_accounts', function (scope, cb) {
             var accounts_round = that.scope.dbClient.define('accounts_round', {
@@ -468,6 +497,8 @@ Account.prototype.createTables = function (cb) {
                     type: Sequelize.BIGINT(20)
                 }
             }, {
+                freezeTableName: true,
+
                 // no createAt, updateAt properties
                 timestamps: false,
 
@@ -475,9 +506,11 @@ Account.prototype.createTables = function (cb) {
                 tableName: 'accounts_round'
             });
 
-            accounts_round.sync();
-
-            cb(null, accounts_round);
+            accounts_round.sync().then(function () {
+                cb(null, accounts_round);
+            }, function (err) {
+                that.scope.log.Warn("Account create table if not exists 'accounts_round'", "Error", err.toString());
+            });
         }]
     }, function (err, scope) {
         that.models = scope;
@@ -494,28 +527,46 @@ Account.prototype.removeTables = function (cb) {
     var that = this;
     async.waterfall([
         function (cb) {
-            that.models.model_accounts.drop();
-            cb(null);
+            that.models.model_accounts.drop().then(function () {
+                cb(null);
+            }, function (err) {
+                that.scope.log.Warn("Account drop table if exists 'accounts'", "Error", err.toString());
+            });
         },
         function (cb) {
-            that.models.model_accounts2delegates.drop();
-            cb(null);
+            that.models.model_accounts2delegates.drop().then(function () {
+                cb(null);
+            }, function (err) {
+                that.scope.log.Warn("Account drop table if exists 'accounts2delegates'", "Error", err.toString());
+            });
         },
         function (cb) {
-            that.models.model_accounts2delegates_unconfirmed.drop();
-            cb(null);
+            that.models.model_accounts2delegates_unconfirmed.drop().then(function () {
+                cb(null);
+            }, function (err) {
+                that.scope.log.Warn("Account drop table if exists 'accounts2delegates_unconfirmed'", "Error", err.toString());
+            });
         },
         function (cb) {
-            that.models.model_accounts2multisignatues.drop();
-            cb(null);
+            that.models.model_accounts2multisignatues.drop().then(function () {
+                cb(null);
+            }, function (err) {
+                that.scope.log.Warn("Account drop table if exists 'accounts2multisignatues'", "Error", err.toString());
+            });
         },
         function (cb) {
-            that.models.model_accounts2multisignatues_unconfirmed.drop();
-            cb(null);
+            that.models.model_accounts2multisignatues_unconfirmed.drop().then(function () {
+                cb(null);
+            }, function (err) {
+                that.scope.log.Warn("Account drop table if exists 'accounts2multisignatues_unconfirmed'", "Error", err.toString());
+            });
         },
         function (cb) {
-            that.models.model_accounts_round.drop();
-            cb(null);
+            that.models.model_accounts_round.drop().then(function () {
+                cb(null);
+            }, function (err) {
+                that.scope.log.Warn("Account drop table if exists 'accounts_round'", "Error", err.toString());
+            });
         }
     ], function (err, result) {
         that.models = null;
@@ -524,27 +575,125 @@ Account.prototype.removeTables = function (cb) {
     }.bind(this));
 };
 
-Account.prototype.objectNormalize = function (object) {
+Account.prototype.objectNormalize = function (account) {
+    var report = this.scope.schema.validate(account, {
+        object: true,
+        properties: this.filter
+    });
 
+    if (!report) {
+        throw new Error(this.scope.schema.getLastError());
+    }
+
+    return account;
 };
 
 Account.prototype.toHex = function (raw) {
+    this.binary.forEach(function (field) {
+        if (raw[field]) {
+            raw[field] = new Buffer(raw[field], 'hex');
+        }
+    });
 
+    return raw;
 };
 
 Account.prototype.create = function () {
 
 };
 
-Account.prototype.find = function () {
+Account.prototype.find = function (filter, fields, cb) {
+    if (typeof(fields) == 'function') { // Here is just for cases that only send-in 2 params
+        cb = fields;
+        fields = this.fields.map(function (field) {
+            return field.alias || field.field;
+        });
+    }
 
+    this.findAll(filter, fields, function (err, data) {
+        cb(err, data && data.length ? data[0] : null);
+    });
 };
 
-Account.prototype.findAll = function () {
+Account.prototype.findAll = function (filter, fields, cb) {
+    if (typeof(fields) == 'function') { // Here is just for cases that only send-in 2 params
+        cb = fields;
+        fields = this.fields.map(function (field) {
+            return field.alias || field.field;
+        });
+    }
 
+    var realFields = this.fields.filter(function (field) {
+        return fields.indexOf(field.alias || field.field) != -1;
+    });
+
+    var realConv = {};
+    Object.keys(this.conv).forEach(function (key) {
+        if (fields.indexOf(key) != -1) {
+            realConv[key] = this.conv[key];
+        }
+    }.bind(this));
+
+    var limit, offset, order;
+
+    if (filter.limit > 0) {
+        limit = filter.limit;
+    }
+    delete filter.limit;
+    if (filter.offset > 0) {
+        offset = filter.offet;
+    }
+    delete filter.offset;
+    if (filter.order) {
+        order = filter.order;
+    }
+    delete filter.order;
+
+    this.models.model_accounts.findAll({ where: filter, limit: limit, offset: offset, order: order })
+        .then(function (accounts) {
+            cb(null, accounts || []);
+        }, function (err) {
+            this.scope.log.Warn("Account findAll", "Error", err.toString(), "TableName", "accounts");
+        });
 };
 
-Account.prototype.update = function () {
+Account.prototype.insertOrUpdate = function (master_address, fields, cb) {
+    if (fields.master_pub !== undefined && !fields.master_pub) {
+        this.scope.log.Error("Account insertOrUpdate", "master_pub", master_pub);
+    }
+
+    fields.master_address = master_address;
+
+    var that = this;
+
+    async.waterfall([
+        function (cb) {
+            that.models.model_accounts.create(that.toHex(fields))
+                .then(function (data) {
+                    cb(null);
+                }, function (err) {
+                    that.scope.log.Warn("Account insertOrUpdate 1", "Error", err.toString());
+                    cb(null);
+                });
+        },
+        function (cb) {
+            that.models.model_accounts.update(that.toHex(fields), {
+                where: {
+                    master_address: master_address
+                }}).then(function (data) {
+                    cb(null);
+                }, function (err) {
+                    that.scope.log.Warn("Account insertOrUpdate 2", "Error", err.toString());
+                    cb(null);
+                });
+        }
+    ], function (err, result) {
+        // callback
+        setImmediate(cb, null, this);
+    }.bind(this));
+};
+
+Account.prototype.merge = function () {
 
 };
 
