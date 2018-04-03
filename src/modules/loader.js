@@ -22,14 +22,17 @@ function Loader(cb, scope) {
 
 // private methods
 privated.loadApp = function () {
-
-    library.base.account.createTables(function (err) {
-        if (err) {
-            throw new Error(err.toString());
-        } else {
-            library.notification_center.notify('blockchainReady');
-        }
-    })
+    library.notification_center.notify('blockchainReady');
+    // console.log('loadApp');
+    // library.base.account.createTables(function (err) {
+    //     if (err) {
+    //         console.log('blockchainReady err');
+    //         throw new Error(err.toString());
+    //     } else {
+    //         console.log('blockchainReady');
+    //         library.notification_center.notify('blockchainReady');
+    //     }
+    // })
 };
 
 // public methods

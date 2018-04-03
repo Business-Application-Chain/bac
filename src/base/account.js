@@ -82,14 +82,13 @@ Account.prototype.createTables = function (cb) {
 
     var address = bignum.fromBuffer(temp).toString() + 'L';
 
-    console.log(address.length);
 
     this.model_accounts.create({
         uid: uid,
         master_pub: address111,
         master_address: address
     }).then(account => {
-        console.log(account);
+        // console.log(account);
     })
 };
 
