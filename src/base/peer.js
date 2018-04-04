@@ -5,10 +5,10 @@ var Sequelize = require('sequelize');
 
 var privated = {}, dbClient;
 var ip = require('ip');
+var jsonSql = require('../json-sql')({dialect: 'mysql'});
 // constructor
 function Peers(scope, cb) {
     this.scope = scope;
-
     this.model_peers = this.scope.dbClient.define('peers', {
         ip: {
             type: Sequelize.BIGINT,
@@ -41,11 +41,11 @@ function Peers(scope, cb) {
     },{
         freezeTableName: true // Model tableName will be the same as the model name
     });
-    this.scope.dbClient.sync().then(() => {
-        // cb(null, this.model_peers)
-    }, (err) => {
-        this.scope.log.Warn("Account create table if not exists 'accounts_round'", "Error", err.toString());
-    });
+    // this.scope.dbClient.sync().then(() => {
+    //     // cb(null, this.model_peers)
+    // }, (err) => {
+    //     this.scope.log.Warn("Account create table if not exists 'accounts_round'", "Error", err.toString());
+    // });
 
     setImmediate(cb, null, this);
 }

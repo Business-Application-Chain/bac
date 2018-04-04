@@ -28,7 +28,13 @@ privated.loadApp = function () {
     // library.base.peer.findAll((res) => {
     //     console.log(res);
     // });
+    library.base.peeer.createTables((err) => {
+        if(err) {
+            console.log('is err', err);
+        } else {
 
+        }
+    });
 };
 
 privated.updatePeerList = function (err) {
@@ -67,8 +73,6 @@ privated.updatePeerList = function (err) {
         });
     });
 };
-
-privated.
 
 // public methods
 Peer.prototype.sandboxApi = function (call, args, cb) {

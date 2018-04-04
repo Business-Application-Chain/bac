@@ -10,13 +10,13 @@ var types = {
 	"Boolean": {syntax: "tinyint", default_length: 1},
 	"Blob": {syntax: "blob"},
 	"Binary": {syntax: "binary", length: true}
-}
+};
 
 // for future
 var onDeleteTrigger = {
 	"set_null": "SET NULL",
 	"cascade": "CASCADE"
-}
+};
 
 function getType(field) {
 	var s = "";
