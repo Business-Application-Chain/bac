@@ -59,18 +59,21 @@ if (!address) {
 console.log(keypair.publicKey.toString('hex'));
 console.log(address);
 
-var jsonSql = require('json-sql')();
-jsonSql.setDialect("mysql");
+var jsonSql = require('./src/json-sql')({dialect: 'mysql'});
 
 var update = {};
 update.$inc = update.$inc || {};
 update.$inc["balance"] = 10000;
 var sql = jsonSql.build({
-    type: 'update',
+    type: 'create',
     table: 'accounts',
-    modifier: update,
-    conidition: {
-        master_address: '123456'
-    }
+    tableFields: [
+        {
+            name: 'master_pub',
+            type: 'String',
+            length: 66,
+            not_null: true
+        }
+    ]
 });
 console.log(sql);

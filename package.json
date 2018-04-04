@@ -32,7 +32,6 @@
     "express-query-int": "^3.0.0",
     "extend": "^3.0.1",
     "ip": "^1.1.5",
-    "json-sql": "^0.3.11",
     "method-override": "^2.3.10",
     "moment": "^2.22.0",
     "moment-timezone": "^0.5.14",
@@ -41,6 +40,7 @@
     "sequelize": "^3.24.1",
     "serve-favicon": "~2.4.5",
     "strftime": "^0.10.0",
+    "underscore": "^1.8.3",
     "util": "^0.10.3",
     "uuid": "^3.2.1",
     "z-schema": "^3.19.1"
