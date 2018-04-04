@@ -5,7 +5,6 @@ var Sequelize = require('sequelize');
 
 var privated = {}, dbClient;
 var ip = require('ip');
-
 // constructor
 function Peers(scope, cb) {
     this.scope = scope;
@@ -33,11 +32,20 @@ function Peers(scope, cb) {
         version: {
             type: Sequelize.STRING,
             allowNull: false
+        },
+        clock: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            defaultValue: 0
         }
     },{
         freezeTableName: true // Model tableName will be the same as the model name
     });
-    this.scope.dbClient.sync();
+    this.scope.dbClient.sync().then(() => {
+        // cb(null, this.model_peers)
+    }, (err) => {
+        this.scope.log.Warn("Account create table if not exists 'accounts_round'", "Error", err.toString());
+    });
 
     setImmediate(cb, null, this);
 }
@@ -95,7 +103,7 @@ Peers.prototype.findOne = function (peer, cb) {
 };
 
 Peers.prototype.findAll = function (cb) {
-    this.model_peers.findAll().then(res => {
+    this.model_peers.findAll().then((res) => {
         cb(res);
     });
 };

@@ -68,19 +68,26 @@ privated.updatePeerList = function (err) {
     });
 };
 
+privated.
+
 // public methods
 Peer.prototype.sandboxApi = function (call, args, cb) {
     sandboxHelper.callMethod(shared, call, args, cb);
 };
 
-Peer.prototype.removePeer = function (p_ip, p_port, cb) {
+// Peer.prototype.removePeer = function (p_ip, p_port, cb) {
+privated.removePeer = function (p_ip, p_port, cb) {
+    debugger;
     var isWhiteList = library.config.peers.default.find(function (peer) {
-        return peer.ip == ip.fromLong(p_ip) && peer.port == p_port;
+        return peer.address == ip.fromLong(p_ip) && peer.port == p_port;
     });
     if(isWhiteList) {
         cb("Peer in white list");
+    } else {
+        library.base.peer.removePeer(p_ip, p_port, (count) => {
+            cb(`remove count -> ${count}`);
+        })
     }
-    library.base.peer.removePeer()
 };
 
 Peer.prototype.callApi = function (call, args, cb) {
@@ -135,7 +142,10 @@ Peer.prototype.onEnd = function (cb) {
 
 // shared
 shared.peer_test = function (req, cb) {
-    cb(null, `aaa:${req.aaa}, bbb:${req.bbb}`);
+    // cb(null, `aaa:${req.aaa}, bbb:${req.bbb}`);
+    privated.removePeer(2130706433, 8000, (msg) => {
+        cb(msg);
+    })
 };
 
 //获取 某节点下的peers
