@@ -6,7 +6,6 @@ var dialects = {
 	base: require('./dialects/base'),
 	mssql: require('./dialects/mssql'),
 	postgresql: require('./dialects/postgresql'),
-	sqlite: require('./dialects/sqlite'),
 	mysql: require('./dialects/mysql')
 };
 
