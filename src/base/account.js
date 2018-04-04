@@ -4,12 +4,14 @@ var genesisBlock = null;
 var Sequelize = require('sequelize');
 var crypto = require('crypto');
 var bignum = require('../utils/bignum.js');
+var jsonSql = require('json-sql')();
 
 var privated = {};
 
 // constructor
 function Account(scope, cb) {
     this.scope = scope;
+    jsonSql.setDialect('mysql'); // 设置方言为Mysql
 
     setImmediate(cb, null, this);
 }
@@ -30,7 +32,8 @@ Account.prototype.createTables = function (cb) {
                         maxLength: 11,
                         minLength: 1
                     },
-                    conv: Boolean
+                    conv: Boolean,
+                    constante: true
                 },
                 uid: {
                     type: Sequelize.STRING(32),
@@ -42,7 +45,8 @@ Account.prototype.createTables = function (cb) {
                     filter: {
                         type: "string"
                     },
-                    conv: String
+                    conv: String,
+                    constante: true
                 },
                 master_pub: {
                     type: Sequelize.STRING(66),
@@ -145,6 +149,22 @@ Account.prototype.createTables = function (cb) {
                         type: "integer"
                     },
                     conv: Number
+                },
+                delegates: {
+                    type: Sequelize.TEXT,
+                    filter: {
+                        type: "array",
+                        uniqueItems: true
+                    },
+                    conv: Array
+                },
+                delegates_unconfirmed: {
+                    type: Sequelize.TEXT,
+                    filter: {
+                        type: "array",
+                        uniqueItems: true
+                    },
+                    conv: Array
                 },
                 createat_block: {
                     type: Sequelize.STRING(20),
@@ -352,7 +372,7 @@ Account.prototype.createTables = function (cb) {
                     allowNull: false
                 },
                 dependentId: {
-                    type: Sequelize.STRING(21),
+                    type: Sequelize.STRING(66),
                     allowNull: false
                 }
             }, {
@@ -387,7 +407,7 @@ Account.prototype.createTables = function (cb) {
                     allowNull: false
                 },
                 dependentId: {
-                    type: Sequelize.STRING(21),
+                    type: Sequelize.STRING(66),
                     allowNull: false
                 }
             }, {
@@ -422,7 +442,7 @@ Account.prototype.createTables = function (cb) {
                     allowNull: false
                 },
                 dependentId: {
-                    type: Sequelize.STRING(21),
+                    type: Sequelize.STRING(66),
                     allowNull: false
                 }
             }, {
@@ -457,7 +477,7 @@ Account.prototype.createTables = function (cb) {
                     allowNull: false
                 },
                 dependentId: {
-                    type: Sequelize.STRING(21),
+                    type: Sequelize.STRING(66),
                     allowNull: false
                 }
             }, {
@@ -491,7 +511,10 @@ Account.prototype.createTables = function (cb) {
                     type: Sequelize.BIGINT(20)
                 },
                 delegate: {
-                    type: Sequelize.STRING(64)
+                    type: Sequelize.STRING(66)
+                },
+                blockId: {
+                    type: Sequelize.STRING(20)
                 },
                 round: {
                     type: Sequelize.BIGINT(20)
@@ -514,7 +537,8 @@ Account.prototype.createTables = function (cb) {
         }]
     }, function (err, scope) {
         that.models = scope;
-        that.scope.dbClient.query('INSERT INTO accounts2delegates_unconfirmed SELECT * FROM accounts2delegates')
+        var sql = 'INSERT INTO accounts2delegates_unconfirmed SELECT * FROM accounts2delegates';
+        that.scope.dbClient.query(sql)
             .catch(function (err) {
                 that.scope.log.Error(err.toString());
             });
@@ -659,7 +683,7 @@ Account.prototype.findAll = function (filter, fields, cb) {
 
 Account.prototype.insertOrUpdate = function (master_address, fields, cb) {
     if (fields.master_pub !== undefined && !fields.master_pub) {
-        this.scope.log.Error("Account insertOrUpdate", "master_pub", master_pub);
+        this.scope.log.Error("Account insertOrUpdate", "master_pub", fields.master_pub);
     }
 
     fields.master_address = master_address;
@@ -672,7 +696,7 @@ Account.prototype.insertOrUpdate = function (master_address, fields, cb) {
                 .then(function (data) {
                     cb(null);
                 }, function (err) {
-                    that.scope.log.Warn("Account insertOrUpdate 1", "Error", err.toString());
+                    that.scope.log.Warn("Account insertOrUpdate [insert]", "Error", err.toString());
                     cb(null);
                 });
         },
@@ -683,7 +707,7 @@ Account.prototype.insertOrUpdate = function (master_address, fields, cb) {
                 }}).then(function (data) {
                     cb(null);
                 }, function (err) {
-                    that.scope.log.Warn("Account insertOrUpdate 2", "Error", err.toString());
+                    that.scope.log.Warn("Account insertOrUpdate [update]", "Error", err.toString());
                     cb(null);
                 });
         }
@@ -693,12 +717,262 @@ Account.prototype.insertOrUpdate = function (master_address, fields, cb) {
     }.bind(this));
 };
 
-Account.prototype.merge = function () {
+Account.prototype.merge = function (master_address, fields, cb) {
+    if (fields.master_pub !== undefined && !fields.master_pub) {
+        this.scope.log.Error("Account merge", "master_pub", fields.master_pub);
+    }
 
+    var self = this;
+
+    var insert = {}, remove = {}, update = {}, insert_object = {}, remove_object = {}, round = [];
+
+    this.editable.forEach(function (key) {
+        if (fields[key]) {
+            var value = fields[key];
+            switch (self.conv[key]) {
+                case String:
+                    update[key] = value;
+                    break;
+                case Number:
+                    if (Math.abs(value) === value && value !== 0) {
+                        update.$inc = update.$inc || {};
+                        update.$inc[key] = value;
+                        if (key == 'balance') {
+                            round.push({
+                                sql: `INSERT INTO accounts_round (master_address, amount, delegate, blockId, round) SELECT ?, ?, dependentId, ?, ? from accounts2delegates WHERE accountId = ?`,
+                                replacements: [
+                                    master_address,
+                                    value,
+                                    fields.blockId,
+                                    fields.round,
+                                    master_address
+                                ]
+                            });
+                            console.log(round[0].sql);
+                        }
+                    }
+                    else if (value < 0) {
+                        update.$dec = update.$dec || {};
+                        update.$dec[key] = Math.abs(value);
+                        if (key == 'balance') {
+                            round.push({
+                                sql: `INSERT INTO accounts_round (master_address, amount, delegate, blockId, round) SELECT ?, ?, dependentId, ?, ? from accounts2delegates WHERE accountId = ?`,
+                                replacements: [
+                                    master_address,
+                                    value,
+                                    fields.blockId,
+                                    fields.round,
+                                    master_address
+                                ]
+                            });
+                        }
+                    }
+                    break;
+                case Array:
+                    if (Object.prototype.toString.call(value[0]) == "[object Object]") {
+                        for (var i = 0; i < value.length; i++) {
+                            var val = value[i];
+                            if (val.action == '-') {
+                                delete val.action;
+                                remove_object[key] = remove_object[key] || [];
+                                remove_object[key].push(val);
+                            } else if (val.action == '+') {
+                                delete val.action;
+                                insert_object[key] = insert_object[key] || [];
+                                insert_object[key].push(val);
+                            } else {
+                                delete val.action;
+                                insert_object[key] = insert_object[key] || [];
+                                insert_object[key].push(val);
+                            }
+                        }
+                    } else {
+                        for (var i = 0; i < value.length; i++) {
+                            var math = value[i][0];
+                            var val = null;
+                            if (math == '-') {
+                                val = value[i].slice(1);
+                                remove[key] = remove[key] || [];
+                                remove[key].push(val);
+                                if (key == "delegates") {
+                                    round.push({
+                                        sql: `INSERT INTO accounts_round (master_address, amount, delegate, blockId, round) SELECT ?, -balance, ?, ?, ? from accounts WHERE master_address = ?`,
+                                        replacements: [
+                                            master_address,
+                                            val,
+                                            fields.blockId,
+                                            fields.round,
+                                            master_address
+                                        ]
+                                    });
+                                }
+                            } else if (math == '+') {
+                                val = value[i].slice(1);
+                                insert[key] = insert[key] || [];
+                                insert[key].push(val);
+                                if (key == "delegates") {
+                                    round.push({
+                                        sql: `INSERT INTO accounts_round (master_address, amount, delegate, blockId, round) SELECT ?,  balance, ?, ?, ? from accounts WHERE master_address = ?`,
+                                        replacements: [
+                                            master_address,
+                                            val,
+                                            fields.blockId,
+                                            fields.round,
+                                            master_address
+                                        ]
+                                    });
+                                }
+                            } else {
+                                val = value[i].slice(1);
+                                insert[key] = insert[key] || [];
+                                insert[key].push(val);
+                                if (key == "delegates") {
+                                    round.push({
+                                        sql: `INSERT INTO accounts_round (master_address, amount, delegate, blockId, round) SELECT ?,  balance, ?, ?, ? from accounts WHERE master_address = ?`,
+                                        replacements: [
+                                            master_address,
+                                            val,
+                                            fields.blockId,
+                                            fields.round,
+                                            master_address
+                                        ]
+                                    });
+                                }
+                            }
+                        }
+                    }
+                    break;
+            }
+        }
+    });
+
+    async.series([
+        function (cb) {
+            Object.keys(insert).forEach(function (key) {
+                for (var i = 0; i < insert[key].length; i++) {
+                    self.models['model_accounts2'+key].create({
+                        master_address: master_address,
+                        dependentId: insert[key][i]
+                    }).then(function (data) {
+
+                    }, function (err) {
+                        self.scope.log.Warn("Account merge [insert]", "Error", err.toString());
+                    });
+                }
+            });
+
+            cb();
+        },
+        function (cb) {
+            Object.keys(insert_object).forEach(function (key) {
+                for (var i = 0; i < insert_object[key].length; i++) {
+                    self.models['model_accounts2'+key].create(insert_object[key]).then(function (data) {
+
+                    }, function (err) {
+                        self.scope.log.Warn("Account merge [insert_object]", "Error", err.toString());
+                    });
+                }
+            });
+
+            cb();
+        },
+        function (cb) {
+            Object.keys(remove).forEach(function (key) {
+                for (var i = 0; i < remove[key].length; i++) {
+                    self.models['model_accounts2'+key].delete({
+                        where: {
+                            master_address: remove[key]
+                        }
+                    }).then(function (data) {
+
+                    }, function (err) {
+                        self.scope.log.Warn("Account merge [remove]", "Error", err.toString());
+                    });
+                }
+            });
+
+            cb();
+        },
+        function (cb) {
+            Object.keys(remove_object).forEach(function (key) {
+                for (var i = 0; i < remove_object[key].length; i++) {
+                    self.models['model_accounts2'+key].delete({
+                        where: {
+                            master_address: remove_object[key]
+                        }
+                    }).then(function (data) {
+
+                    }, function (err) {
+                        self.scope.log.Warn("Account merge [remove_object]", "Error", err.toString());
+                    });
+                }
+            });
+
+            cb();
+        },
+        function (cb) {
+            if (Object.keys(update).length) {
+                debugger
+                self.models.model_accounts.update(update, {
+                    where: {
+                        master_address: master_address
+                    }
+                }).then(function (data) {
+
+                }, function (err) {
+                    self.scope.log.Warn("Account merge [update]", "Error", err.toString());
+                });
+            }
+
+            cb();
+        },
+        function (cb) {
+            async.eachSeries(round, function (sub_round, cb) {
+                self.scope.dbClient.query(sub_round.sql, {
+                    type: Sequelize.QueryTypes.INSERT,
+                    replacements: sub_round.replacements
+                }).then(function (data) {
+                    cb();
+                }, function (err) {
+                    self.scope.log.Warn("Account merge [update]", "Error", err.toString());
+                    cb();
+                });
+            }, function (err) {
+                cb(err);
+            });
+        }
+    ], done);
+
+    function done(err) {
+        if (cb.length != 2) {
+            return cb(err);
+        } else {
+            if (err) {
+                return cb(err);
+            }
+            self.find({master_address: master_address}, cb);
+        }
+    }
 };
 
-Account.prototype.remove = function () {
-
+Account.prototype.remove = function (master_address, cb) {
+    async.waterfall([
+        function (cb) {
+            that.models.model_accounts.delete({
+                where: {
+                    master_address: master_address
+                }
+            }).then(function (data) {
+                cb(null);
+            }, function (err) {
+                that.scope.log.Warn("Account remove", "Error", err.toString());
+                cb(null);
+            });
+        }
+    ], function (err, result) {
+        // callback
+        setImmediate(cb, null, this);
+    }.bind(this));
 };
 
 // export

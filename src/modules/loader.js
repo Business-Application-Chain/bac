@@ -52,16 +52,31 @@ privated.loadApp = function () {
     //     }
     // });
 
+    // library.base.account.createTables(function (err) {
+    //     if (err) {
+    //         throw new Error(err.toString());
+    //     } else {
+    //         library.base.account.insertOrUpdate('1234', {
+    //             uid: 'abcdefg-hijk-lmnopqrst-uvwxyz',
+    //             master_pub: 'xxxxxxxx-xxxx-xxxxxxxx-xxxxxxxxxxxx',
+    //             username: 'alex222'
+    //         }, function (err, data) {
+    //             console.log(">>>>> output: ");
+    //         });
+    //     }
+    // });
+
     library.base.account.createTables(function (err) {
         if (err) {
             throw new Error(err.toString());
         } else {
-            library.base.account.insertOrUpdate('1234', {
-                uid: 'abcdefg-hijk-lmnopqrst-uvwxyz',
-                master_pub: 'xxxxxxxx-xxxx-xxxxxxxx-xxxxxxxxxxxx',
-                username: 'alex222'
+            library.base.account.merge('6202245275956910442L', {
+                master_pub: '3319e5bb7b26eda2f3ba91d55536e8260b58bb37b968233823c2ba588200459f',
+                balance: 10000,
+                blockId: '8593810399212843182',
+
             }, function (err, data) {
-                console.log(">>>>> output: " + data);
+
             });
         }
     });
