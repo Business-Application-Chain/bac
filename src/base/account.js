@@ -4,523 +4,524 @@ var genesisBlock = null;
 var Sequelize = require('sequelize');
 var crypto = require('crypto');
 var bignum = require('../utils/bignum.js');
+var jsonSql = require('json-sql')();
 
 var privated = {};
+
+jsonSql.setDialect('mysql'); // 设置方言为Mysql
 
 // constructor
 function Account(scope, cb) {
     this.scope = scope;
+    genesisBlock = this.scope.genesisblock.block;
+
+    this.table = 'accounts';
+
+    this.model = [
+        {
+            name: 'master_pub',
+            type: 'String',
+            length: 66,
+            filter: {
+                type: 'string'
+            },
+            conv: String,
+            constante: true
+        },
+        {
+            name: 'master_address',
+            type: 'String',
+            length: 21,
+            not_null: true,
+            unique: true,
+            primary_key: true,
+            filter: {
+                type: 'string',
+                maxLength: 21,
+                minLength: 1
+            },
+            conv: String,
+            constante: true
+        },
+        {
+            name: 'username',
+            type: 'String',
+            length: 20,
+            filter: {
+                type: 'string',
+                maxLength: 20,
+                minLength: 1
+            },
+            conv: String,
+            constante: true
+        },
+        {
+            name: 'username_unconfirmed',
+            type: 'String',
+            length: 20,
+            filter: {
+                type: 'string',
+                maxLength: 20,
+                minLength: 1
+            },
+            conv: String,
+            constante: true
+        },
+        {
+            name: 'secondsign',
+            type: 'BigInt',
+            filter: {
+                type: 'boolean'
+            },
+            conv: Boolean,
+            default: 0
+        },
+        {
+            name: 'secondsign_unconfirmed',
+            type: 'BigInt',
+            filter: {
+                type: 'boolean'
+            },
+            conv: Boolean,
+            default: 0
+        },
+        {
+            name: 'second_pub',
+            type: 'String',
+            length: 66,
+            filter: {
+                type: 'string'
+            },
+            conv: String,
+            constante: true
+        },
+        {
+            name: 'balance',
+            type: 'BigInt',
+            filter: {
+                required: true,
+                type: 'integer',
+                minimum: 0,
+                maximum: constants.totalAmount
+            },
+            conv: Number,
+            default: 0
+        },
+        {
+            name: 'balance_unconfirmed',
+            type: 'BigInt',
+            filter: {
+                required: true,
+                type: 'integer',
+                minimum: 0,
+                maximum: constants.totalAmount
+            },
+            conv: Number,
+            default: 0
+        },
+        {
+            name: 'uservote',
+            type: 'BigInt',
+            filter: {
+                type: 'integer'
+            },
+            conv: Number,
+            default: 0
+        },
+        {
+            name: 'rate',
+            type: 'BigInt',
+            length: 66,
+            filter: {
+                type: 'integer'
+            },
+            conv: Number,
+            default: 0
+        },
+        {
+            name: 'delegates',
+            type: 'Text',
+            filter: {
+                type: 'array',
+                uniqueItems: true
+            },
+            conv: Array,
+            expression: "(select GROUP_CONCAT(dependentId) from " + this.table + "2delegates where accountId = a.master_address)"
+        },
+        {
+            name: 'delegates_unconfirmed',
+            type: 'Text',
+            filter: {
+                type: 'array',
+                uniqueItems: true
+            },
+            conv: Array,
+            expression: "(select GROUP_CONCAT(dependentId) from " + this.table + "2delegates where accountId = a.master_address)"
+        },
+        {
+            name: 'createat_block',
+            type: 'String',
+            length: 20,
+            filter: {
+                type: 'string',
+                maxLength: 20,
+                minLength: 1
+            },
+            conv: String,
+            default: genesisBlock.id
+        },
+        {
+            name: 'name_exist',
+            type: 'Boolean',
+            filter: {
+                type: 'boolean'
+            },
+            conv: Boolean,
+            default: 0
+        },
+        {
+            name: 'name_exist_unconfirmed',
+            type: 'Boolean',
+            filter: {
+                type: 'boolean'
+            },
+            conv: Boolean,
+            default: 0
+        },
+        {
+            name: 'prod_block_num',
+            type: 'BigInt',
+            filter: {
+                type: 'integer',
+                minimum: -1,
+                maximum: 1
+            },
+            conv: Number,
+            default: 0
+        },
+        {
+            name: 'missed_block_num',
+            type: 'BigInt',
+            filter: {
+                type: 'integer',
+                minimum: -1,
+                maximum: 1
+            },
+            conv: Number,
+            default: 0
+        },
+        {
+            name: 'multisignatures',
+            type: 'Text',
+            filter: {
+                type: 'array',
+                uniqueItems: true
+            },
+            conv: Array,
+            expression: "(select GROUP_CONCAT(dependentId) from " + this.table + "2multisignatures where accountId = a.master_address)"
+        },
+        {
+            name: 'multisignatures_unconfirmed',
+            type: 'Text',
+            filter: {
+                type: 'array',
+                uniqueItems: true
+            },
+            conv: Array,
+            expression: "(select GROUP_CONCAT(dependentId) from " + this.table + "2multisignatures where accountId = a.master_address)"
+        },
+        {
+            name: 'multisign_min',
+            type: 'BigInt',
+            filter: {
+                type: 'integer',
+                minimum: 0,
+                maximum: 17
+            },
+            conv: Number,
+            default: 0
+        },
+        {
+            name: 'multisign_min_unconfirmed',
+            type: 'BigInt',
+            filter: {
+                type: 'integer',
+                minimum: 0,
+                maximum: 17
+            },
+            conv: Number,
+            default: 0
+        },
+        {
+            name: 'multisign_lifetime',
+            type: 'BigInt',
+            filter: {
+                type: 'integer',
+                minimum: 1,
+                maximum: 72
+            },
+            conv: Number,
+            default: 0
+        },
+        {
+            name: 'multisign_lifetime_unconfirmed',
+            type: 'BigInt',
+            filter: {
+                type: 'integer',
+                minimum: 1,
+                maximum: 72
+            },
+            conv: Number,
+            default: 0
+        },
+        {
+            name: 'virgin',
+            type: 'Boolean',
+            filter: {
+                type: 'boolean',
+            },
+            conv: Boolean,
+            default: 0
+        },
+        {
+            name: 'fees',
+            type: 'BigInt',
+            filter: {
+                type: 'integer',
+            },
+            conv: Number,
+            default: 0
+        },
+        {
+            name: 'rewards',
+            type: 'BigInt',
+            filter: {
+                type: 'integer',
+            },
+            conv: Number,
+            default: 0
+        }
+    ];
+
+    this.fields = this.model.map(field => {
+        var _tmp = {};
+        if (field.type == "Binary") {
+            _tmp.expression = ['lower', 'hex'];
+        }
+
+        if (field.expression) {
+            _tmp.expression = field.expression;
+        } else {
+            if (field.mod) {
+                _tmp.expression = field.mod;
+            }
+            _tmp.field = field.name;
+        }
+        if (_tmp.expression || field.alias) {
+            _tmp.alias = field.alias || field.name;
+        }
+
+        return _tmp;
+    });
+
+    this.binary = [];
+    this.model.forEach(function (field) {
+        if (field.type == "Binary") {
+            this.binary.push(field.name);
+        }
+    }.bind(this));
+
+    this.filter = {};
+    this.model.forEach(function (field) {
+        this.filter[field.name] = field.filter;
+    }.bind(this));
+
+    this.conv = {};
+    this.model.forEach(function (field) {
+        this.conv[field.name] = field.conv;
+    }.bind(this));
+
+    this.editable = [];
+    this.model.forEach(function (field) {
+        if (!field.constante && !field.readonly) {
+            this.editable.push(field.name);
+        }
+    }.bind(this));
 
     setImmediate(cb, null, this);
 }
 
 // public methods
 Account.prototype.createTables = function (cb) {
-    var that = this;
+
     async.auto({
-        model_accounts: function (cb) {
-            var accounts = that.scope.dbClient.define('accounts', {
-                id: {
-                    type: Sequelize.INTEGER(11),
-                    primaryKey: true,
-                    autoIncrement: true,
-                    allowNull: false,
-                    filter: {
-                        type: "integer",
-                        maxLength: 11,
-                        minLength: 1
-                    },
-                    conv: Boolean
-                },
-                uid: {
-                    type: Sequelize.STRING(32),
-                    allowNull: false,
-                    unique: true,
-                    set(val) {
-                        this.setDataValue('uid', val.replace(new RegExp('-', "gm"), ''))
-                    },
-                    filter: {
-                        type: "string"
-                    },
-                    conv: String
-                },
-                master_pub: {
-                    type: Sequelize.STRING(66),
-                    unique: true,
-                    filter: {
-                        type: "string"
-                    },
-                    conv: String,
-                    constante: true
-                },
-                master_address: {
-                    type: Sequelize.STRING(21),
-                    unique: true,
-                    filter: {
-                        type: "string"
-                    },
-                    conv: String,
-                    constante: true
-                },
-                username: {
-                    type: Sequelize.STRING(20),
-                    filter: {
-                        type: "string",
-                        maxLength: 20,
-                        minLength: 1
-                    },
-                    conv: String,
-                    constante: true
-                },
-                username_unconfirmed: {
-                    type: Sequelize.STRING(20),
-                    filter: {
-                        type: "string",
-                        maxLength: 20,
-                        minLength: 1
-                    },
-                    conv: String,
-                    constante: true
-                },
-                secondsign: {
-                    type: Sequelize.BOOLEAN,
-                    defaultValue: false,
-                    filter: {
-                        type: "boolean"
-                    },
-                    conv: Boolean
-                },
-                secondsign_unconfirmed: {
-                    type: Sequelize.BOOLEAN,
-                    defaultValue: false,
-                    filter: {
-                        type: "boolean"
-                    },
-                    conv: Boolean
-                },
-                second_pub: {
-                    type: Sequelize.STRING(66),
-                    filter: {
-                        type: "string",
-                        maxLength: 66,
-                        minLength: 1
-                    },
-                    conv: String,
-                    constante: true
-                },
-                balance: {
-                    type: Sequelize.BIGINT(20),
-                    defaultValue: 0,
-                    filter: {
-                        required: true,
-                        type: "integer",
-                        minimum: 0,
-                        maximum: constants.totalAmount
-                    },
-                    conv: Number
-                },
-                balance_unconfirmed: {
-                    type: Sequelize.BIGINT(20),
-                    defaultValue: 0,
-                    filter: {
-                        required: true,
-                        type: "integer",
-                        minimum: 0,
-                        maximum: constants.totalAmount
-                    },
-                    conv: Number
-                },
-                uservote: {
-                    type: Sequelize.BIGINT(20),
-                    defaultValue: 0,
-                    filter: {
-                        type: "integer"
-                    },
-                    conv: Number
-                },
-                rate: {
-                    type: Sequelize.BIGINT(20),
-                    defaultValue: 0,
-                    filter: {
-                        type: "integer"
-                    },
-                    conv: Number
-                },
-                createat_block: {
-                    type: Sequelize.STRING(20),
-                    filter: {
-                        type: "string",
-                        maxLength: 20,
-                        minLength: 1
-                    },
-                    conv: String
-                },
-                name_exist: {
-                    type: Sequelize.BOOLEAN,
-                    defaultValue: false,
-                    filter: {
-                        type: "boolean"
-                    },
-                    conv: Boolean
-                },
-                name_exist_unconfirmed: {
-                    type: Sequelize.BOOLEAN,
-                    defaultValue: false,
-                    filter: {
-                        type: "boolean"
-                    },
-                    conv: Boolean
-                },
-                prod_block_num: {
-                    type: Sequelize.INTEGER(11),
-                    defaultValue: 0,
-                    filter: {
-                        type: "integer",
-                        minimum: -1,
-                        maximum: 1
-                    },
-                    conv: Number
-                },
-                missed_block_num: {
-                    type: Sequelize.INTEGER(11),
-                    defaultValue: 0,
-                    filter: {
-                        type: "integer",
-                        minimum: -1,
-                        maximum: 1
-                    },
-                    conv: Number
-                },
-                multisignatures: {
-                    type: Sequelize.TEXT,
-                    filter: {
-                        type: "array",
-                        uniqueItems: true
-                    },
-                    conv: Array
-                },
-                multisignatures_unconfirmed: {
-                    type: Sequelize.TEXT,
-                    filter: {
-                        type: "array",
-                        uniqueItems: true
-                    },
-                    conv: Array
-                },
-                multisign_min: {
-                    type: Sequelize.INTEGER(11),
-                    defaultValue: 0,
-                    filter: {
-                        isNumeric: true,
-                        min: 0,
-                        max: 17
-                    },
-                    conv: Number
-                },
-                multisign_min_unconfirmed: {
-                    type: Sequelize.INTEGER(11),
-                    defaultValue: 0,
-                    filter: {
-                        isNumeric: true,
-                        min: 0,
-                        max: 17
-                    },
-                    conv: Number
-                },
-                multisign_lifetime: {
-                    type: Sequelize.INTEGER(11),
-                    defaultValue: 0,
-                    filter: {
-                        isNumeric: true,
-                        min: 1,
-                        max: 72
-                    },
-                    conv: Number
-                },
-                multisign_lifetime_unconfirmed: {
-                    type: Sequelize.INTEGER(11),
-                    defaultValue: 0,
-                    filter: {
-                        isNumeric: true,
-                        min: 1,
-                        max: 72
-                    },
-                    conv: Number
-                },
-                is_delegate: {
-                    type: Sequelize.BOOLEAN,
-                    defaultValue: false,
-                    filter: {
-                        type: "boolean"
-                    },
-                    conv: Boolean
-                },
-                is_delegate_unconfirmed: {
-                    type: Sequelize.BOOLEAN,
-                    defaultValue: false,
-                    filter: {
-                        type: "boolean"
-                    },
-                    conv: Boolean
-                },
-                virgin: {
-                    type: Sequelize.BOOLEAN,
-                    defaultValue: false,
-                    filter: {
-                        type: "boolean"
-                    },
-                    conv: Boolean
-                },
-                fees: {
-                    type: Sequelize.BIGINT(20),
-                    defaultValue: 0,
-                    filter: {
-                        type: "integer"
-                    },
-                    conv: Number
-                },
-                rewards: {
-                    type: Sequelize.BIGINT(20),
-                    defaultValue: 0,
-                    filter: {
-                        type: "integer"
-                    },
-                    conv: Number
-                }
-            }, {
-                freezeTableName: true,
-
-                // no createAt, updateAt properties
-                timestamps: false,
-
-                // define table name
-                tableName: 'accounts'
+        accounts: function (cb) {
+            var sqles = [];
+            var sql = jsonSql.build({
+                type: 'create',
+                table: this.table,
+                tableFields: this.model
             });
-
-            that.fields = [];
-            Object.keys(accounts.attributes).forEach(function (key) {
-                var _tmp = {};
-                if (accounts.attributes[key].type)
-                    that.fields.push({
-                         field: key
-                    });
-            }.bind(that));
-
-            that.filter = {};
-            Object.keys(accounts.attributes).forEach(function (key) {
-                that.filter[key] = accounts.attributes[key].filter;
-            }.bind(that));
-
-            that.binary = [];
-            Object.keys(accounts.attributes).forEach(function (key) {
-                if (accounts.attributes[key].type == "Binary") {
-                    that.binary.push(key);
-                }
-            }.bind(that));
-
-            that.conv = {};
-            Object.keys(accounts.attributes).forEach(function (key) {
-                that.conv[key] = accounts.attributes[key].conv;
-            }.bind(that));
-
-            that.editable = [];
-            Object.keys(accounts.attributes).forEach(function (key) {
-                if (!accounts.attributes[key].constante) {
-                    that.editable.push(key);
-                }
-            }.bind(that));
-
-            accounts.sync().then(function () {
-                cb(null, accounts);
-            }, function (err) {
-                that.scope.log.Warn("Account create table if not exists 'accounts'", "Error", err.toString());
-            });
+            sqles.push(sql.query);
+            cb(null, sqles);
         },
-        model_accounts2delegates: ['model_accounts', function (scope, cb) {
-            var accounts2delegates = that.scope.dbClient.define('accounts2delegates', {
-                id: {
-                    type: Sequelize.INTEGER(11),
-                    primaryKey: true,
-                    autoIncrement: true,
-                    allowNull: false,
-                    filter: {
-                        type: "integer"
+        accounts2delegates: ['accounts', function (scope, cb) {
+            var sql = jsonSql.build({
+                type: 'create',
+                table: this.table + '2delegates',
+                tableFields: [
+                    {
+                        name: 'accountId',
+                        type: 'String',
+                        length: 21,
+                        not_null: true
+                    },
+                    {
+                        name: 'dependentId',
+                        type: 'String',
+                        length: 66,
+                        not_null: true
                     }
-                },
-                accountId: {
-                    type: Sequelize.STRING(21),
-                    allowNull: false
-                },
-                dependentId: {
-                    type: Sequelize.STRING(21),
-                    allowNull: false
-                }
-            }, {
-                freezeTableName: true,
-
-                // no createAt, updateAt properties
-                timestamps: false,
-
-                // define table name
-                tableName: 'accounts2delegates'
-            });
-
-            accounts2delegates.sync().then(function () {
-                cb(null, accounts2delegates);
-            }, function (err) {
-                that.scope.log.Warn("Account create table if not exists 'accounts2delegates'", "Error", err.toString());
-            });
-        }],
-        model_accounts2delegates_unconfirmed: ['model_accounts', 'model_accounts2delegates', function (scope, cb) {
-            var accounts2delegates_unconfirmed = that.scope.dbClient.define('accounts2delegates_unconfirmed', {
-                id: {
-                    type: Sequelize.INTEGER(11),
-                    primaryKey: true,
-                    autoIncrement: true,
-                    allowNull: false,
-                    filter: {
-                        type: "integer"
+                ],
+                foreignKeys: [
+                    {
+                        field: 'accountId',
+                        table: this.table,
+                        table_field: 'master_address',
+                        on_delete: 'cascade'
                     }
-                },
-                accountId: {
-                    type: Sequelize.STRING(21),
-                    allowNull: false
-                },
-                dependentId: {
-                    type: Sequelize.STRING(21),
-                    allowNull: false
-                }
-            }, {
-                freezeTableName: true,
-
-                // no createAt, updateAt properties
-                timestamps: false,
-
-                // define table name
-                tableName: 'accounts2delegates_unconfirmed'
+                ]
             });
-
-            accounts2delegates_unconfirmed.sync().then(function () {
-                cb(null, accounts2delegates_unconfirmed);
-            }, function (err) {
-                that.scope.log.Warn("Account create table if not exists 'accounts2delegates_unconfirmed'", "Error", err.toString());
-            });
+            scope.accounts.push(sql.query);
+            cb(null, sql);
         }],
-        model_accounts2multisignatues: ['model_accounts', function (scope, cb) {
-            var accounts2multisignatues = that.scope.dbClient.define('accounts2multisignatues', {
-                id: {
-                    type: Sequelize.INTEGER(11),
-                    primaryKey: true,
-                    autoIncrement: true,
-                    allowNull: false,
-                    filter: {
-                        type: "integer"
+        accounts2delegates_unconfirmed: ['accounts', function (scope, cb) {
+            var sql = jsonSql.build({
+                type: 'create',
+                table: this.table + '2delegates_unconfirmed',
+                tableFields: [
+                    {
+                        name: 'accountId',
+                        type: 'String',
+                        length: 21,
+                        not_null: true
+                    },
+                    {
+                        name: 'dependentId',
+                        type: 'String',
+                        length: 66,
+                        not_null: true
                     }
-                },
-                accountId: {
-                    type: Sequelize.STRING(21),
-                    allowNull: false
-                },
-                dependentId: {
-                    type: Sequelize.STRING(21),
-                    allowNull: false
-                }
-            }, {
-                freezeTableName: true,
-
-                // no createAt, updateAt properties
-                timestamps: false,
-
-                // define table name
-                tableName: 'accounts2multisignatues'
-            });
-
-            accounts2multisignatues.sync().then(function () {
-                cb(null, accounts2multisignatues);
-            }, function (err) {
-                that.scope.log.Warn("Account create table if not exists 'accounts2multisignatues'", "Error", err.toString());
-            });
-        }],
-        model_accounts2multisignatues_unconfirmed: ['model_accounts', 'model_accounts2multisignatues', function (scope, cb) {
-            var accounts2multisignatues_unconfirmed = that.scope.dbClient.define('accounts2multisignatues_unconfirmed', {
-                id: {
-                    type: Sequelize.INTEGER(11),
-                    primaryKey: true,
-                    autoIncrement: true,
-                    allowNull: false,
-                    filter: {
-                        type: "integer"
+                ],
+                foreignKeys: [
+                    {
+                        field: 'accountId',
+                        table: this.table,
+                        table_field: 'master_address',
+                        on_delete: 'cascade'
                     }
-                },
-                accountId: {
-                    type: Sequelize.STRING(21),
-                    allowNull: false
-                },
-                dependentId: {
-                    type: Sequelize.STRING(21),
-                    allowNull: false
-                }
-            }, {
-                freezeTableName: true,
-
-                // no createAt, updateAt properties
-                timestamps: false,
-
-                // define table name
-                tableName: 'accounts2multisignatues_unconfirmed'
+                ]
             });
-
-            accounts2multisignatues_unconfirmed.sync().then(function () {
-                cb(null, accounts2multisignatues_unconfirmed);
-            }, function (err) {
-                that.scope.log.Warn("Account create table if not exists 'accounts2multisignatues_unconfirmed'", "Error", err.toString());
-            });
+            scope.accounts.push(sql.query);
+            cb(null, sql);
         }],
-        model_accounts_round: ['model_accounts', function (scope, cb) {
-            var accounts_round = that.scope.dbClient.define('accounts_round', {
-                id: {
-                    type: Sequelize.INTEGER(11),
-                    primaryKey: true,
-                    autoIncrement: true,
-                    allowNull: false
-                },
-                master_address: {
-                    type: Sequelize.STRING(21)
-                },
-                amount: {
-                    type: Sequelize.BIGINT(20)
-                },
-                delegate: {
-                    type: Sequelize.STRING(64)
-                },
-                round: {
-                    type: Sequelize.BIGINT(20)
-                }
-            }, {
-                freezeTableName: true,
-
-                // no createAt, updateAt properties
-                timestamps: false,
-
-                // define table name
-                tableName: 'accounts_round'
+        accounts2multisignatues: ['accounts', function (scope, cb) {
+            var sql = jsonSql.build({
+                type: 'create',
+                table: this.table + '2multisignatures',
+                tableFields: [
+                    {
+                        name: 'accountId',
+                        type: 'String',
+                        length: 21,
+                        not_null: true
+                    },
+                    {
+                        name: 'dependentId',
+                        type: 'String',
+                        length: 66,
+                        not_null: true
+                    }
+                ],
+                foreignKeys: [
+                    {
+                        field: 'accountId',
+                        table: this.table,
+                        table_field: 'master_address',
+                        on_delete: 'cascade'
+                    }
+                ]
             });
-
-            accounts_round.sync().then(function () {
-                cb(null, accounts_round);
-            }, function (err) {
-                that.scope.log.Warn("Account create table if not exists 'accounts_round'", "Error", err.toString());
+            scope.accounts.push(sql.query);
+            cb(null, sql);
+        }],
+        accounts2multisignatues_unconfirmed: ['accounts', function (scope, cb) {
+            var sql = jsonSql.build({
+                type: 'create',
+                table: this.table + '2multisignatures_unconfirmed',
+                tableFields: [
+                    {
+                        name: 'accountId',
+                        type: 'String',
+                        length: 21,
+                        not_null: true
+                    },
+                    {
+                        name: 'dependentId',
+                        type: 'String',
+                        length: 66,
+                        not_null: true
+                    }
+                ],
+                foreignKeys: [
+                    {
+                        field: 'accountId',
+                        table: this.table,
+                        table_field: 'master_address',
+                        on_delete: 'cascade'
+                    }
+                ]
             });
+            scope.accounts.push(sql.query);
+            cb(null, sql);
+        }],
+        accounts_round: ['accounts', function (scope, cb) {
+            var sql = jsonSql.build({
+                type: 'create',
+                table: this.table + '_round',
+                tableFields: [
+                    {
+                        name: 'master_address',
+                        type: 'String',
+                        length: 21
+                    },
+                    {
+                        name: 'amount',
+                        type: 'BigInt'
+                    },
+                    {
+                        name: 'delegate',
+                        type: 'String',
+                        length: 66
+                    },
+                    {
+                        name: 'blockId',
+                        type: 'String',
+                        length: 20
+                    },
+                    {
+                        name: 'round',
+                        type: 'BigInt'
+                    }
+                ]
+            });
+            scope.accounts.push(sql.query);
+            cb(null, sql);
         }]
     }, function (err, scope) {
-        that.models = scope;
-        that.scope.dbClient.query('INSERT INTO accounts2delegates_unconfirmed SELECT * FROM accounts2delegates')
-            .catch(function (err) {
-                that.scope.log.Error(err.toString());
-            });
-        // callback
-        setImmediate(cb, null, this);
+        console.log(scope.accounts);
     }.bind(this));
+
 };
 
 Account.prototype.removeTables = function (cb) {
@@ -602,7 +603,7 @@ Account.prototype.create = function () {
 
 };
 
-Account.prototype.find = function (filter, fields, cb) {
+Account.prototype.findOne = function (filter, fields, cb) {
     if (typeof(fields) == 'function') { // Here is just for cases that only send-in 2 params
         cb = fields;
         fields = this.fields.map(function (field) {
@@ -659,7 +660,7 @@ Account.prototype.findAll = function (filter, fields, cb) {
 
 Account.prototype.insertOrUpdate = function (master_address, fields, cb) {
     if (fields.master_pub !== undefined && !fields.master_pub) {
-        this.scope.log.Error("Account insertOrUpdate", "master_pub", master_pub);
+        this.scope.log.Error("Account insertOrUpdate", "master_pub", fields.master_pub);
     }
 
     fields.master_address = master_address;
@@ -672,7 +673,7 @@ Account.prototype.insertOrUpdate = function (master_address, fields, cb) {
                 .then(function (data) {
                     cb(null);
                 }, function (err) {
-                    that.scope.log.Warn("Account insertOrUpdate 1", "Error", err.toString());
+                    that.scope.log.Warn("Account insertOrUpdate [insert]", "Error", err.toString());
                     cb(null);
                 });
         },
@@ -683,7 +684,7 @@ Account.prototype.insertOrUpdate = function (master_address, fields, cb) {
                 }}).then(function (data) {
                     cb(null);
                 }, function (err) {
-                    that.scope.log.Warn("Account insertOrUpdate 2", "Error", err.toString());
+                    that.scope.log.Warn("Account insertOrUpdate [update]", "Error", err.toString());
                     cb(null);
                 });
         }
@@ -693,12 +694,262 @@ Account.prototype.insertOrUpdate = function (master_address, fields, cb) {
     }.bind(this));
 };
 
-Account.prototype.merge = function () {
+Account.prototype.merge = function (master_address, fields, cb) {
+    if (fields.master_pub !== undefined && !fields.master_pub) {
+        this.scope.log.Error("Account merge", "master_pub", fields.master_pub);
+    }
 
+    var self = this;
+
+    var insert = {}, remove = {}, update = {}, insert_object = {}, remove_object = {}, round = [];
+
+    this.editable.forEach(function (key) {
+        if (fields[key]) {
+            var value = fields[key];
+            switch (self.conv[key]) {
+                case String:
+                    update[key] = value;
+                    break;
+                case Number:
+                    if (Math.abs(value) === value && value !== 0) {
+                        update.$inc = update.$inc || {};
+                        update.$inc[key] = value;
+                        if (key == 'balance') {
+                            round.push({
+                                sql: `INSERT INTO accounts_round (master_address, amount, delegate, blockId, round) SELECT ?, ?, dependentId, ?, ? from accounts2delegates WHERE accountId = ?`,
+                                replacements: [
+                                    master_address,
+                                    value,
+                                    fields.blockId,
+                                    fields.round,
+                                    master_address
+                                ]
+                            });
+                            console.log(round[0].sql);
+                        }
+                    }
+                    else if (value < 0) {
+                        update.$dec = update.$dec || {};
+                        update.$dec[key] = Math.abs(value);
+                        if (key == 'balance') {
+                            round.push({
+                                sql: `INSERT INTO accounts_round (master_address, amount, delegate, blockId, round) SELECT ?, ?, dependentId, ?, ? from accounts2delegates WHERE accountId = ?`,
+                                replacements: [
+                                    master_address,
+                                    value,
+                                    fields.blockId,
+                                    fields.round,
+                                    master_address
+                                ]
+                            });
+                        }
+                    }
+                    break;
+                case Array:
+                    if (Object.prototype.toString.call(value[0]) == "[object Object]") {
+                        for (var i = 0; i < value.length; i++) {
+                            var val = value[i];
+                            if (val.action == '-') {
+                                delete val.action;
+                                remove_object[key] = remove_object[key] || [];
+                                remove_object[key].push(val);
+                            } else if (val.action == '+') {
+                                delete val.action;
+                                insert_object[key] = insert_object[key] || [];
+                                insert_object[key].push(val);
+                            } else {
+                                delete val.action;
+                                insert_object[key] = insert_object[key] || [];
+                                insert_object[key].push(val);
+                            }
+                        }
+                    } else {
+                        for (var i = 0; i < value.length; i++) {
+                            var math = value[i][0];
+                            var val = null;
+                            if (math == '-') {
+                                val = value[i].slice(1);
+                                remove[key] = remove[key] || [];
+                                remove[key].push(val);
+                                if (key == "delegates") {
+                                    round.push({
+                                        sql: `INSERT INTO accounts_round (master_address, amount, delegate, blockId, round) SELECT ?, -balance, ?, ?, ? from accounts WHERE master_address = ?`,
+                                        replacements: [
+                                            master_address,
+                                            val,
+                                            fields.blockId,
+                                            fields.round,
+                                            master_address
+                                        ]
+                                    });
+                                }
+                            } else if (math == '+') {
+                                val = value[i].slice(1);
+                                insert[key] = insert[key] || [];
+                                insert[key].push(val);
+                                if (key == "delegates") {
+                                    round.push({
+                                        sql: `INSERT INTO accounts_round (master_address, amount, delegate, blockId, round) SELECT ?,  balance, ?, ?, ? from accounts WHERE master_address = ?`,
+                                        replacements: [
+                                            master_address,
+                                            val,
+                                            fields.blockId,
+                                            fields.round,
+                                            master_address
+                                        ]
+                                    });
+                                }
+                            } else {
+                                val = value[i].slice(1);
+                                insert[key] = insert[key] || [];
+                                insert[key].push(val);
+                                if (key == "delegates") {
+                                    round.push({
+                                        sql: `INSERT INTO accounts_round (master_address, amount, delegate, blockId, round) SELECT ?,  balance, ?, ?, ? from accounts WHERE master_address = ?`,
+                                        replacements: [
+                                            master_address,
+                                            val,
+                                            fields.blockId,
+                                            fields.round,
+                                            master_address
+                                        ]
+                                    });
+                                }
+                            }
+                        }
+                    }
+                    break;
+            }
+        }
+    });
+
+    async.series([
+        function (cb) {
+            Object.keys(insert).forEach(function (key) {
+                for (var i = 0; i < insert[key].length; i++) {
+                    self.models['model_accounts2'+key].create({
+                        master_address: master_address,
+                        dependentId: insert[key][i]
+                    }).then(function (data) {
+
+                    }, function (err) {
+                        self.scope.log.Warn("Account merge [insert]", "Error", err.toString());
+                    });
+                }
+            });
+
+            cb();
+        },
+        function (cb) {
+            Object.keys(insert_object).forEach(function (key) {
+                for (var i = 0; i < insert_object[key].length; i++) {
+                    self.models['model_accounts2'+key].create(insert_object[key]).then(function (data) {
+
+                    }, function (err) {
+                        self.scope.log.Warn("Account merge [insert_object]", "Error", err.toString());
+                    });
+                }
+            });
+
+            cb();
+        },
+        function (cb) {
+            Object.keys(remove).forEach(function (key) {
+                for (var i = 0; i < remove[key].length; i++) {
+                    self.models['model_accounts2'+key].delete({
+                        where: {
+                            master_address: remove[key]
+                        }
+                    }).then(function (data) {
+
+                    }, function (err) {
+                        self.scope.log.Warn("Account merge [remove]", "Error", err.toString());
+                    });
+                }
+            });
+
+            cb();
+        },
+        function (cb) {
+            Object.keys(remove_object).forEach(function (key) {
+                for (var i = 0; i < remove_object[key].length; i++) {
+                    self.models['model_accounts2'+key].delete({
+                        where: {
+                            master_address: remove_object[key]
+                        }
+                    }).then(function (data) {
+
+                    }, function (err) {
+                        self.scope.log.Warn("Account merge [remove_object]", "Error", err.toString());
+                    });
+                }
+            });
+
+            cb();
+        },
+        function (cb) {
+            if (Object.keys(update).length) {
+                debugger
+                self.models.model_accounts.update(update, {
+                    where: {
+                        master_address: master_address
+                    }
+                }).then(function (data) {
+
+                }, function (err) {
+                    self.scope.log.Warn("Account merge [update]", "Error", err.toString());
+                });
+            }
+
+            cb();
+        },
+        function (cb) {
+            async.eachSeries(round, function (sub_round, cb) {
+                self.scope.dbClient.query(sub_round.sql, {
+                    type: Sequelize.QueryTypes.INSERT,
+                    replacements: sub_round.replacements
+                }).then(function (data) {
+                    cb();
+                }, function (err) {
+                    self.scope.log.Warn("Account merge [update]", "Error", err.toString());
+                    cb();
+                });
+            }, function (err) {
+                cb(err);
+            });
+        }
+    ], done);
+
+    function done(err) {
+        if (cb.length != 2) {
+            return cb(err);
+        } else {
+            if (err) {
+                return cb(err);
+            }
+            self.find({master_address: master_address}, cb);
+        }
+    }
 };
 
-Account.prototype.remove = function () {
-
+Account.prototype.remove = function (master_address, cb) {
+    async.waterfall([
+        function (cb) {
+            that.models.model_accounts.delete({
+                where: {
+                    master_address: master_address
+                }
+            }).then(function (data) {
+                cb(null);
+            }, function (err) {
+                that.scope.log.Warn("Account remove", "Error", err.toString());
+                cb(null);
+            });
+        }
+    ], function (err, result) {
+        // callback
+        setImmediate(cb, null, this);
+    }.bind(this));
 };
 
 // export

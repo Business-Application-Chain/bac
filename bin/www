@@ -8,6 +8,7 @@ var app = require('../app');
 var debug = require('debug')('entu:server');
 var http = require('http');
 var appConfig = require('../config.json');
+var genesisblock = require('../genesisBlock.json');
 var async = require('async');
 var path = require('path');
 var fs = require('fs');
@@ -27,7 +28,7 @@ var params = {
     "db": appConfig.db.uri,
     "modules": {
         "loader": "../src/modules/loader.js",
-        "peer": "../src/modules/peer.js",
+        "peers": "../src/modules/peers.js",
         "server": "../src/modules/server.js",
         "system": "../src/modules/system.js"
     }
@@ -58,6 +59,12 @@ d.run(function () {
 
         build: function (cb) {
             cb(null, versionBuild);
+        },
+
+        genesisblock: function (cb) {
+            cb(null, {
+                block: genesisblock
+            });
         },
 
         public: function (cb) {
@@ -144,7 +151,7 @@ d.run(function () {
             cb(null, queue);
         }],
 
-        dbClient: ['config', 'log', function (scope, cb) {
+        dbClient: ['config', 'log', 'genesisblock', function (scope, cb) {
             var sequelize = new Sequelize(scope.config.db.name, scope.config.db.user, scope.config.db.password, {
                 host: scope.config.db.host,
                 dialect: 'mysql',
@@ -159,7 +166,7 @@ d.run(function () {
             cb(null, sequelize);
         }],
 
-        network: ['config', 'log', 'dbWorkQueue', 'mainWorkQueue', 'balancesWorkQueue', 'dbClient', function (scope, cb) {
+        network: ['dbWorkQueue', 'mainWorkQueue', 'balancesWorkQueue', 'dbClient', function (scope, cb) {
             var server = http.createServer(app);
             server.on('error', onError);
             server.listen(scope.config.port, scope.config.address, function (err) {
@@ -189,11 +196,17 @@ d.run(function () {
             cb(null, new ncenter);
         },
 
-        base: ['config', 'log', 'dbClient', 'build', 'public', function (scope, cb) {
+        base: ['config', 'log', 'genesisblock', 'dbClient', 'notification_center', function (scope, cb) {
             var Account = require('../src/base/Account.js');
             var Peers = require('../src/base/peer.js');
 
             async.auto({
+                config: function (cb) {
+                    cb(null, scope.config);
+                },
+                genesisblock: function (cb) {
+                    cb(null, scope.genesisblock);
+                },
                 log: function (cb) {
                     cb(null, scope.log);
                 },
