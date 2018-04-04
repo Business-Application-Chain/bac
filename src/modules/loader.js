@@ -23,30 +23,30 @@ function Loader(cb, scope) {
 // private methods
 privated.loadApp = function () {
 
-    library.base.account.createTables(function (err) {
-        if (err) {
-            throw new Error(err.toString());
-        } else {
-            // library.base.account.removeTables(function (err) {
-            //     if (err) {
-            //         throw new Error(err.toString());
-            //     } else {
-            //         library.base.account.createTables(function (err) {
-            //             if (err) {
-            //                 throw new Error(err.toString());
-            //             }
-            //         });
-            //     }
-            // });
-            // library.notification_center.notify('blockchainReady');
-        }
-    });
+    // library.base.account.createTables(function (err) {
+    //     if (err) {
+    //         throw new Error(err.toString());
+    //     } else {
+    //         library.base.account.removeTables(function (err) {
+    //             if (err) {
+    //                 throw new Error(err.toString());
+    //             } else {
+    //                 library.base.account.createTables(function (err) {
+    //                     if (err) {
+    //                         throw new Error(err.toString());
+    //                     }
+    //                 });
+    //             }
+    //         });
+    //         library.notification_center.notify('blockchainReady');
+    //     }
+    // });
 
     // library.base.account.createTables(function (err) {
     //     if (err) {
     //         throw new Error(err.toString());
     //     } else {
-    //         library.base.account.findAll({uid: 'abcd'}, function (err, data) {
+    //         library.base.account.findAll({master_address: '6202245275956910442L'}, function (err, data) {
     //             console.log(JSON.stringify(data));
     //         });
     //     }
@@ -56,15 +56,23 @@ privated.loadApp = function () {
     //     if (err) {
     //         throw new Error(err.toString());
     //     } else {
-    //         library.base.account.insertOrUpdate('1234', {
-    //             uid: 'abcdefg-hijk-lmnopqrst-uvwxyz',
-    //             master_pub: 'xxxxxxxx-xxxx-xxxxxxxx-xxxxxxxxxxxx',
-    //             username: 'alex222'
+    //         library.base.account.insertOrUpdate('6202245275956910442L', {
+    //             username: 'alex444'
     //         }, function (err, data) {
     //             console.log(">>>>> output: ");
     //         });
     //     }
     // });
+
+    library.base.account.createTables(function (err) {
+        if (err) {
+            throw new Error(err.toString());
+        } else {
+            library.base.account.remove('6202245275956910443L', function (err, data) {
+                console.log(">>>>> output: ");
+            });
+        }
+    });
 
     // library.base.account.createTables(function (err) {
     //     if (err) {

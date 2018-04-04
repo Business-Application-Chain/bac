@@ -4,8 +4,6 @@ var _ = require('underscore');
 
 var dialects = {
 	base: require('./dialects/base'),
-	mssql: require('./dialects/mssql'),
-	postgresql: require('./dialects/postgresql'),
 	mysql: require('./dialects/mysql')
 };
 

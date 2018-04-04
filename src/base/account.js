@@ -154,7 +154,7 @@ function Account(scope, cb) {
                 uniqueItems: true
             },
             conv: Array,
-            expression: "(select GROUP_CONCAT(dependentId) from " + this.table + "2delegates where accountId = a.master_address)"
+            expression: "(select GROUP_CONCAT(dependentId) from " + this.table + "2delegates_unconfirmed where accountId = a.master_address)"
         },
         {
             name: 'createat_block',
@@ -225,7 +225,7 @@ function Account(scope, cb) {
                 uniqueItems: true
             },
             conv: Array,
-            expression: "(select GROUP_CONCAT(dependentId) from " + this.table + "2multisignatures where accountId = a.master_address)"
+            expression: "(select GROUP_CONCAT(dependentId) from " + this.table + "2multisignatures_unconfirmed where accountId = a.master_address)"
         },
         {
             name: 'multisign_min',
@@ -509,10 +509,10 @@ Account.prototype.createTables = function (cb) {
 
     async.eachSeries(sqles, function (sql, cb) {
         self.scope.dbClient.query(sql).then(function (data) {
-            cb();
+            cb(null, data);
         }, function (err) {
-            self.scope.log.Warn("Account merge [update]", "Error", err.toString());
-            cb();
+            self.scope.log.Warn("Account createTables", "Error", err.toString());
+            cb(err, undefined);
         });
     }.bind(this), function (err) {
         setImmediate(cb, err, this);
@@ -520,54 +520,25 @@ Account.prototype.createTables = function (cb) {
 };
 
 Account.prototype.removeTables = function (cb) {
-    var that = this;
-    async.waterfall([
-        function (cb) {
-            that.models.model_accounts.drop().then(function () {
-                cb(null);
-            }, function (err) {
-                that.scope.log.Warn("Account drop table if exists 'accounts'", "Error", err.toString());
-            });
-        },
-        function (cb) {
-            that.models.model_accounts2delegates.drop().then(function () {
-                cb(null);
-            }, function (err) {
-                that.scope.log.Warn("Account drop table if exists 'accounts2delegates'", "Error", err.toString());
-            });
-        },
-        function (cb) {
-            that.models.model_accounts2delegates_unconfirmed.drop().then(function () {
-                cb(null);
-            }, function (err) {
-                that.scope.log.Warn("Account drop table if exists 'accounts2delegates_unconfirmed'", "Error", err.toString());
-            });
-        },
-        function (cb) {
-            that.models.model_accounts2multisignatues.drop().then(function () {
-                cb(null);
-            }, function (err) {
-                that.scope.log.Warn("Account drop table if exists 'accounts2multisignatues'", "Error", err.toString());
-            });
-        },
-        function (cb) {
-            that.models.model_accounts2multisignatues_unconfirmed.drop().then(function () {
-                cb(null);
-            }, function (err) {
-                that.scope.log.Warn("Account drop table if exists 'accounts2multisignatues_unconfirmed'", "Error", err.toString());
-            });
-        },
-        function (cb) {
-            that.models.model_accounts_round.drop().then(function () {
-                cb(null);
-            }, function (err) {
-                that.scope.log.Warn("Account drop table if exists 'accounts_round'", "Error", err.toString());
-            });
-        }
-    ], function (err, result) {
-        that.models = null;
-        // callback
-        setImmediate(cb, null, this);
+    var sqles = [];
+
+    var sql = jsonSql.build({
+        type: 'remove',
+        table: this.table
+    });
+    sqles.push(sql.query);
+
+    var self = this;
+
+    async.eachSeries(sqles, function (sql, cb) {
+        self.scope.dbClient.query(sql).then(function (data) {
+            cb(null, data);
+        }, function (err) {
+            self.scope.log.Warn("Account removeTables", "Error", err.toString());
+            cb(err, undefined);
+        });
+    }.bind(this), function (err) {
+        setImmediate(cb, err, this);
     }.bind(this));
 };
 
@@ -630,7 +601,7 @@ Account.prototype.findAll = function (filter, fields, cb) {
         }
     }.bind(this));
 
-    var limit, offset, order;
+    var limit, offset, sort;
 
     if (filter.limit > 0) {
         limit = filter.limit;
@@ -640,17 +611,33 @@ Account.prototype.findAll = function (filter, fields, cb) {
         offset = filter.offet;
     }
     delete filter.offset;
-    if (filter.order) {
-        order = filter.order;
+    if (filter.sort) {
+        sort = filter.sort;
     }
-    delete filter.order;
+    delete filter.sort;
 
-    this.models.model_accounts.findAll({ where: filter, limit: limit, offset: offset, order: order })
-        .then(function (accounts) {
-            cb(null, accounts || []);
-        }, function (err) {
-            this.scope.log.Warn("Account findAll", "Error", err.toString(), "TableName", "accounts");
-        });
+    var sql = jsonSql.build({
+        type: 'select',
+        table: this.table,
+        limit: limit,
+        offset: offset,
+        sort: sort,
+        alias: 'a',
+        condition: filter,
+        fields: realFields
+    });
+
+    var self = this;
+
+    this.scope.dbClient.query(sql.query, {
+        bind: sql.values,
+        type: Sequelize.QueryTypes.SELECT
+    }).then(function (data) {
+        cb(null, data);
+    }, function (err) {
+        self.scope.log.Warn("Account findAll", "Error", err.toString());
+        cb(err, undefined);
+    });
 };
 
 Account.prototype.insertOrUpdate = function (master_address, fields, cb) {
@@ -660,33 +647,38 @@ Account.prototype.insertOrUpdate = function (master_address, fields, cb) {
 
     fields.master_address = master_address;
 
-    var that = this;
+    var sqles = [];
 
-    async.waterfall([
-        function (cb) {
-            that.models.model_accounts.create(that.toHex(fields))
-                .then(function (data) {
-                    cb(null);
-                }, function (err) {
-                    that.scope.log.Warn("Account insertOrUpdate [insert]", "Error", err.toString());
-                    cb(null);
-                });
-        },
-        function (cb) {
-            that.models.model_accounts.update(that.toHex(fields), {
-                where: {
-                    master_address: master_address
-                }}).then(function (data) {
-                    cb(null);
-                }, function (err) {
-                    that.scope.log.Warn("Account insertOrUpdate [update]", "Error", err.toString());
-                    cb(null);
-                });
+    var sql = jsonSql.build({
+        type: 'insert',
+        or: 'ignore',
+        table: this.table,
+        values: this.toHex(fields)
+    });
+    sqles.push(sql);
+
+    var sql = jsonSql.build({
+        type: 'update',
+        table: this.table,
+        modifier: this.toHex(fields),
+        condition: {
+            master_address: master_address
         }
-    ], function (err, result) {
-        // callback
-        setImmediate(cb, null, this);
-    }.bind(this));
+    });
+    sqles.push(sql);
+
+    var self = this;
+
+    async.eachSeries(sqles, function (sql, cb) {
+        self.scope.dbClient.query(sql.query.replace('or', ''), {
+            bind: sql.values
+        }).then(function (data) {
+            cb(null, data);
+        }, function (err) {
+            self.scope.log.Warn("Account insertOrUpdate", "Error", err.toString());
+            cb(err, undefined);
+        });
+    }, cb);
 };
 
 Account.prototype.merge = function (master_address, fields, cb) {
@@ -928,23 +920,25 @@ Account.prototype.merge = function (master_address, fields, cb) {
 };
 
 Account.prototype.remove = function (master_address, cb) {
-    async.waterfall([
-        function (cb) {
-            that.models.model_accounts.delete({
-                where: {
-                    master_address: master_address
-                }
-            }).then(function (data) {
-                cb(null);
-            }, function (err) {
-                that.scope.log.Warn("Account remove", "Error", err.toString());
-                cb(null);
-            });
+    var sql = jsonSql.build({
+        type: 'remove',
+        table: this.table,
+        condition: {
+            master_address: master_address
         }
-    ], function (err, result) {
-        // callback
-        setImmediate(cb, null, this);
-    }.bind(this));
+    });
+
+    var self = this;
+
+    this.scope.dbClient.query(sql.query, {
+        bind: sql.values,
+        type: Sequelize.QueryTypes.DELETE
+    }).then(function (data) {
+        cb(null, data);
+    }, function (err) {
+        self.scope.log.Warn("Account remove", "Error", err.toString());
+        cb(err, undefined);
+    });
 };
 
 // export
