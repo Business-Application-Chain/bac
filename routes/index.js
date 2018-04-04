@@ -17,7 +17,7 @@ module.exports = function (scope) {
         if (body.hasOwnProperty('method') && body.hasOwnProperty('params')) {
 
             // distinguish router by name keywords
-            if (body.method.substring(0, 4) == 'peer') {
+            if (body.method.match('peer.*')) {
                 scope.modules.peer.callApi(body['method'], body['params'], function (err, data) {
                     if (err) {
                         return res.json({
