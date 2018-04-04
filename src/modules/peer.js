@@ -31,57 +31,56 @@ privated.loadApp = function () {
 
 };
 
-privated.updatePeerList = function (peers, cb) {
-    peers.forEach(function (peer) {
-        var option = {
-            uri: `http://${ip.fromLong(peer.ip)}:${peer.port}/rpc`,
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            method: 'POST',
-            body: JSON.stringify({
-                method: "peer_get_peers",
-                params: {}
-            })
-        };
-        request(option, function (error, response, body) {
-            if (!error && response.statusCode == 200) {
-                var new_peers = JSON.parse(body).result;
-                new_peers.forEach((item) => {
-                    console.log(item);
+privated.updatePeerList = function (err) {
+    if(err){
+    }
+    library.base.peer.findAll((peers) => {
+        async.eachLimit(peers, 1, function (item, cb) {
+            var option = {
+                uri: `http://${ip.fromLong(item.ip)}:${item.port}/rpc`,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                method: 'POST',
+                body: JSON.stringify({
+                    method: "peer_get_peers",
+                    params: {}
                 })
-            }
+            };
+            request(option, function (error, response, body) {
+                if (!error && response.statusCode == 200) {
+                    JSON.parse(body).result.forEach((item) => {
+                        if(item.state === 3) {
+                            console.log('this peer state is 3');
+                        } else {
+                            library.base.peer.findOrCreate(item, (newPeer, created) => {
+                                if(created) {
+                                    console.log(`add new peer ip:${newPeer.ip} port:${newPeer.port} state:${newPeer.state}`);
+                                } else {
+                                    console.log('not add new peer')
+                                }
+                            });
+                        }
+                    });
+                }
+            }, cb());
         });
-        // http.request(options, function (data_peers) {
-        //     data_peers.result.forEach((item, index) => {
-        //         library.base.peer.findOrCreate(item, (err, res) => {
-        //             if(res) {
-        //                 console.log('add peer success')
-        //                 // console.log('updatePeerList', err)
-        //             } else {
-        //                 console.log('peers list is empty')
-        //             }
-        //         })
-        //     });
-        // });
     });
 };
-
-//Transport
-Peer.prototype.getFromRandomPeer = function (peers, cb) {
-
-    async.retry(20, (cb) => {
-        //获取种子节点中的节点
-
-    }, (err, results) => {
-        cb(err, results);
-    })
-};
-
 
 // public methods
 Peer.prototype.sandboxApi = function (call, args, cb) {
     sandboxHelper.callMethod(shared, call, args, cb);
+};
+
+Peer.prototype.removePeer = function (p_ip, p_port, cb) {
+    var isWhiteList = library.config.peers.default.find(function (peer) {
+        return peer.ip == ip.fromLong(p_ip) && peer.port == p_port;
+    });
+    if(isWhiteList) {
+        cb("Peer in white list");
+    }
+    library.base.peer.removePeer()
 };
 
 Peer.prototype.callApi = function (call, args, cb) {
@@ -96,23 +95,36 @@ Peer.prototype.onInit = function (scope) {
 };
 
 Peer.prototype.onBlockchainReady = function () {
-    // console.log(library.config.peers.default)
-    async.eachSeries(library.config.peers.default, function (peer, cb) {
+    async.eachSeries(library.config.peers.default, (peer, cb) => {
         peer.version = library.config.version;
-        peer.ip = ip.toLong(peer.ip);
-        library.base.peer.findOrCreate(peer, (err) => {
-            if(err) {
-                console.log('onBlockchainReady', err)
+        peer.ip = ip.toLong(peer.address);
+        library.base.peer.findOrCreate(peer, (newPeer, created) => {
+            // if(err) {
+            //     console.log('onBlockchainReady', err);
+            // }
+            if(created) {
+                console.log(`add new peer ip:${newPeer.ip} port:${newPeer.port} state:${newPeer.state}`);
+            } else {
+                console.log('peer is not add new peer');
             }
-            library.base.peer.getCount((err, res) => {
-                console.log('err', err, ' res ', res);
-                if(res) {
-                    privated.updatePeerList(err)
-                } else {
-                    console.log('peers list is empty');
-                }
-            })
+        }, cb());
+    }, (err) => {
+        if(err) {
+            console.log(err);
+        }
+        library.base.peer.getCount((err, res) => {
+            if(res) {
+                privated.updatePeerList(err);
+            } else {
+                console.log('peers list is empty');
+            }
         });
+    });
+};
+
+Peer.prototype.onPeerReady = function() {
+    setImmediate(function updateNextPeerList() {
+        privated.updatePeerList()
     })
 };
 
@@ -123,21 +135,28 @@ Peer.prototype.onEnd = function (cb) {
 
 // shared
 shared.peer_test = function (req, cb) {
-    cb(null, 'successed');
+    cb(null, `aaa:${req.aaa}, bbb:${req.bbb}`);
 };
 
 //获取 某节点下的peers
 shared.peer_get_peers = function (req, cb) {
-    // cb(null, 'successed1');
-    // library.base.peer.create(10000000, 8000, 2, 'mac', 1, '0.0.1');
     library.base.peer.findAll((listData) => {
-        console.log('data -> ', listData);
         var data = [];
-        listData.forEach(function (item, index) {
+        listData.forEach(function (item) {
             data.push(item.dataValues);
         });
         cb(null, data);
     });
+};
+
+shared.peer_get_peer = function (req, cb) {
+    var peer_ip = ip.toLong(req.address);
+    var peer_port = parseInt(req.port);
+    library.base.peer.findPeers(peer_ip, peer_port, (peer) => {
+        // cb(peer);
+        // console.log(peer);
+        cb(null, peer || {});
+    })
 };
 
 // export

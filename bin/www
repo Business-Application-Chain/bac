@@ -191,7 +191,7 @@ d.run(function () {
 
         base: ['config', 'log', 'dbClient', 'build', 'public', function (scope, cb) {
             var Account = require('../src/base/Account.js');
-            var Peers = require('../src/base/peer.hs')
+            var Peers = require('../src/base/peer.js');
 
             async.auto({
                 log: function (cb) {

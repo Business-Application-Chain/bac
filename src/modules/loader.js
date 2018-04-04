@@ -51,20 +51,20 @@ privated.loadApp = function () {
     //         });
     //     }
     // });
-
-    library.base.account.createTables(function (err) {
-        if (err) {
-            throw new Error(err.toString());
-        } else {
-            library.base.account.insertOrUpdate('1234', {
-                uid: 'abcdefg-hijk-lmnopqrst-uvwxyz',
-                master_pub: 'xxxxxxxx-xxxx-xxxxxxxx-xxxxxxxxxxxx',
-                username: 'alex222'
-            }, function (err, data) {
-                console.log(">>>>> output: " + data);
-            });
-        }
-    });
+    library.notification_center.notify('blockchainReady');
+    // library.base.account.createTables(function (err) {
+    //     if (err) {
+    //         throw new Error(err.toString());
+    //     } else {
+    //         library.base.account.insertOrUpdate('1234', {
+    //             uid: 'abcdefg-hijk-lmnopqrst-uvwxyz',
+    //             master_pub: 'xxxxxxxx-xxxx-xxxxxxxx-xxxxxxxxxxxx',
+    //             username: 'alex222'
+    //         }, function (err, data) {
+    //             console.log(">>>>> output: " + data);
+    //         });
+    //     }
+    // });
 };
 
 // public methods

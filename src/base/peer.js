@@ -1,5 +1,5 @@
 var async = require('async');
-var contants = require('../utils/contants.js');
+var contants = require('../utils/constants.js');
 var genesisBlock = null;
 var Sequelize = require('sequelize');
 
@@ -72,6 +72,17 @@ Peers.prototype.create = function (ip, port, state, os, sharePort, version) {
     });
 };
 
+Peers.prototype.findPeers = function (ip, port, cb) {
+    this.model_peers.findOne({
+        where:{
+            ip: ip,
+            port: port
+        }
+    }).then((peer) =>{
+        cb(peer);
+    });
+};
+
 Peers.prototype.findOne = function (peer, cb) {
     this.model_peers.findOne({
         where:{
@@ -111,10 +122,23 @@ Peers.prototype.findOrCreate = function (peer, cb) {
             sharePort: Number(true),
             version: peer.version
         }
-    }).then(() => {
-        cb();
-    }).catch((err) => {
-        cb(err);
+    }).spread((peer, created) => {
+        // console.log(peer.get({
+        //     plain: true
+        // }));
+        // console.log(created);
+        cb(peer, created);
+    });
+};
+
+Peers.prototype.removePeer = function (ip, port, cb) {
+    this.model_peers.destroy({
+        where: {
+            ip: ip,
+            port: port
+        }
+    }).then((number) => {
+        cb(number)
     })
 };
 

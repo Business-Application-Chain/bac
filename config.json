@@ -14,7 +14,8 @@
     },
     "peers": {
         "default": [
-          {"address": "192.168.18.101", "port": 9000}
+            {"address": "127.0.0.1", "port": 8000},
+            {"address": "192.168.18.101", "port": 8000}
         ],
         "blankList": [],
         "optional": {
