@@ -4,11 +4,9 @@ var genesisBlock = null;
 var Sequelize = require('sequelize');
 var crypto = require('crypto');
 var bignum = require('../utils/bignum.js');
-var jsonSql = require('json-sql')();
+var jsonSql = require('../json-sql')({dialect: 'mysql'});
 
 var privated = {};
-
-jsonSql.setDialect('mysql'); // 设置方言为Mysql
 
 // constructor
 function Account(scope, cb) {
@@ -69,7 +67,7 @@ function Account(scope, cb) {
         },
         {
             name: 'secondsign',
-            type: 'BigInt',
+            type: 'Boolean',
             filter: {
                 type: 'boolean'
             },
@@ -78,7 +76,7 @@ function Account(scope, cb) {
         },
         {
             name: 'secondsign_unconfirmed',
-            type: 'BigInt',
+            type: 'Boolean',
             filter: {
                 type: 'boolean'
             },
@@ -167,8 +165,7 @@ function Account(scope, cb) {
                 maxLength: 20,
                 minLength: 1
             },
-            conv: String,
-            default: genesisBlock.id
+            conv: String
         },
         {
             name: 'name_exist',
@@ -354,174 +351,172 @@ function Account(scope, cb) {
 // public methods
 Account.prototype.createTables = function (cb) {
 
-    async.auto({
-        accounts: function (cb) {
-            var sqles = [];
-            var sql = jsonSql.build({
-                type: 'create',
-                table: this.table,
-                tableFields: this.model
-            });
-            sqles.push(sql.query);
-            cb(null, sqles);
-        },
-        accounts2delegates: ['accounts', function (scope, cb) {
-            var sql = jsonSql.build({
-                type: 'create',
-                table: this.table + '2delegates',
-                tableFields: [
-                    {
-                        name: 'accountId',
-                        type: 'String',
-                        length: 21,
-                        not_null: true
-                    },
-                    {
-                        name: 'dependentId',
-                        type: 'String',
-                        length: 66,
-                        not_null: true
-                    }
-                ],
-                foreignKeys: [
-                    {
-                        field: 'accountId',
-                        table: this.table,
-                        table_field: 'master_address',
-                        on_delete: 'cascade'
-                    }
-                ]
-            });
-            scope.accounts.push(sql.query);
-            cb(null, sql);
-        }],
-        accounts2delegates_unconfirmed: ['accounts', function (scope, cb) {
-            var sql = jsonSql.build({
-                type: 'create',
-                table: this.table + '2delegates_unconfirmed',
-                tableFields: [
-                    {
-                        name: 'accountId',
-                        type: 'String',
-                        length: 21,
-                        not_null: true
-                    },
-                    {
-                        name: 'dependentId',
-                        type: 'String',
-                        length: 66,
-                        not_null: true
-                    }
-                ],
-                foreignKeys: [
-                    {
-                        field: 'accountId',
-                        table: this.table,
-                        table_field: 'master_address',
-                        on_delete: 'cascade'
-                    }
-                ]
-            });
-            scope.accounts.push(sql.query);
-            cb(null, sql);
-        }],
-        accounts2multisignatues: ['accounts', function (scope, cb) {
-            var sql = jsonSql.build({
-                type: 'create',
-                table: this.table + '2multisignatures',
-                tableFields: [
-                    {
-                        name: 'accountId',
-                        type: 'String',
-                        length: 21,
-                        not_null: true
-                    },
-                    {
-                        name: 'dependentId',
-                        type: 'String',
-                        length: 66,
-                        not_null: true
-                    }
-                ],
-                foreignKeys: [
-                    {
-                        field: 'accountId',
-                        table: this.table,
-                        table_field: 'master_address',
-                        on_delete: 'cascade'
-                    }
-                ]
-            });
-            scope.accounts.push(sql.query);
-            cb(null, sql);
-        }],
-        accounts2multisignatues_unconfirmed: ['accounts', function (scope, cb) {
-            var sql = jsonSql.build({
-                type: 'create',
-                table: this.table + '2multisignatures_unconfirmed',
-                tableFields: [
-                    {
-                        name: 'accountId',
-                        type: 'String',
-                        length: 21,
-                        not_null: true
-                    },
-                    {
-                        name: 'dependentId',
-                        type: 'String',
-                        length: 66,
-                        not_null: true
-                    }
-                ],
-                foreignKeys: [
-                    {
-                        field: 'accountId',
-                        table: this.table,
-                        table_field: 'master_address',
-                        on_delete: 'cascade'
-                    }
-                ]
-            });
-            scope.accounts.push(sql.query);
-            cb(null, sql);
-        }],
-        accounts_round: ['accounts', function (scope, cb) {
-            var sql = jsonSql.build({
-                type: 'create',
-                table: this.table + '_round',
-                tableFields: [
-                    {
-                        name: 'master_address',
-                        type: 'String',
-                        length: 21
-                    },
-                    {
-                        name: 'amount',
-                        type: 'BigInt'
-                    },
-                    {
-                        name: 'delegate',
-                        type: 'String',
-                        length: 66
-                    },
-                    {
-                        name: 'blockId',
-                        type: 'String',
-                        length: 20
-                    },
-                    {
-                        name: 'round',
-                        type: 'BigInt'
-                    }
-                ]
-            });
-            scope.accounts.push(sql.query);
-            cb(null, sql);
-        }]
-    }, function (err, scope) {
-        console.log(scope.accounts);
-    }.bind(this));
+    var sqles = [];
 
+    var sql = jsonSql.build({
+        type: 'create',
+        table: this.table,
+        tableFields: this.model
+    });
+    sqles.push(sql.query);
+
+    var sql = jsonSql.build({
+        type: 'create',
+        table: this.table + '2delegates',
+        tableFields: [
+            {
+                name: 'accountId',
+                type: 'String',
+                length: 21,
+                not_null: true
+            },
+            {
+                name: 'dependentId',
+                type: 'String',
+                length: 66,
+                not_null: true
+            }
+        ],
+        foreignKeys: [
+            {
+                field: 'accountId',
+                table: this.table,
+                table_field: 'master_address',
+                on_delete: 'cascade'
+            }
+        ]
+    });
+    sqles.push(sql.query);
+
+    var sql = jsonSql.build({
+        type: 'create',
+        table: this.table + '2delegates_unconfirmed',
+        tableFields: [
+            {
+                name: 'accountId',
+                type: 'String',
+                length: 21,
+                not_null: true
+            },
+            {
+                name: 'dependentId',
+                type: 'String',
+                length: 66,
+                not_null: true
+            }
+        ],
+        foreignKeys: [
+            {
+                field: 'accountId',
+                table: this.table,
+                table_field: 'master_address',
+                on_delete: 'cascade'
+            }
+        ]
+    });
+    sqles.push(sql.query);
+
+    var sql = jsonSql.build({
+        type: 'create',
+        table: this.table + '2multisignatures',
+        tableFields: [
+            {
+                name: 'accountId',
+                type: 'String',
+                length: 21,
+                not_null: true
+            },
+            {
+                name: 'dependentId',
+                type: 'String',
+                length: 66,
+                not_null: true
+            }
+        ],
+        foreignKeys: [
+            {
+                field: 'accountId',
+                table: this.table,
+                table_field: 'master_address',
+                on_delete: 'cascade'
+            }
+        ]
+    });
+    sqles.push(sql.query);
+
+    var sql = jsonSql.build({
+        type: 'create',
+        table: this.table + '2multisignatures_unconfirmed',
+        tableFields: [
+            {
+                name: 'accountId',
+                type: 'String',
+                length: 21,
+                not_null: true
+            },
+            {
+                name: 'dependentId',
+                type: 'String',
+                length: 66,
+                not_null: true
+            }
+        ],
+        foreignKeys: [
+            {
+                field: 'accountId',
+                table: this.table,
+                table_field: 'master_address',
+                on_delete: 'cascade'
+            }
+        ]
+    });
+    sqles.push(sql.query);
+
+    var sql = jsonSql.build({
+        type: 'create',
+        table: this.table + '_round',
+        tableFields: [
+            {
+                name: 'master_address',
+                type: 'String',
+                length: 21
+            },
+            {
+                name: 'amount',
+                type: 'BigInt'
+            },
+            {
+                name: 'delegate',
+                type: 'String',
+                length: 66
+            },
+            {
+                name: 'blockId',
+                type: 'String',
+                length: 20
+            },
+            {
+                name: 'round',
+                type: 'BigInt'
+            }
+        ]
+    });
+    sqles.push(sql.query);
+
+    sqles.push("INSERT INTO accounts2delegates_unconfirmed SELECT * FROM accounts2delegates;");
+
+    var self = this;
+
+    async.eachSeries(sqles, function (sql, cb) {
+        self.scope.dbClient.query(sql).then(function (data) {
+            cb();
+        }, function (err) {
+            self.scope.log.Warn("Account merge [update]", "Error", err.toString());
+            cb();
+        });
+    }.bind(this), function (err) {
+        setImmediate(cb, err, this);
+    }.bind(this));
 };
 
 Account.prototype.removeTables = function (cb) {
