@@ -340,14 +340,16 @@ Transaction.prototype.process = function (txObj, sender, requester, cb) {
     }.bind(this));
 };
 
-Transaction.prototype.sign = function (keypair, txObj) {
+Transaction.prototype.sign = function (txObj, kaypair) {
     var hash = this.getHash(txObj);
+
     return ed.Sign(hash, keypair).toString('hex');
 };
 
-Transaction.prototype.multisign = function (keypair, txObj) {
+Transaction.prototype.multisign = function (txObj, kaypair) {
     var bytes = this.getBytes(txObj, true, true);
     var hash = crypto.createHash('sha256').update(bytes).digest();
+
     return ed.Sign(hash, keypair).toString('hex');
 };
 
@@ -737,7 +739,7 @@ Transaction.prototype.save = function (txObj, cb) {
     //     return cb(err.toString());
     // }
 
-    this.scope.dbClient.query("", {
+    this.scope.dbClient.query("INSERT INTO transactions (id, blockId, type, timestamp, senderPublicKey, requesterPublicKey, senderId, recipientId, senderUsername, recipientUsername, amount, fee, signature, signSignature, signatures) VALUES ($id, $blockId, $type, $timestamp, $senderPublicKey, $requesterPublicKey, $senderId, $recipientId, $senderUsername, $recipientUsername, $amount, $fee, $signature, $signSignature, $signatures)", {
         bind: {
             id: txObj.id,
             blockId: txObj.blockId,
