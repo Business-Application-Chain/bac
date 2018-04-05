@@ -64,15 +64,16 @@ privated.loadApp = function () {
     //     }
     // });
 
-    library.base.account.createTables(function (err) {
-        if (err) {
-            throw new Error(err.toString());
-        } else {
-            library.base.account.remove('6202245275956910443L', function (err, data) {
-                console.log(">>>>> output: ");
-            });
-        }
-    });
+    // library.base.account.createTables(function (err) {
+    //     if (err) {
+    //         throw new Error(err.toString());
+    //     } else {
+    //         library.base.account.remove('6202245275956910443L', function (err, data) {
+    //             console.log(">>>>> output: ");
+    //         });
+    //     }
+    // });
+
 
     // library.base.account.createTables(function (err) {
     //     if (err) {
@@ -88,6 +89,18 @@ privated.loadApp = function () {
     //         });
     //     }
     // });
+
+    var Sequelize = require('sequelize');
+    library.dbClient.query('SELECT COUNT(master_pub) AS count FROM accounts WHERE master_address = $master_address', {
+        type: Sequelize.QueryTypes.SELECT,
+        bind: {
+            master_address: '6202245275956910442L'
+        }
+    }).then(function (data) {
+        console.log(data);
+    }, function (err) {
+        console.log(err.toString());
+    });
 };
 
 // public methods

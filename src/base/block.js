@@ -25,15 +25,15 @@ function Block(scope, cb) {
     setImmediate(cb, null, this);
 }
 
-Block.prototype.objectNormalize = function () {
-
-};
-
 Block.prototype.calculateFee = function (block) {
     return 10000000;
 }
 
 Block.prototype.create = function (tx_data) {
+
+};
+
+Block.prototype.objectNormalize = function () {
 
 };
 

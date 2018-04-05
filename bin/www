@@ -72,6 +72,32 @@ d.run(function () {
         },
 
         schema: function (cb) {
+            z_schema.registerFormat('hex', function (str) {
+                try {
+                    new Buffer(str, 'hex');
+                } catch (err) {
+                    return false;
+                }
+
+                return true;
+            });
+
+            z_schema.registerFormat('hex', function (str) {
+                if (str.length === 0) {
+                    return true;
+                }
+
+                try {
+                    var publicKey = new Buffer(str, 'hex');
+
+                    return publicKey.length == 32;
+                } catch (err) {
+                    return false;
+                }
+
+                return true;
+            });
+
             z_schema.registerFormat('splitArray', function (str) {
                 try {
                     var arr = str.split(',');
@@ -199,6 +225,7 @@ d.run(function () {
         base: ['config', 'log', 'genesisblock', 'dbClient', 'notification_center', function (scope, cb) {
             var Account = require('../src/base/Account.js');
             var Peers = require('../src/base/peer.js');
+            var Transaction = require('../src/base/transaction.js');
 
             async.auto({
                 config: function (cb) {
@@ -219,9 +246,12 @@ d.run(function () {
                 account: ['log', 'dbClient', 'notification_center', function (scope, cb) {
                     new Account(scope, cb);
                 }],
-                peer: ['dbClient', 'notification_center', 'log', function (scope, cb) {
+                peer: ['log', 'dbClient', 'notification_center', function (scope, cb) {
                     new Peers(scope, cb);
-                }]
+                }],
+                transaction: ['log', 'dbClient', 'notification_center', function (scope, cb) {
+                    new Transaction(scope, cb);
+                }],
             }, cb);
         }],
 

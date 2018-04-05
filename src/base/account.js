@@ -511,7 +511,6 @@ Account.prototype.createTables = function (cb) {
         self.scope.dbClient.query(sql).then(function (data) {
             cb(null, data);
         }, function (err) {
-            self.scope.log.Warn("Account createTables", "Error", err.toString());
             cb(err, undefined);
         });
     }.bind(this), function (err) {
@@ -534,12 +533,15 @@ Account.prototype.removeTables = function (cb) {
         self.scope.dbClient.query(sql).then(function (data) {
             cb(null, data);
         }, function (err) {
-            self.scope.log.Warn("Account removeTables", "Error", err.toString());
             cb(err, undefined);
         });
     }.bind(this), function (err) {
         setImmediate(cb, err, this);
     }.bind(this));
+};
+
+Account.prototype.create = function () {
+
 };
 
 Account.prototype.objectNormalize = function (account) {
@@ -565,9 +567,6 @@ Account.prototype.toHex = function (raw) {
     return raw;
 };
 
-Account.prototype.create = function () {
-
-};
 
 Account.prototype.findOne = function (filter, fields, cb) {
     if (typeof(fields) == 'function') { // Here is just for cases that only send-in 2 params
@@ -630,12 +629,11 @@ Account.prototype.findAll = function (filter, fields, cb) {
     var self = this;
 
     this.scope.dbClient.query(sql.query, {
-        bind: sql.values,
-        type: Sequelize.QueryTypes.SELECT
+        type: Sequelize.QueryTypes.SELECT,
+        bind: sql.values
     }).then(function (data) {
         cb(null, data);
     }, function (err) {
-        self.scope.log.Warn("Account findAll", "Error", err.toString());
         cb(err, undefined);
     });
 };
@@ -675,7 +673,6 @@ Account.prototype.insertOrUpdate = function (master_address, fields, cb) {
         }).then(function (data) {
             cb(null, data);
         }, function (err) {
-            self.scope.log.Warn("Account insertOrUpdate", "Error", err.toString());
             cb(err, undefined);
         });
     }, cb);
@@ -884,12 +881,10 @@ Account.prototype.merge = function (master_address, fields, cb) {
                     }).then(function (data) {
                         cb(null, data);
                     }, function (err) {
-                        self.scope.log.Warn("Account merge sqles query", "Error", err.toString());
                         cb(err, undefined);
                     });
                 }, function (err) {
                     if (err) {
-                        self.scope.log.Warn("Account merge sqles", "Error", err.toString());
                         cb(err);
                     }
                     cb();
@@ -909,12 +904,10 @@ Account.prototype.merge = function (master_address, fields, cb) {
                     }).then(function (data) {
                         cb();
                     }, function (err) {
-                        self.scope.log.Warn("Account merge round query", "Error", err.toString());
                         cb(err, undefined);
                     });
                 }, function (err) {
                     if (err) {
-                        self.scope.log.Warn("Account merge round", "Error", err.toString());
                         cb(err);
                     }
                     cb();
@@ -947,7 +940,6 @@ Account.prototype.remove = function (master_address, cb) {
     }).then(function (data) {
         cb(null, data);
     }, function (err) {
-        self.scope.log.Warn("Account remove", "Error", err.toString());
         cb(err, undefined);
     });
 };
