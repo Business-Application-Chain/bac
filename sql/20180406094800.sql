@@ -25,7 +25,7 @@ DROP TABLE IF EXISTS `peers`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `peers` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `ip` bigint(10) DEFAULT NULL,
   `port` int(11) DEFAULT NULL,
   `state` int(11) DEFAULT NULL,
@@ -36,7 +36,7 @@ CREATE TABLE `peers` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `id_UNIQUE` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
+
 
 --
 -- Table structure for table `peers_dapp`
