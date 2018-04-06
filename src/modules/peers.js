@@ -35,7 +35,7 @@ privated.loadApp = function () {
     var peer = {
         ip:2130706413,
         port: 8000
-    }
+    };
     library.base.peeer.findAll(peer);
 
     // var peer = {

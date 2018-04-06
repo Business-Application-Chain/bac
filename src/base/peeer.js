@@ -106,13 +106,20 @@ Peeer.prototype.findAll = function (peer, cb) {
     var sql = jsonSql.build({
         type: 'select',
         table: this.table,
-        condition: 'where',
-        values: {
+        condition: {
             ip: peer.ip,
-            sort: peer.port
+            port: peer.port
         }
-    })
-    console.log(sql);
+    });
+    // console.log(sql);
+    this.scope.dbClient.query(sql.query, {
+        bind: sql.values,
+        type: Sequelize.QueryTypes.SELECT
+    }).then(function (data) {
+        cb(null, data);
+    }, function (err) {
+        cb(err, undefined);
+    });
 };
 
 

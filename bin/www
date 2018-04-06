@@ -225,6 +225,8 @@ d.run(function () {
         base: ['config', 'log', 'genesisblock', 'dbClient', 'notification_center', function (scope, cb) {
             var Account = require('../src/base/Account.js');
             var Peers = require('../src/base/peer.js');
+            var Peeer = require('../src/base/peeer.js');
+            var Transaction = require('../src/base/transaction.js');
 
             async.auto({
                 config: function (cb) {
