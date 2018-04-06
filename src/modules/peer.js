@@ -147,7 +147,9 @@ Peer.prototype.callApi = function (call, args, cb) {
 Peer.prototype.list = function (options, cb) {
     options.limit = options.limit || 100;
 
-    library.dbClient.query("SELECT p.ip, p.port, p.state, p.os, p.sharePort, p.version FROM peers p " + (options.dappId ? " INNER JOIN peers_dapp pd on p.id = pd.peerId and pd.dappId = $dappId" : "") + " WHERE p.state > 0 AND p.sharePort = 1 ORDER BY RANDOM() LIMIT $limit", {
+    var sql = "SELECT p.ip, p.port, p.state, p.os, p.sharePort, p.version FROM peers p " + (options.dappId ? " INNER JOIN peers_dapp pd on p.id = pd.peerId and pd.dappId = $dappId" : "") + " WHERE p.state > 0 AND p.sharePort = 1 ORDER BY RAND() LIMIT $limit";
+
+    library.dbClient.query(sql, {
         type: Sequelize.QueryTypes.SELECT,
         bind: options
     }).then(function (rows) {
