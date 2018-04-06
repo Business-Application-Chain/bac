@@ -34,9 +34,8 @@ CREATE TABLE `peers` (
   `version` varchar(11) DEFAULT NULL,
   `clock` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `id_UNIQUE` (`id`)
+  UNIQUE KEY `ip_UNIQUE` (`ip`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
 
 --
 -- Table structure for table `peers_dapp`
