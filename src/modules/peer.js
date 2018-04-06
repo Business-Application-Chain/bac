@@ -25,7 +25,8 @@ function Peer(cb, scope) {
 // private methods
 privated.updatePeerList = function (err) {
     library.modules.kernel.getFromRandomPeer({
-        api: 'peer_list'
+        api: '/list',
+        method: 'GET'
     }, function (err, data) {
         if (err) {
             return cb();
@@ -323,19 +324,19 @@ Peer.prototype.onBlockchainReady = function () {
 };
 
 Peer.prototype.onPeerReady = function() {
-    // setImmediate(function nextUpdatePeerList() {
-    //     privated.updatePeerList(function (err) {
-    //         err && library.log.Error("updatePeerList timer", "Error", err.toString());
-    //         setTimeout(nextUpdatePeerList, 60 * 1000);
-    //     });
-    // });
-    //
-    // setImmediate(function nextBanManager() {
-    //     privated.banManager(function (err) {
-    //         err && library.log.Error("banManager timer", "Error", err.toString());
-    //         setTimeout(nextBanManager, 65 * 1000);
-    //     });
-    // });
+    setImmediate(function nextUpdatePeerList() {
+        privated.updatePeerList(function (err) {
+            err && library.log.Error("updatePeerList timer", "Error", err.toString());
+            setTimeout(nextUpdatePeerList, 60 * 1000);
+        });
+    });
+
+    setImmediate(function nextBanManager() {
+        privated.banManager(function (err) {
+            err && library.log.Error("banManager timer", "Error", err.toString());
+            setTimeout(nextBanManager, 65 * 1000);
+        });
+    });
 };
 
 Peer.prototype.onEnd = function (cb) {

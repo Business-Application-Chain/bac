@@ -10,6 +10,8 @@ var _ = require('underscore');
 var zlib = require('zlib');
 var crypto = require('crypto');
 var bignum = require('../utils/bignum.js');
+var express = require('express');
+var router = express.Router();
 
 // private objects
 var modules_loaded, library, self, privated = {}, shared = {};
@@ -23,9 +25,38 @@ function Kernel(cb, scope) {
     library = scope;
     self = this;
     self.__private = privated;
+    privated.attachApi();
 
     setImmediate(cb, null, self);
 }
+
+// private methods
+privated.attachApi = function () {
+    library.network.app.use(function(req, res, next) {
+        if (modules_loaded) return next();
+        res.status(500).send({success: false, error: "Blockchain is loading"});
+    });
+
+    library.network.app.use('/peer', router);
+
+    /* GET home page. */
+    router.get('/list', function(req, res, next) {
+        res.set(privated.headers);
+        library.modules.peer.list({limit: 100}, function (err, peers) {
+            return res.status(200).json({peers: !err ? peers : []});
+        });
+    });
+
+    router.use(function (req, res, next) {
+        res.status(500).send({success: false, error: "API endpoint not found"});
+    });
+
+    library.network.app.use(function (err, req, res, next) {
+        if (!err) return next();
+        library.logger.error(req.url, err.toString());
+        res.status(500).send({success: false, error: err.toString()});
+    });
+};
 
 // public methods
 Kernel.prototype.sandboxApi = function (call, args, cb) {
@@ -60,16 +91,23 @@ Kernel.prototype.getRandomPeer = function (config, options, cb) {
 };
 
 Kernel.prototype.getFromPeer = function (peer, options, cb) {
-    var method = '';
+    var url = '';
     if (options.api) {
-        method = options.api;
+        url = options.api;
     } else {
-        throw new Error("Invalid options with api");
+        url = options.url;
     }
 
+    // var req = {
+    //     url: 'http://' + ip.fromLong(peer.ip) + ':' + peer.port + '/rpc',
+    //     method: 'POST',
+    //     json: true,
+    //     headers: _.extend({}, privated.headers, options.headers),
+    //     timeout: library.config.peers.optional.timeout
+    // };
     var req = {
-        url: 'http://' + ip.fromLong(peer.ip) + ':' + peer.port + '/rpc',
-        method: 'POST',
+        url: 'http://' + ip.fromLong(peer.ip) + ':' + peer.port + url,
+        method: options.method,
         json: true,
         headers: _.extend({}, privated.headers, options.headers),
         timeout: library.config.peers.optional.timeout
