@@ -628,7 +628,6 @@ Account.prototype.findAll = function (filter, fields, cb) {
     });
 
     var self = this;
-
     this.scope.dbClient.query(sql.query, {
         bind: sql.values,
         type: Sequelize.QueryTypes.SELECT

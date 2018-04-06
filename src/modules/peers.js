@@ -25,16 +25,28 @@ function Peer(cb, scope) {
 
 // private methods
 privated.loadApp = function () {
-    // library.base.peer.findAll((res) => {
-    //     console.log(res);
+    // library.base.peeer.createTables((err, data) => {
+    //     if(err) {
+    //         console.log('is err', err);
+    //     } else {
+    //         console.log('is success', data);
+    //     }
     // });
-    library.base.peeer.createTables((err) => {
-        if(err) {
-            console.log('is err', err);
-        } else {
+    var peer = {
+        ip:2130706413,
+        port: 8000
+    }
+    library.base.peeer.findAll(peer);
 
-        }
-    });
+    // var peer = {
+    //     ip: 2130706413,
+    //     port: 8000,
+    //     state: 2,
+    //     os: 'mac',
+    //     sharePort: 1,
+    //     version: '0.0.1'
+    // };
+    // library.base.peeer.findOrCreate(peer);
 };
 
 privated.updatePeerList = function (err) {

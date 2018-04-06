@@ -42,15 +42,15 @@ privated.loadApp = function () {
     //     }
     // });
 
-    // library.base.account.createTables(function (err) {
-    //     if (err) {
-    //         throw new Error(err.toString());
-    //     } else {
-    //         library.base.account.findAll({master_address: '6202245275956910442L'}, function (err, data) {
-    //             console.log(JSON.stringify(data));
-    //         });
-    //     }
-    // });
+    library.base.account.createTables(function (err) {
+        if (err) {
+            throw new Error(err.toString());
+        } else {
+            library.base.account.findAll({master_address: '6202245275956910442L'}, function (err, data) {
+                console.log(JSON.stringify(data));
+            });
+        }
+    });
 
     // library.base.account.createTables(function (err) {
     //     if (err) {
@@ -64,15 +64,15 @@ privated.loadApp = function () {
     //     }
     // });
 
-    library.base.account.createTables(function (err) {
-        if (err) {
-            throw new Error(err.toString());
-        } else {
-            library.base.account.remove('6202245275956910443L', function (err, data) {
-                console.log(">>>>> output: ");
-            });
-        }
-    });
+    // library.base.account.createTables(function (err) {
+    //     if (err) {
+    //         throw new Error(err.toString());
+    //     } else {
+    //         library.base.account.remove('6202245275956910443L', function (err, data) {
+    //             console.log(">>>>> output: ");
+    //         });
+    //     }
+    // });
 
     // library.base.account.createTables(function (err) {
     //     if (err) {
