@@ -89,3 +89,6 @@ function BlockStatus() {
         return supply * Math.pow(10,8);
     };
 }
+
+// Exports
+module.exports = BlockStatus;
