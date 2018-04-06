@@ -291,13 +291,11 @@ Peer.prototype.onInit = function (scope) {
 
 Peer.prototype.onBlockchainReady = function () {
     async.eachSeries(library.config.peers.list, (peer, cb) => {
-        peer.version = library.config.version;
-        peer.ip = ip.toLong(peer.address);
-        library.dbClient.query("INSERT IGNORE INTO peers (ip, port, status, sharePort) VALUES ($ip, $port, $status, $sharePort)", {
+        library.dbClient.query("INSERT IGNORE INTO peers (ip, port, state, sharePort) VALUES ($ip, $port, $state, $sharePort)", {
             bind: {
                 ip: ip.toLong(peer.ip),
                 port: peer.port,
-                status: 2, // default is 2, means health peer
+                state: 2, // default is 2, means health peer
                 sharePort: Number(true)
             }
         }).then((data) => {
