@@ -511,7 +511,6 @@ Account.prototype.createTables = function (cb) {
         self.scope.dbClient.query(sql).then(function (data) {
             cb(null, data);
         }, function (err) {
-            self.scope.log.Warn("Account createTables", "Error", err.toString());
             cb(err, undefined);
         });
     }.bind(this), function (err) {
@@ -534,12 +533,15 @@ Account.prototype.removeTables = function (cb) {
         self.scope.dbClient.query(sql).then(function (data) {
             cb(null, data);
         }, function (err) {
-            self.scope.log.Warn("Account removeTables", "Error", err.toString());
             cb(err, undefined);
         });
     }.bind(this), function (err) {
         setImmediate(cb, err, this);
     }.bind(this));
+};
+
+Account.prototype.create = function () {
+
 };
 
 Account.prototype.objectNormalize = function (account) {
@@ -565,9 +567,6 @@ Account.prototype.toHex = function (raw) {
     return raw;
 };
 
-Account.prototype.create = function () {
-
-};
 
 Account.prototype.findOne = function (filter, fields, cb) {
     if (typeof(fields) == 'function') { // Here is just for cases that only send-in 2 params
@@ -629,12 +628,11 @@ Account.prototype.findAll = function (filter, fields, cb) {
 
     var self = this;
     this.scope.dbClient.query(sql.query, {
-        bind: sql.values,
-        type: Sequelize.QueryTypes.SELECT
+        type: Sequelize.QueryTypes.SELECT,
+        bind: sql.values
     }).then(function (data) {
         cb(null, data);
     }, function (err) {
-        self.scope.log.Warn("Account findAll", "Error", err.toString());
         cb(err, undefined);
     });
 };
@@ -674,7 +672,6 @@ Account.prototype.insertOrUpdate = function (master_address, fields, cb) {
         }).then(function (data) {
             cb(null, data);
         }, function (err) {
-            self.scope.log.Warn("Account insertOrUpdate", "Error", err.toString());
             cb(err, undefined);
         });
     }, cb);
@@ -684,8 +681,6 @@ Account.prototype.merge = function (master_address, fields, cb) {
     if (fields.master_pub !== undefined && !fields.master_pub) {
         this.scope.log.Error("Account merge", "master_pub", fields.master_pub);
     }
-
-    var self = this;
 
     var insert = {}, remove = {}, update = {}, insert_object = {}, remove_object = {}, round = [];
 
@@ -702,16 +697,14 @@ Account.prototype.merge = function (master_address, fields, cb) {
                         update.$inc[key] = value;
                         if (key == 'balance') {
                             round.push({
-                                sql: `INSERT INTO accounts_round (master_address, amount, delegate, blockId, round) SELECT ?, ?, dependentId, ?, ? from accounts2delegates WHERE accountId = ?`,
-                                replacements: [
-                                    master_address,
-                                    value,
-                                    fields.blockId,
-                                    fields.round,
-                                    master_address
-                                ]
+                                query: `INSERT INTO accounts_round (master_address, amount, delegate, blockId, round) SELECT $master_address, $amount, dependentId, $blockId, $round from accounts2delegates WHERE accountId = $master_address`,
+                                values: {
+                                    master_address: master_address,
+                                    amount: value,
+                                    blockId: fields.blockId,
+                                    round: fields.round
+                                }
                             });
-                            console.log(round[0].sql);
                         }
                     }
                     else if (value < 0) {
@@ -719,14 +712,13 @@ Account.prototype.merge = function (master_address, fields, cb) {
                         update.$dec[key] = Math.abs(value);
                         if (key == 'balance') {
                             round.push({
-                                sql: `INSERT INTO accounts_round (master_address, amount, delegate, blockId, round) SELECT ?, ?, dependentId, ?, ? from accounts2delegates WHERE accountId = ?`,
-                                replacements: [
-                                    master_address,
-                                    value,
-                                    fields.blockId,
-                                    fields.round,
-                                    master_address
-                                ]
+                                query: `INSERT INTO accounts_round (master_address, amount, delegate, blockId, round) SELECT $master_address, $amount, dependentId, $blockId, $round from accounts2delegates WHERE accountId = $master_address`,
+                                values: {
+                                    master_address: master_address,
+                                    amount: value,
+                                    blockId: fields.blockId,
+                                    round: fields.round
+                                }
                             });
                         }
                     }
@@ -759,14 +751,13 @@ Account.prototype.merge = function (master_address, fields, cb) {
                                 remove[key].push(val);
                                 if (key == "delegates") {
                                     round.push({
-                                        sql: `INSERT INTO accounts_round (master_address, amount, delegate, blockId, round) SELECT ?, -balance, ?, ?, ? from accounts WHERE master_address = ?`,
-                                        replacements: [
-                                            master_address,
-                                            val,
-                                            fields.blockId,
-                                            fields.round,
-                                            master_address
-                                        ]
+                                        query: `INSERT INTO accounts_round (master_address, amount, delegate, blockId, round) SELECT $master_address, -balance, $delegate, $blockId, $round from accounts WHERE master_address = $master_address`,
+                                        values: {
+                                            master_address: master_address,
+                                            delegate: val,
+                                            blockId: fields.blockId,
+                                            round: fields.round
+                                        }
                                     });
                                 }
                             } else if (math == '+') {
@@ -775,14 +766,13 @@ Account.prototype.merge = function (master_address, fields, cb) {
                                 insert[key].push(val);
                                 if (key == "delegates") {
                                     round.push({
-                                        sql: `INSERT INTO accounts_round (master_address, amount, delegate, blockId, round) SELECT ?,  balance, ?, ?, ? from accounts WHERE master_address = ?`,
-                                        replacements: [
-                                            master_address,
-                                            val,
-                                            fields.blockId,
-                                            fields.round,
-                                            master_address
-                                        ]
+                                        sql: `INSERT INTO accounts_round (master_address, amount, delegate, blockId, round) SELECT $master_address,  balance, $delegate, $blockId, $round from accounts WHERE master_address = $master_address`,
+                                        values: {
+                                            master_address: master_address,
+                                            delegate: val,
+                                            blockId: fields.blockId,
+                                            round: fields.round
+                                        }
                                     });
                                 }
                             } else {
@@ -791,14 +781,13 @@ Account.prototype.merge = function (master_address, fields, cb) {
                                 insert[key].push(val);
                                 if (key == "delegates") {
                                     round.push({
-                                        sql: `INSERT INTO accounts_round (master_address, amount, delegate, blockId, round) SELECT ?,  balance, ?, ?, ? from accounts WHERE master_address = ?`,
-                                        replacements: [
-                                            master_address,
-                                            val,
-                                            fields.blockId,
-                                            fields.round,
-                                            master_address
-                                        ]
+                                        sql: `INSERT INTO accounts_round (master_address, amount, delegate, blockId, round) SELECT $master_address,  balance, $delegate, $blockId, $round from accounts WHERE master_address = $master_address`,
+                                        values: {
+                                            master_address: master_address,
+                                            delegate: val,
+                                            blockId: fields.blockId,
+                                            round: fields.round
+                                        }
                                     });
                                 }
                             }
@@ -809,102 +798,67 @@ Account.prototype.merge = function (master_address, fields, cb) {
         }
     });
 
-    async.series([
-        function (cb) {
-            Object.keys(insert).forEach(function (key) {
-                for (var i = 0; i < insert[key].length; i++) {
-                    self.models['model_accounts2'+key].create({
-                        master_address: master_address,
-                        dependentId: insert[key][i]
-                    }).then(function (data) {
+    var sqles = [];
 
-                    }, function (err) {
-                        self.scope.log.Warn("Account merge [insert]", "Error", err.toString());
-                    });
-                }
-            });
-
-            cb();
-        },
-        function (cb) {
-            Object.keys(insert_object).forEach(function (key) {
-                for (var i = 0; i < insert_object[key].length; i++) {
-                    self.models['model_accounts2'+key].create(insert_object[key]).then(function (data) {
-
-                    }, function (err) {
-                        self.scope.log.Warn("Account merge [insert_object]", "Error", err.toString());
-                    });
-                }
-            });
-
-            cb();
-        },
-        function (cb) {
-            Object.keys(remove).forEach(function (key) {
-                for (var i = 0; i < remove[key].length; i++) {
-                    self.models['model_accounts2'+key].delete({
-                        where: {
-                            master_address: remove[key]
-                        }
-                    }).then(function (data) {
-
-                    }, function (err) {
-                        self.scope.log.Warn("Account merge [remove]", "Error", err.toString());
-                    });
-                }
-            });
-
-            cb();
-        },
-        function (cb) {
-            Object.keys(remove_object).forEach(function (key) {
-                for (var i = 0; i < remove_object[key].length; i++) {
-                    self.models['model_accounts2'+key].delete({
-                        where: {
-                            master_address: remove_object[key]
-                        }
-                    }).then(function (data) {
-
-                    }, function (err) {
-                        self.scope.log.Warn("Account merge [remove_object]", "Error", err.toString());
-                    });
-                }
-            });
-
-            cb();
-        },
-        function (cb) {
-            if (Object.keys(update).length) {
-                debugger
-                self.models.model_accounts.update(update, {
-                    where: {
-                        master_address: master_address
-                    }
-                }).then(function (data) {
-
-                }, function (err) {
-                    self.scope.log.Warn("Account merge [update]", "Error", err.toString());
-                });
+    Object.keys(remove).forEach(function (key) {
+        var sql = jsonSql.build({
+            type: 'remove',
+            table: self.table + '2' + key,
+            condition: {
+                dependentId: {$in: remove[key]},
+                accountId: master_address
             }
+        });
+        sqles.push(sql);
+    });
 
-            cb();
-        },
-        function (cb) {
-            async.eachSeries(round, function (sub_round, cb) {
-                self.scope.dbClient.query(sub_round.sql, {
-                    type: Sequelize.QueryTypes.INSERT,
-                    replacements: sub_round.replacements
-                }).then(function (data) {
-                    cb();
-                }, function (err) {
-                    self.scope.log.Warn("Account merge [update]", "Error", err.toString());
-                    cb();
-                });
-            }, function (err) {
-                cb(err);
+    Object.keys(insert).forEach(function (key) {
+        for (var i = 0; i < insert[key].length; i++) {
+            var sql = jsonSql.build({
+                type: 'insert',
+                table: self.table + '2' + key,
+                values: {
+                    accountId: master_address,
+                    dependentId: insert[key][i]
+                }
             });
+            sqles.push(sql);
         }
-    ], done);
+    });
+
+    Object.keys(remove_object).forEach(function (key) {
+        remove_object[key].accountId = master_address;
+        var sql = jsonSql.build({
+            type: 'remove',
+            table: self.table + '2' + key,
+            condition: remove_object[key]
+        });
+        sqles.push(sql);
+    });
+
+    Object.keys(insert_object).forEach(function (key) {
+        insert_object[key].accountId = master_address;
+        for (var i = 0; i < insert_object[key].length; i++) {
+            var sql = jsonSql.build({
+                type: 'insert',
+                table: self.table + '2' + key,
+                values: insert_object[key]
+            });
+            sqles.push(sql);
+        }
+    });
+
+    if (Object.keys(update).length) {
+        var sql = jsonSql.build({
+            type: 'update',
+            table: self.table,
+            modifier: update,
+            condition: {
+                master_address: master_address
+            }
+        });
+        sqles.push(sql);
+    }
 
     function done(err) {
         if (cb.length != 2) {
@@ -913,9 +867,59 @@ Account.prototype.merge = function (master_address, fields, cb) {
             if (err) {
                 return cb(err);
             }
-            self.find({master_address: master_address}, cb);
+            self.findOne({master_address: master_address}, cb);
         }
     }
+
+    async.series([
+        function (cb) {
+            self.scope.dbClient.transaction(function (t) {
+                async.eachSeries(sqles, function (sql, cb) {
+                    self.scope.dbClient.query(sql.query, {
+                        bind: sql.values
+                    }).then(function (data) {
+                        cb(null, data);
+                    }, function (err) {
+                        cb(err, undefined);
+                    });
+                }, function (err) {
+                    if (err) {
+                        cb(err);
+                    }
+                    cb();
+                });
+            }).then(function (data) {
+                cb();
+            }).catch(function (err) {
+                cb(err);
+            });
+        },
+        function (cb) {
+            self.scope.dbClient.transaction(function (t) {
+                async.eachSeries(round, function (sql, cb) {
+                    self.scope.dbClient.query(sql.query, {
+                        bind: sql.values,
+                        transaction: t
+                    }).then(function (data) {
+                        cb();
+                    }, function (err) {
+                        cb(err, undefined);
+                    });
+                }, function (err) {
+                    if (err) {
+                        cb(err);
+                    }
+                    cb();
+                });
+            }).then(function (data) {
+                cb();
+            }).catch(function (err) {
+                cb(err);
+            });
+        }
+    ], done);
+
+    var self = this;
 };
 
 Account.prototype.remove = function (master_address, cb) {
@@ -935,7 +939,6 @@ Account.prototype.remove = function (master_address, cb) {
     }).then(function (data) {
         cb(null, data);
     }, function (err) {
-        self.scope.log.Warn("Account remove", "Error", err.toString());
         cb(err, undefined);
     });
 };

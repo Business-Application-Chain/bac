@@ -77,3 +77,7 @@ var sql = jsonSql.build({
     ]
 });
 console.log(sql);
+
+var publicKey = new Buffer('b7b46c08c24d0f91df5387f84b068ec67b8bfff8f7f4762631894fce4aff6c75', 'hex');
+
+console.log(publicKey.length);
