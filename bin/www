@@ -27,8 +27,9 @@ var log = new Log15({echo: appConfig.echoLogLevel, recLevel: appConfig.outputLog
 var params = {
     "db": appConfig.db.uri,
     "modules": {
+        "kernel": "../src/modules/kernel.js",
         "loader": "../src/modules/loader.js",
-        "peers": "../src/modules/peers.js",
+        "peer": "../src/modules/peer.js",
         "server": "../src/modules/server.js",
         "system": "../src/modules/system.js"
     }
@@ -222,7 +223,7 @@ d.run(function () {
             cb(null, new ncenter);
         },
 
-        base: ['config', 'log', 'genesisblock', 'dbClient', 'notification_center', function (scope, cb) {
+        base: ['config', 'genesisblock', 'dbClient', 'notification_center', function (scope, cb) {
             var Account = require('../src/base/Account.js');
             var Peers = require('../src/base/peer.js');
             var Transaction = require('../src/base/transaction.js');
@@ -234,22 +235,19 @@ d.run(function () {
                 genesisblock: function (cb) {
                     cb(null, scope.genesisblock);
                 },
-                log: function (cb) {
-                    cb(null, scope.log);
-                },
                 dbClient: function (cb) {
                     cb(null, scope.dbClient);
                 },
                 notification_center: function (cb) {
                     cb(null, scope.notification_center);
                 },
-                account: ['log', 'dbClient', 'notification_center', function (scope, cb) {
+                account: ['config', 'dbClient', 'notification_center', function (scope, cb) {
                     new Account(scope, cb);
                 }],
-                peer: ['log', 'dbClient', 'notification_center', function (scope, cb) {
+                peer: ['config', 'dbClient', 'notification_center', function (scope, cb) {
                     new Peers(scope, cb);
                 }],
-                transaction: ['log', 'dbClient', 'notification_center', function (scope, cb) {
+                transaction: ['config', 'dbClient', 'notification_center', function (scope, cb) {
                     new Transaction(scope, cb);
                 }],
             }, cb);
