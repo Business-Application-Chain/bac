@@ -13,9 +13,8 @@
         "password": "123456"
     },
     "peers": {
-        "default": [
-            {"address": "127.0.0.1", "port": 8000},
-            {"address": "192.168.18.101", "port": 8000}
+        "list": [
+
         ],
         "blankList": [],
         "optional": {
