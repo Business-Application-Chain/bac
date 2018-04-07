@@ -37,6 +37,41 @@ privated.attachApi = function () {
         res.status(500).send({success: false, error: "Blockchain is loading"});
     });
 
+    router.use(function (req, res, next) {
+        var peerIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+
+        if (peerIp == "127.0.0.1") {
+            return next();
+        }
+
+        if (!peerIp) {
+            return res.status(500).send({success: false, error: "Wrong header data"});
+        }
+
+        req.headers.port = parseInt(req.headers.port);
+        req.headers['share-port'] = parseInt(req.headers['share-port']);
+
+        var peer = {
+            ip: ip.toLong(peerIp),
+            port: headers.port,
+            state: 2,
+            os: headers.os,
+            sharePort: Number(headers['share-port']),
+            version: headers.version
+        };
+
+        if (req.body && req.body.dappId) {
+            peer.dappId = req.body.dappId;
+        }
+
+        if (peer.port > 0 && peer.port <= 65535 && peer.version == library.config.version) {
+            library.modules.peer.update(peer);
+        }
+
+        next();
+    });
+
+
     library.network.app.use('/peer', router);
 
     /* GET home page. */
@@ -69,7 +104,7 @@ Kernel.prototype.callApi = function (call, args, cb) {
     shared[call].apply(null, callArgs);
 };
 
-Kernel.prototype.getRandomPeer = function (config, options, cb) {
+Kernel.prototype.getFromRandomPeer = function (config, options, cb) {
     if (typeof options == 'function') {
         cb = options;
         options = config;
@@ -93,7 +128,7 @@ Kernel.prototype.getRandomPeer = function (config, options, cb) {
 Kernel.prototype.getFromPeer = function (peer, options, cb) {
     var url = '';
     if (options.api) {
-        url = options.api;
+        url = '/peer' + options.api;
     } else {
         url = options.url;
     }
@@ -112,7 +147,7 @@ Kernel.prototype.getFromPeer = function (peer, options, cb) {
         headers: _.extend({}, privated.headers, options.headers),
         timeout: library.config.peers.optional.timeout
     };
-    if (Object.prototype.toString.call(options.data) === '[object Object]' || utils.isArray(options.data)) {
+    if (Object.prototype.toString.call(options.data) === '[object Object]' || util.isArray(options.data)) {
         req.json = options.data;
     } else {
         req.body = options.data;
@@ -120,20 +155,20 @@ Kernel.prototype.getFromPeer = function (peer, options, cb) {
 
     return request(req, function (err, response, body) {
         if (err || response.statusCode != 200) {
-            library.log.Debug("Request", "method", method, "Error", err.toString());
+            library.log.Debug("Request", "Error", err.toString());
 
             if (peer) {
                 if (err && (err.code == 'ETIMEOUT' || err.code == 'ESOCKETTIMEOUT' || err.code == 'ECONNREFUSED')) {
                     library.modules.peer.remove(peer.ip, peer.port, function (err) {
                         if (!err) {
-                            library.log.Info("Removing peer", "method", method, "ip", peer.ip, "port", peer.port);
+                            library.log.Info("Removing peer", "ip", peer.ip, "port", peer.port);
                         }
                     });
                 } else {
                     if (!options.no_ban) {
                         library.modules.peer.state(peer.ip, peer.port, 0, 600, function (err) {
                             if (!err) {
-                                library.log.Info("Ban peer for 10 minutes", "method", method, "ip", peer.ip, "port", peer.port);
+                                library.log.Info("Ban peer for 10 minutes", "ip", peer.ip, "port", peer.port);
                             }
                         });
                     }
@@ -141,6 +176,7 @@ Kernel.prototype.getFromPeer = function (peer, options, cb) {
             }
 
             cb && cb(err || ("Request status code " + response.statusCode));
+            return;
         }
 
         response.headers.port = parseInt(response.headers.port);
@@ -196,7 +232,7 @@ Kernel.prototype.onInit = function (scope) {
     modules_loaded = scope && scope != undefined ? true : false;
 
     privated.headers = {
-        'verion': scope.system.getVersion(),
+        'version': scope.system.getVersion(),
         'os': scope.system.getOS(),
         'port': scope.system.getPort(),
         'share-port': scope.system.getSharePort()

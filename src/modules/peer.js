@@ -23,7 +23,7 @@ function Peer(cb, scope) {
 }
 
 // private methods
-privated.updatePeerList = function (err) {
+privated.updatePeerList = function (cb) {
     library.modules.kernel.getFromRandomPeer({
         api: '/list',
         method: 'GET'
@@ -48,7 +48,7 @@ privated.updatePeerList = function (err) {
 
             var peers = data.body.peers;
 
-            aysnc.eachLmit(peers, 2, function (peer, cb) {
+            async.eachLimit(peers, 2, function (peer, cb) {
                 library.schema.validate(peer, {
                     type: 'object',
                     properties: {
@@ -105,11 +105,6 @@ privated.count = function (cb) {
         type: Sequelize.QueryTypes.SELECT
     }).then(function (rows) {
         var res = rows.length && rows[0];
-
-        if (res.count) {
-            return cb("Failed to process peers count");
-        }
-
         cb(null, res.count);
     }, function (err) {
         cb(err, undefined);
@@ -159,9 +154,9 @@ Peer.prototype.list = function (options, cb) {
     });
 };
 
-Peer.prototype.state = function (ip, port, state, timeout, cb) {
+Peer.prototype.state = function (pip, port, state, timeout, cb) {
     var exist = library.config.peers.list.find(function (peer) {
-        return peer.ip == ip.fromLong(ip) && pper.port == port;
+        return peer.ip == ip.fromLong(pip) && pper.port == port;
     });
     if (exist != undefined) return cb && cb("Peer in config peer list");
     if (state == 0) {
@@ -175,7 +170,7 @@ Peer.prototype.state = function (ip, port, state, timeout, cb) {
         bind: {
             state: state,
             clock: clock,
-            ip: ip,
+            ip: pip,
             port: port
         }
     }).then(function (data) {
@@ -185,15 +180,15 @@ Peer.prototype.state = function (ip, port, state, timeout, cb) {
     });
 };
 
-Peer.prototype.remove = function (ip, port, cb) {
+Peer.prototype.remove = function (pip, port, cb) {
     var exist = library.config.peers.list.find(function (peer) {
-        return peer.ip == ip.fromLong(ip) && pper.port == port;
+        return peer.ip == ip.fromLong(pip) && peer.port == port;
     });
     if (exist != undefined) return cb && cb("Peer in config peer list");
     library.dbClient.query("DELETE peers WHERE ip = $ip AND port = $port", {
         type: Sequelize.QueryTypes.DELETE,
         bind: {
-            ip: ip,
+            ip: pip,
             port: port
         }
     }).then(function (data) {
@@ -245,7 +240,7 @@ Peer.prototype.update = function (peer, cb) {
             library.dbClient.query("INSERT IGNORE INTO peers (ip, port, state, os, sharePort, version) VALUES ($ip, $port, $state, $os, $sharePort, $version)", {
                 type: Sequelize.QueryTypes.DELETE,
                 bind: {
-                    id: options.id,
+                    ip: options.ip,
                     port: options.port,
                     state: 1,
                     os: options.os,
@@ -304,11 +299,12 @@ Peer.prototype.onBlockchainReady = function () {
         }).then((data) => {
             cb();
         }, (err) => {
-            library.log.Error("peers.js", "Error", err.toString());
+            library.log.Error("Peer onBlockchainReady", "Error", err.toString());
+            cb();
         });
     }, (err) => {
         if(err) {
-            library.log.Error("peers.js", "Error", err.toString());
+            library.log.Error("Peer onBlockchainReady", "Error", err.toString());
         }
 
         privated.count((err, count) => {
@@ -317,9 +313,9 @@ Peer.prototype.onBlockchainReady = function () {
                     err && library.log.Error("updatePeerList", "Error", err.toString());
                     library.notification_center.notify('peerReady');
                 });
-                library.log.Info("Peers ready, stored");
+                library.log.Info("Peer onBlockchainReady", "stored", count);
             } else {
-                library.log.Info("Peers is empty");
+                library.log.Info("Peer onBlockchainReady list is empty");
             }
         });
     });
