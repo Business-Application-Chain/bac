@@ -27,11 +27,15 @@ var log = new Log15({echo: appConfig.echoLogLevel, recLevel: appConfig.outputLog
 var params = {
     "db": appConfig.db.uri,
     "modules": {
+        "accounts": "../src/modules/accounts.js",
+        "blocks": "../src/modules/blocks.js",
+        "crypto": "../src/modules/crypto.js",
         "kernel": "../src/modules/kernel.js",
         "loader": "../src/modules/loader.js",
         "peer": "../src/modules/peer.js",
         "server": "../src/modules/server.js",
-        "system": "../src/modules/system.js"
+        "system": "../src/modules/system.js",
+        "transactions": "../src/modules/transactions.js",
     }
 }
 

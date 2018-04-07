@@ -53,11 +53,11 @@ privated.attachApi = function () {
 
         var peer = {
             ip: ip.toLong(peerIp),
-            port: headers.port,
+            port: req.headers.port,
             state: 2,
-            os: headers.os,
-            sharePort: Number(headers['share-port']),
-            version: headers.version
+            os: req.headers.os,
+            sharePort: Number(req.headers['share-port']),
+            version: req.headers.version
         };
 
         if (req.body && req.body.dappId) {
@@ -155,7 +155,7 @@ Kernel.prototype.getFromPeer = function (peer, options, cb) {
 
     return request(req, function (err, response, body) {
         if (err || response.statusCode != 200) {
-            library.log.Debug("Request", "Error", err.toString());
+            library.log.Debug("Request", "Error", err, "body", response.body);
 
             if (peer) {
                 if (err && (err.code == 'ETIMEOUT' || err.code == 'ESOCKETTIMEOUT' || err.code == 'ECONNREFUSED')) {

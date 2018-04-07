@@ -148,6 +148,15 @@ Peer.prototype.list = function (options, cb) {
         type: Sequelize.QueryTypes.SELECT,
         bind: options
     }).then(function (rows) {
+        for (var i = 0; i < rows.length; i++) {
+            var row = rows[i];
+            row.ip = String(row.ip);
+            row.port = Number(row.port);
+            row.state = Number(row.state);
+            row.os = String(row.os);
+            row.sharePort = Number(row.sharePort);
+            row.version = String(row.version);
+        }
         cb(null, rows);
     }, function (err) {
         cb(err, undefined);
@@ -156,11 +165,11 @@ Peer.prototype.list = function (options, cb) {
 
 Peer.prototype.state = function (pip, port, state, timeout, cb) {
     var exist = library.config.peers.list.find(function (peer) {
-        return peer.ip == ip.fromLong(pip) && pper.port == port;
+        return peer.ip == ip.fromLong(pip) && peer.port == port;
     });
     if (exist != undefined) return cb && cb("Peer in config peer list");
     if (state == 0) {
-        var clock = (timeoue || 1) * 1000;
+        var clock = (timeout || 1) * 1000;
         clock = Date.now() + clock;
     } else {
         clock = null;

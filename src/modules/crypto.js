@@ -4,12 +4,16 @@ var async = require('async');
 var path = require('path');
 var fs = require('fs');
 var sandboxHelper = require('../utils/sandbox.js');
+var crypto = require('crypto');
+var ed = require('ed25519');
 
 // private objects
 var modules_loaded, library, self, privated = {}, shared = {};
 
+privated.loaded = false;
+
 // constructor
-function Blocks(cb, scope) {
+function Crypto(cb, scope) {
     library = scope;
     self = this;
     self.__private = privated;
@@ -18,20 +22,18 @@ function Blocks(cb, scope) {
 }
 
 // public methods
-Blocks.prototype.sandboxApi = function (call, args, cb) {
+Crypto.prototype.sandboxApi = function (call, args, cb) {
     sandboxHelper.callMethod(shared, call, args, cb);
 };
 
-Blocks.prototype.callApi = function (call, args, cb) {
-    var callArgs = [args, cb];
-    // execute
-    shared[call].apply(null, callArgs);
-};
-
-// Events
-Blocks.prototype.onInit = function (scope) {
+// events
+Crypto.prototype.onInit = function (scope) {
     modules_loaded = scope && scope != undefined ? true : false;
 };
 
+Crypto.prototype.onBlockchainReady = function () {
+    privated.loaded = true;
+};
+
 // export
-module.exports = Blocks;
+module.exports = Crypto;
