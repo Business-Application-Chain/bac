@@ -95,3 +95,6 @@ console.log(buf1.toString());
 
 var buf2 = buf1.slice(0, 3);
 console.log(buf2.toString());
+
+var arr = [0,5,1,10,2,4];
+console.log(arr.reverse());

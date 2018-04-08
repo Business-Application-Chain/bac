@@ -19,7 +19,7 @@ function Account(scope, cb) {
         {
             name: 'master_pub',
             type: 'String',
-            length: 66,
+            length: 64,
             filter: {
                 type: 'string'
             },
@@ -86,7 +86,7 @@ function Account(scope, cb) {
         {
             name: 'second_pub',
             type: 'String',
-            length: 66,
+            length: 64,
             filter: {
                 type: 'string'
             },
@@ -373,7 +373,7 @@ Account.prototype.createTables = function (cb) {
             {
                 name: 'dependentId',
                 type: 'String',
-                length: 66,
+                length: 64,
                 not_null: true
             }
         ],
@@ -401,7 +401,7 @@ Account.prototype.createTables = function (cb) {
             {
                 name: 'dependentId',
                 type: 'String',
-                length: 66,
+                length: 64,
                 not_null: true
             }
         ],
@@ -429,7 +429,7 @@ Account.prototype.createTables = function (cb) {
             {
                 name: 'dependentId',
                 type: 'String',
-                length: 66,
+                length: 64,
                 not_null: true
             }
         ],
@@ -457,7 +457,7 @@ Account.prototype.createTables = function (cb) {
             {
                 name: 'dependentId',
                 type: 'String',
-                length: 66,
+                length: 64,
                 not_null: true
             }
         ],
@@ -488,7 +488,7 @@ Account.prototype.createTables = function (cb) {
             {
                 name: 'delegate',
                 type: 'String',
-                length: 66
+                length: 64
             },
             {
                 name: 'blockId',
