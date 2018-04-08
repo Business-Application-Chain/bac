@@ -51,24 +51,57 @@ privated.attachApi = function () {
         req.headers.port = parseInt(req.headers.port);
         req.headers['share-port'] = parseInt(req.headers['share-port']);
 
-        var peer = {
-            ip: ip.toLong(peerIp),
-            port: req.headers.port,
-            state: 2,
-            os: req.headers.os,
-            sharePort: Number(req.headers['share-port']),
-            version: req.headers.version
-        };
+        req.sanitize(req.headers, {
+            type: 'object',
+            properties: {
+                'port': {
+                    type: 'integer',
+                    minimum: 1,
+                    maximum: 65535
+                },
+                'os': {
+                    type: 'string',
+                    maxLength: 64
+                },
+                'share-port': {
+                    type: 'integer',
+                    minimum: 0,
+                    maximum: 1
+                },
+                'version': {
+                    type: 'string',
+                    maxLength: 11
+                }
+            },
+            required: ['port', 'share-port', 'version']
+        }, function (err, report, headers) {
+            if (err) {
+                console.log(err.toString());
+                return next(err);
+            }
+            if (!report.isValid) {
+                return res.status(500).send({status: false, error: report});
+            }
 
-        if (req.body && req.body.dappId) {
-            peer.dappId = req.body.dappId;
-        }
+            var peer = {
+                ip: ip.toLong(peerIp),
+                port: headers.port,
+                state: 2,
+                os: headers.os,
+                sharePort: Number(headers['share-port']),
+                version: headers.version
+            };
 
-        if (peer.port > 0 && peer.port <= 65535 && peer.version == library.config.version) {
-            library.modules.peer.update(peer);
-        }
+            if (req.body && req.body.dappId) {
+                peer.dappId = req.body.dappId;
+            }
 
-        next();
+            if (peer.port > 0 && peer.port <= 65535 && peer.version == library.config.version) {
+                library.modules.peer.update(peer);
+            }
+
+            next();
+        });
     });
 
 
