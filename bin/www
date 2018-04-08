@@ -30,10 +30,13 @@ var params = {
         "accounts": "../src/modules/accounts.js",
         "blocks": "../src/modules/blocks.js",
         "crypto": "../src/modules/crypto.js",
+        "delegates": "../src/modules/delegates.js",
         "kernel": "../src/modules/kernel.js",
         "loader": "../src/modules/loader.js",
+        "multisignatures": "../src/modules/multisignatures.js",
         "peer": "../src/modules/peer.js",
         "server": "../src/modules/server.js",
+        "signatures": "../src/modules/signatures.js",
         "system": "../src/modules/system.js",
         "transactions": "../src/modules/transactions.js",
     }
@@ -198,6 +201,7 @@ d.run(function () {
         }],
 
         network: ['dbWorkQueue', 'mainWorkQueue', 'balancesWorkQueue', 'dbClient', function (scope, cb) {
+            app.use(require('../src/utils/zscheme-express.js')(scope.schema));
             var server = http.createServer(app);
             server.on('error', onError);
             server.listen(scope.config.port, scope.config.address, function (err) {
