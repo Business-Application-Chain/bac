@@ -18,6 +18,8 @@ var WorkQueue = require('../src/utils/workqueue.js');
 var Sequelize = require('sequelize');
 var z_schema = require('z-schema');
 
+var Sequence = require('../src/utils/sequence.js');
+
 process.stdin.resume();
 
 var versionBuild = fs.readFileSync(path.join(__dirname, '../build'), 'utf8');
@@ -197,6 +199,15 @@ d.run(function () {
             cb(null, sequelize);
         }],
 
+        balancesSequence: ["logger", function (scope, cb) {
+            var sequence = new Sequence({
+                onWarning: function (current, limit) {
+                    scope.logger.warn("Balance queue", current)
+                }
+            });
+            cb(null, sequence);
+        }],
+
         network: ['dbWorkQueue', 'mainWorkQueue', 'balancesWorkQueue', 'dbClient', function (scope, cb) {
             var server = http.createServer(app);
             server.on('error', onError);
@@ -257,7 +268,7 @@ d.run(function () {
             }, cb);
         }],
 
-        modules: ['network', 'notification_center', 'base', function (scope, cb) {
+        modules: ['network', 'notification_center', 'base', 'balancesSequence', function (scope, cb) {
             var __modules = {};
             Object.keys(params.modules).forEach(function (module_name) {
                 __modules[module_name] = function (cb) {

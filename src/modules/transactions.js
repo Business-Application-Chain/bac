@@ -12,7 +12,7 @@ privated.unconfirmedTransactions = [];
 privated.unconfirmedTransactionsIdIndex = {};
 privated.doubleSpendingTransactions = {};
 
-function Transaction_0() {
+function Transaction() {
 
     this.calculateFee = function (txObj, sender) {
         return library.base.block.calculateFee();

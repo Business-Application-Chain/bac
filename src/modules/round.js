@@ -4,6 +4,8 @@ var sandboxHelper = require('../utils/sandbox.js');
 
 var modules_loaded, library, self, privated = {}, shared = {};
 
+privated.loaded = false;
+
 privated.feesByRound = {};
 privated.rewardsByRound = {};
 privated.delegatesByRound = {};
@@ -69,4 +71,13 @@ Round.prototype.onBind = function (modules_loaded) {
 
 Round.prototype.onBlockchainReady = function () {
     var round = self.calc(library.block.getLastBlock().height);
+    library.dbClient.query()
 };
+
+Round.prototype.cleanup = function (cb) {
+    privated.loaded = false;
+    cb();
+};
+
+// Export
+module.exports = Round;
