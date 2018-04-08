@@ -199,14 +199,14 @@ d.run(function () {
             cb(null, sequelize);
         }],
 
-        balancesSequence: ["logger", function (scope, cb) {
-            var sequence = new Sequence({
-                onWarning: function (current, limit) {
-                    scope.logger.warn("Balance queue", current)
-                }
-            });
-            cb(null, sequence);
-        }],
+        // balancesSequence: ["logger", function (scope, cb) {
+        //     var sequence = new Sequence({
+        //         onWarning: function (current, limit) {
+        //             scope.logger.warn("Balance queue", current)
+        //         }
+        //     });
+        //     cb(null, sequence);
+        // }],
 
         network: ['dbWorkQueue', 'mainWorkQueue', 'balancesWorkQueue', 'dbClient', function (scope, cb) {
             var server = http.createServer(app);
@@ -268,7 +268,7 @@ d.run(function () {
             }, cb);
         }],
 
-        modules: ['network', 'notification_center', 'base', 'balancesSequence', function (scope, cb) {
+        modules: ['network', 'notification_center', 'base', function (scope, cb) {
             var __modules = {};
             Object.keys(params.modules).forEach(function (module_name) {
                 __modules[module_name] = function (cb) {

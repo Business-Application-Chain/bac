@@ -127,7 +127,7 @@ function Transactions(cb, scope) {
     self = this;
     self.__private = privated;
 
-    library.base.transaction.attachAssetType(TransactionTypes.SEND, new Transaction_0());
+    library.base.transaction.attachAssetType(TransactionTypes.SEND, new Transaction());
 
     setImmediate(cb, null, self);
 }

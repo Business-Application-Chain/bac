@@ -133,13 +133,6 @@ Kernel.prototype.getFromPeer = function (peer, options, cb) {
         url = options.url;
     }
 
-    // var req = {
-    //     url: 'http://' + ip.fromLong(peer.ip) + ':' + peer.port + '/rpc',
-    //     method: 'POST',
-    //     json: true,
-    //     headers: _.extend({}, privated.headers, options.headers),
-    //     timeout: library.config.peers.optional.timeout
-    // };
     var req = {
         url: 'http://' + ip.fromLong(peer.ip) + ':' + peer.port + url,
         method: options.method,
@@ -155,7 +148,7 @@ Kernel.prototype.getFromPeer = function (peer, options, cb) {
 
     return request(req, function (err, response, body) {
         if (err || response.statusCode != 200) {
-            library.log.Debug("Request", "Error", err, "body", response.body);
+            library.log.Debug("Request", "Error", err);
 
             if (peer) {
                 if (err && (err.code == 'ETIMEOUT' || err.code == 'ESOCKETTIMEOUT' || err.code == 'ECONNREFUSED')) {

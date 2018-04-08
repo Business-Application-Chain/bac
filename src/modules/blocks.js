@@ -5,7 +5,7 @@ var path = require('path');
 var fs = require('fs');
 var sandboxHelper = require('../utils/sandbox.js');
 var constants = require('../utils/constants.js');
-var	blockStatus = require("../helpers/blockStatus.js");
+var	blockStatus = require("../utils/blockStatus.js");
 
 // private objects
 var modules_loaded, library, self, privated = {}, shared = {};

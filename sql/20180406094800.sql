@@ -187,3 +187,29 @@ CREATE TABLE `votes` (
   `votes` text
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+
+
+--
+-- Table structure for table `blocks`
+--
+DROP TABLE IF EXISTS `blocks`;
+CREATE TABLE `blocks` (
+  `id` varchar(20) NOT NULL,
+  `version` int(11) NOT NULL,
+  `timestamp` int(11) NOT NULL,
+  `height` int(11) NOT NULL,
+  `previousBlock` varchar(20) DEFAULT NULL,
+  `numberOfTransactions` int(11) NOT NULL,
+  `totalAmount` bigint(20) NOT NULL,
+  `totalFee` bigint(20) NOT NULL,
+  `reward` bigint(20) NOT NULL,
+  `payloadLength` int(11) NOT NULL,
+  `payloadHash` binary(32) NOT NULL,
+  `generatorPublicKey` binary(32) NOT NULL,
+  `blockSignature` binary(64) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `previousBlock` (`previousBlock`),
+  CONSTRAINT `blocks_ibfk_1` FOREIGN KEY (`previousBlock`) REFERENCES `blocks` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+SET FOREIGN_KEY_CHECKS = 1;
