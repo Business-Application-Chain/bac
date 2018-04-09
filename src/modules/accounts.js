@@ -1,6 +1,5 @@
-var util = require('util');
-var extend = require('extend');
 var async = require('async');
+var constants = require('../utils/constants.js');
 var path = require('path');
 var fs = require('fs');
 var sandboxHelper = require('../utils/sandbox.js');
@@ -16,61 +15,6 @@ var bip39 = require('bip39');
 
 // private objects
 var modules_loaded, library, self, privated = {}, shared = {};
-
-function Vote() {
-
-    this.calculateFee = function (txObj, sender) {
-        return 1 * constants.fixedPoint;
-    };
-
-    this.create = function (data, txObj) {
-
-    };
-
-    this.objectNormalize = function (txObj) {
-
-    };
-
-    this.getBytes = function (txObj) {
-
-    };
-
-    this.ready = function (txObj, sender) {
-
-    };
-
-    this.process = function (txObj, sender, cb) {
-
-    };
-
-    this.verify = function (txObj, sender, cb) {
-
-    };
-
-    this.apply = function (txObj, blockObj, sender, cb) {
-
-    };
-
-    this.undo = function (txObj, blockObj, sender, cb) {
-
-    };
-
-    this.applyUnconfirmed = function (txObj, sender, cb) {
-
-    };
-
-    this.undoUnconfirmed = function (txObj, sender, cb) {
-
-    };
-
-    this.load = function (raw) {
-
-    };
-
-    this.save = function (txObj, cb) {
-
-    };
-}
 
 function Username() {
 
@@ -133,7 +77,6 @@ function Accounts(cb, scope) {
     self = this;
     self.__private = privated;
 
-    library.base.transaction.attachAssetType(TransactionTypes.VOTE, new Vote());
     library.base.transaction.attachAssetType(TransactionTypes.USERNAME, new Username());
 
     setImmediate(cb, null, self);

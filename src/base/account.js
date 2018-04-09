@@ -667,7 +667,7 @@ Account.prototype.insertOrUpdate = function (master_address, fields, cb) {
     var self = this;
 
     async.eachSeries(sqles, function (sql, cb) {
-        self.scope.dbClient.query(sql.query.replace('or', ''), {
+        self.scope.dbClient.query(sql.query.replace("or", ""), {
             bind: sql.values
         }).then(function (data) {
             cb(null, data);

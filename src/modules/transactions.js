@@ -1,6 +1,5 @@
-var util = require('util');
-var extend = require('extend');
 var async = require('async');
+var constants = require('../utils/constants.js');
 var path = require('path');
 var fs = require('fs');
 var sandboxHelper = require('../utils/sandbox.js');
@@ -193,24 +192,24 @@ privated.list = function (filter, cb) {
         return cb("Invalid limit. Maximum is 100");
     }
 
-    this.scope.dbClient.query('SELECT COUNT(t.id) AS count ' +
-        'FROM transactions t ' +
-        'INNER JOIN blocks b on t.blockId = b.id ' +
-        (fields_or.length || owner ? 'WHERE ' : '') + ' ' +
-        (fields_or.length ? '(' + fields_or.join(' or ') + ') ' : '') + (fields_or.length && owner ? ' AND ' + owner : owner), {
+    this.scope.dbClient.query("SELECT COUNT(t.id) AS count " +
+        "FROM transactions t " +
+        "INNER JOIN blocks b on t.blockId = b.id " +
+        (fields_or.length || owner ? 'WHERE ' : "") + " " +
+        (fields_or.length ? "(" + fields_or.join(" or ") + ") " : "") + (fields_or.length && owner ? " AND " + owner : owner), {
         type: Sequelize.QueryTypes.SELECT,
         bind: fields
     }).then(function (rows) {
         var count = rows.length ? rows[0].count : 0;
 
-        this.scope.dbClient.query('t.id AS t_id, b.height AS b_height, t.blockId AS t_blockId, t.type AS t_type, t.timestamp AS t_timestamp, lower(t.senderPublicKey) AS t_senderPublicKey, t.senderId AS t_senderId, t.recipientId AS t_recipientId, t.senderUsername AS t_senderUsername, t.recipientUsername AS t_recipientUsername, t.amount AS t_amount, t.fee AS t_fee, lower(t.signature) AS t_signature, lower(t.signSignature) AS t_signSignature, (SELECT MAX(height) + 1 FROM blocks) AS t_confirmations ' +
-            'FROM transactions t ' +
-            'INNER JOIN blocks b on t.blockId = b.id ' +
-            (fields_or.length || owner ? 'WHERE ' : '') + ' ' +
-            (fields_or.length ? '(' + fields_or.join(' or ') + ') ' : '') + (fields_or.length && owner ? ' AND ' + owner : owner) + ' ' +
-            (filter.orderBy ? 'ORDER BY ' + sortBy + ' ' + sortMethod : '') + ' ' +
-            (filter.limit ? 'LIMIT $limit' : '') + ' ' +
-            (filter.offset ? 'OFFSET $offset' : ''), {
+        this.scope.dbClient.query("t.id AS t_id, b.height AS b_height, t.blockId AS t_blockId, t.type AS t_type, t.timestamp AS t_timestamp, lower(t.senderPublicKey) AS t_senderPublicKey, t.senderId AS t_senderId, t.recipientId AS t_recipientId, t.senderUsername AS t_senderUsername, t.recipientUsername AS t_recipientUsername, t.amount AS t_amount, t.fee AS t_fee, lower(t.signature) AS t_signature, lower(t.signSignature) AS t_signSignature, (SELECT MAX(height) + 1 FROM blocks) AS t_confirmations " +
+            "FROM transactions t " +
+            "INNER JOIN blocks b on t.blockId = b.id " +
+            (fields_or.length || owner ? "WHERE " : "") + " " +
+            (fields_or.length ? "(" + fields_or.join(" or ") + ") " : "") + (fields_or.length && owner ? " AND " + owner : owner) + " " +
+            (filter.orderBy ? "ORDER BY " + sortBy + " " + sortMethod : "") + " " +
+            (filter.limit ? "LIMIT $limit" : "") + " " +
+            (filter.offset ? "OFFSET $offset" : ""), {
             type: Sequelize.QueryTypes.SELECT,
             bind: fields
         }).then(function (rows) {

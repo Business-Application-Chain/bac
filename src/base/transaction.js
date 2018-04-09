@@ -321,7 +321,7 @@ Transaction.prototype.process = function (txObj, sender, requester, cb) {
             return setImmediate(cb, err);
         }
 
-        this.scope.dbClient.query('SELECT COUNT(id) AS count FROM transactions WHERE id = $id', {
+        this.scope.dbClient.query("SELECT COUNT(id) AS count FROM transactions WHERE id = $id", {
             type: Sequelize.QueryTypes.SELECT,
             bind: {
                 id: txObj.id
@@ -740,6 +740,7 @@ Transaction.prototype.save = function (txObj, cb) {
     // }
 
     this.scope.dbClient.query("INSERT INTO transactions (id, blockId, type, timestamp, senderPublicKey, requesterPublicKey, senderId, recipientId, senderUsername, recipientUsername, amount, fee, signature, signSignature, signatures) VALUES ($id, $blockId, $type, $timestamp, $senderPublicKey, $requesterPublicKey, $senderId, $recipientId, $senderUsername, $recipientUsername, $amount, $fee, $signature, $signSignature, $signatures)", {
+        type: Sequelize.QueryTypes.INSERT,
         bind: {
             id: txObj.id,
             blockId: txObj.blockId,

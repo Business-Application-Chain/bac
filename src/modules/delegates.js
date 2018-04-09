@@ -1,67 +1,11 @@
-var util = require('util');
-var extend = require('extend');
 var async = require('async');
+var constants = require('../utils/constants.js');
 var path = require('path');
 var fs = require('fs');
 var sandboxHelper = require('../utils/sandbox.js');
 
 // private objects
 var modules_loaded, library, self, privated = {}, shared = {};
-
-function Delegate() {
-
-    this.calculateFee = function (txObj, sender) {
-
-    };
-
-    this.create = function (data, txObj) {
-
-    };
-
-    this.objectNormalize = function (txObj) {
-
-    };
-
-    this.getBytes = function (txObj) {
-
-    };
-
-    this.ready = function (txObj, sender) {
-
-    };
-
-    this.process = function (txObj, sender, cb) {
-
-    };
-
-    this.verify = function (txObj, sender, cb) {
-
-    };
-
-    this.apply = function (txObj, blockObj, sender, cb) {
-
-    };
-
-    this.undo = function (txObj, blockObj, sender, cb) {
-
-    };
-
-    this.applyUnconfirmed = function (txObj, sender, cb) {
-
-    };
-
-    this.undoUnconfirmed = function (txObj, sender, cb) {
-
-    };
-
-    this.load = function (raw) {
-
-    };
-
-    this.save = function (txObj, cb) {
-
-    };
-}
 
 // constructor
 function Delegates(cb, scope) {
@@ -81,6 +25,11 @@ Delegates.prototype.callApi = function (call, args, cb) {
     var callArgs = [args, cb];
     // execute
     shared[call].apply(null, callArgs);
+};
+
+Delegates.prototype.generateDelegateList = function (height, cb) {
+
+    cb(null, []);
 };
 
 // Events

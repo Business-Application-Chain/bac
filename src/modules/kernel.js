@@ -1,9 +1,9 @@
-var util = require('util');
-var extend = require('extend');
 var async = require('async');
+var constants = require('../utils/constants.js');
 var path = require('path');
 var fs = require('fs');
 var sandboxHelper = require('../utils/sandbox.js');
+var util = require('util');
 var ip = require('ip');
 var request = require('request');
 var _ = require('underscore');
@@ -188,7 +188,7 @@ Kernel.prototype.getFromPeer = function (peer, options, cb) {
 
     return request(req, function (err, response, body) {
         if (err || response.statusCode != 200) {
-            library.log.Debug("Request", "Error", err, "body", response.body);
+            library.log.Debug("Request", "Error", err, err.toString());
 
             if (peer) {
                 if (err && (err.code == 'ETIMEOUT' || err.code == 'ESOCKETTIMEOUT' || err.code == 'ECONNREFUSED')) {

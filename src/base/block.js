@@ -10,7 +10,7 @@ var slots = require('../utils/slots.js');
 var ByteBuffer = require('bytebuffer');
 var blockStatus = require('../utils/blockStatus.js');
 
-var privated = {};
+var self, privated = {};
 
 privated.blockStatus = new blockStatus();
 
@@ -28,6 +28,7 @@ privated.getAddressByPublicKey = function (publicKey) {
 // constructor
 function Block(scope, cb) {
     this.scope = scope;
+    self = this;
     genesisblock = this.scope.genesisblock;
 
     setImmediate(cb, null, this);
@@ -190,7 +191,7 @@ Block.prototype.getHash = function (blockObj) {
 
 Block.prototype.getBytes = function (blockObj, skipSignature, skipSecondSignature) {
     try {
-        var bb = new ByteBuffer(4 + 4 + 8 + 4 + 8 + 8 + 8 + 4 + 32 + 32 + 64, true);
+        var bb = new ByteBuffer(4 + 4 + 8 + 4 + 4 + 8 + 8 + 4 + 4 + 4 + 32 + 32 + 64/*4 + 4 + 8 + 4 + 8 + 8 + 8 + 4 + 32 + 32 + 64*/, true);
         // 4:version
         // 4:timestamp
         // 8:previousBlock
@@ -202,8 +203,8 @@ Block.prototype.getBytes = function (blockObj, skipSignature, skipSecondSignatur
         // 32:payloadHash
         // 32:generatorPublicKey
         // 64:blockSignature
-        bb.writeByte(txObj.type);
-        bb.writeInt(txObj.timestamp);
+        bb.writeByte(blockObj.version);
+        bb.writeInt(blockObj.timestamp);
 
         if (blockObj.previousBlock) {
             var pb = bignum(blockObj.previousBlock).toBuffer({size: 8});
@@ -316,23 +317,29 @@ Block.prototype.save = function (blockObj, cb) {
     //     return cb(e.toString())
     // }
 
-    this.scope.dbClient.query("INSERT INTO blocks (id, version, timestamp, height, previousBlock, numberOfTransactions, totalAmount, totalFee, reward, payloadLength, payloadHash, generatorPublicKey, blockSignature) VALUES ($id, $version, $timestamp, $height, $previousBlock, $numberOfTransactions, $totalAmount, $totalFee, $reward, $payloadLength, $payloadHash, $generatorPublicKey, $blockSignature)", {
-        bind: {
-            id: blockObj.id,
-            version: blockObj.version,
-            timestamp: blockObj.timestamp,
-            height: blockObj.height,
-            previousBlock: blockObj.previousBlock,
-            numberOfTransactions: blockObj.numberOfTransactions,
-            totalAmount: blockObj.totalAmount,
-            totalFee: blockObj.totalFee,
-            reward: blockObj.reward || 0,
-            payloadLength: blockObj.payloadLength,
-            payloadHash: blockObj.payloadHash,
-            generatorPublicKey: blockObj.generatorPublicKey,
-            blockSignature: blockObj.blockSignature
+    self.verifySignature(blockObj, function (err) {
+        if (err) {
+            return cb(err);
         }
-    }, cb);
+
+        self.scope.dbClient.query("INSERT INTO blocks (id, version, timestamp, height, previousBlock, numberOfTransactions, totalAmount, totalFee, reward, payloadLength, payloadHash, generatorPublicKey, blockSignature) VALUES ($id, $version, $timestamp, $height, $previousBlock, $numberOfTransactions, $totalAmount, $totalFee, $reward, $payloadLength, $payloadHash, $generatorPublicKey, $blockSignature)", {
+            bind: {
+                id: blockObj.id,
+                version: blockObj.version,
+                timestamp: blockObj.timestamp,
+                height: blockObj.height,
+                previousBlock: blockObj.previousBlock,
+                numberOfTransactions: blockObj.numberOfTransactions,
+                totalAmount: blockObj.totalAmount,
+                totalFee: blockObj.totalFee,
+                reward: blockObj.reward || 0,
+                payloadLength: blockObj.payloadLength,
+                payloadHash: blockObj.payloadHash,
+                generatorPublicKey: blockObj.generatorPublicKey,
+                blockSignature: blockObj.blockSignature
+            }
+        }, cb);
+    });
 };
 
 // export

@@ -98,3 +98,10 @@ console.log(buf2.toString());
 
 var arr = [0,5,1,10,2,4];
 console.log(arr.reverse());
+
+var height = 96462;
+var delegates = 101;
+console.log(Math.floor(96462 / delegates) + (96462 % delegates > 0 ? 1 : 0));
+console.log(Math.floor(96463 / delegates) + (96463 % delegates > 0 ? 1 : 0));
+console.log(Math.floor(96464 / delegates) + (96464 % delegates > 0 ? 1 : 0));
+console.log(Math.floor(96465 / delegates) + (96465 % delegates > 0 ? 1 : 0));
