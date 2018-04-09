@@ -1,0 +1,17 @@
+{
+  "server": {
+    "port": 9000,
+    "address": "192.168.18.101",
+    "version": "0.1.3",
+    "fileLogLevel": "log",
+    "consoleLogLevel": "log",
+    "sharePort": true
+  },
+  "mocha": {
+    "peers": {
+      "account": "F3DP835EBuZMAhiuYn2AzhJh1lz8glLolghCMD4X8lRh5v2GlcBWws7plIDUuPjf3GUTOnyYEfXQx7cH",
+      "address": "2334212999465599568C",
+      "publicKey": "631b91fa537f74e23addccd30555fbc7729ea267c7e0517cbf1bfcc46354abc3"
+    }
+  }
+}
