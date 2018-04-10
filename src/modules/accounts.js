@@ -1,6 +1,5 @@
-var util = require('util');
-var extend = require('extend');
 var async = require('async');
+var constants = require('../utils/constants.js');
 var path = require('path');
 var fs = require('fs');
 var sandboxHelper = require('../utils/sandbox.js');
@@ -20,7 +19,7 @@ var modules_loaded, library, self, privated = {}, shared = {};
 function Vote() {
 
     this.calculateFee = function (txObj, sender) {
-        return 1 * constants.fixedPoint;
+        return 100 * constants.fixedPoint;
     };
 
     this.create = function (data, txObj) {

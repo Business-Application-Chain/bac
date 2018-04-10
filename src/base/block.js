@@ -10,7 +10,7 @@ var slots = require('../utils/slots.js');
 var ByteBuffer = require('bytebuffer');
 var blockStatus = require('../utils/blockStatus.js');
 
-var privated = {};
+var self, privated = {};
 
 privated.blockStatus = new blockStatus();
 
@@ -28,6 +28,7 @@ privated.getAddressByPublicKey = function (publicKey) {
 // constructor
 function Block(scope, cb) {
     this.scope = scope;
+    self = this;
     genesisblock = this.scope.genesisblock;
 
     setImmediate(cb, null, this);
@@ -188,7 +189,7 @@ Block.prototype.getHash = function (blockObj) {
     return crypto.createHash('sha256').update(this.getBytes(blockObj)).digest();
 };
 
-Block.prototype.getBytes = function (blockObj, skipSignature, skipSecondSignature) {
+Block.prototype.getBytes = function (blockObj) {
     try {
         var bb = new ByteBuffer(4 + 4 + 8 + 4 + 8 + 8 + 8 + 4 + 32 + 32 + 64, true);
         // 4:version
@@ -202,8 +203,8 @@ Block.prototype.getBytes = function (blockObj, skipSignature, skipSecondSignatur
         // 32:payloadHash
         // 32:generatorPublicKey
         // 64:blockSignature
-        bb.writeByte(txObj.type);
-        bb.writeInt(txObj.timestamp);
+        bb.writeInt(blockObj.version);
+        bb.writeInt(blockObj.timestamp);
 
         if (blockObj.previousBlock) {
             var pb = bignum(blockObj.previousBlock).toBuffer({size: 8});
@@ -271,6 +272,7 @@ Block.prototype.verifySignature = function (blockObj) {
             data2[i] = data1[i];
         }
         var hash = crypto.createHash('sha256').update(data2).digest();
+        console.log(crypto.createHash('sha256').update(data1).digest().toString('hex'));
         var blockSignatureBuffer = new Buffer(blockObj.blockSignature, 'hex');
         var generatorPublicKeyBuffer = new Buffer(blockObj.generatorPublicKey, 'hex');
         var res = ed.Verify(hash, blockSignatureBuffer || ' ', generatorPublicKeyBuffer || ' ');
@@ -307,16 +309,14 @@ Block.prototype.load = function (raw) {
     }
 };
 
-Block.prototype.save = function (blockObj, cb) {
-    // try {
-    //     var payloadHash = new Buffer(block.payloadHash, 'hex');
-    //     var generatorPublicKey = new Buffer(block.generatorPublicKey, 'hex');
-    //     var blockSignature = new Buffer(block.blockSignature, 'hex');
-    // } catch (e) {
-    //     return cb(e.toString())
-    // }
+Block.prototype.save = function (blockObj, t, cb) {
+    if (typeof t == 'function') {
+        cb = t;
+        t = null;
+    }
 
     this.scope.dbClient.query("INSERT INTO blocks (id, version, timestamp, height, previousBlock, numberOfTransactions, totalAmount, totalFee, reward, payloadLength, payloadHash, generatorPublicKey, blockSignature) VALUES ($id, $version, $timestamp, $height, $previousBlock, $numberOfTransactions, $totalAmount, $totalFee, $reward, $payloadLength, $payloadHash, $generatorPublicKey, $blockSignature)", {
+        type: Sequelize.QueryTypes.INSERT,
         bind: {
             id: blockObj.id,
             version: blockObj.version,
@@ -331,8 +331,13 @@ Block.prototype.save = function (blockObj, cb) {
             payloadHash: blockObj.payloadHash,
             generatorPublicKey: blockObj.generatorPublicKey,
             blockSignature: blockObj.blockSignature
-        }
-    }, cb);
+        },
+        transaction: t
+    }).then(function (rows) {
+        cb();
+    }, function (err) {
+        cb(err, undefined);
+    });
 };
 
 // export

@@ -87,14 +87,81 @@
 // console.log(publicKey.length);
 
 
-var buf1 = new Buffer(26);
-for (var i = 0 ; i < 26 ; i++) {
-    buf1[i] = i + 97; // 97 is ASCII a
-}
-console.log(buf1.toString());
+// var buf1 = new Buffer(26);
+// for (var i = 0 ; i < 26 ; i++) {
+//     buf1[i] = i + 97; // 97 is ASCII a
+// }
+// console.log(buf1.toString());
+//
+// var buf2 = buf1.slice(0, 3);
+// console.log(buf2.toString());
+//
+// var arr = [0,5,1,10,2,4];
+// console.log(arr.reverse());
+//
+// var height = 96462;
+// var delegates = 101;
+// console.log(Math.floor(96462 / delegates) + (96462 % delegates > 0 ? 1 : 0));
+// console.log(Math.floor(96463 / delegates) + (96463 % delegates > 0 ? 1 : 0));
+// console.log(Math.floor(96464 / delegates) + (96464 % delegates > 0 ? 1 : 0));
+// console.log(Math.floor(96465 / delegates) + (96465 % delegates > 0 ? 1 : 0));
 
-var buf2 = buf1.slice(0, 3);
-console.log(buf2.toString());
+var Sequelize = require('sequelize');
 
-var arr = [0,5,1,10,2,4];
-console.log(arr.reverse());
+var dbClient = new Sequelize('db_entu', 'root', '123456', {
+    host: '127.0.0.1',
+    dialect: 'mysql',
+    logging: false,
+    pool: {
+        max: 10,
+        min: 0,
+        acquire: 30000,
+        idle: 30000
+    }
+});
+
+var sql = "INSERT INTO blocks (id, version, timestamp, height, previousBlock, numberOfTransactions, totalAmount, totalFee, reward, payloadLength, payloadHash, generatorPublicKey, blockSignature) VALUES ($id, $version, $timestamp, $height, $previousBlock, $numberOfTransactions, $totalAmount, $totalFee, $reward, $payloadLength, $payloadHash, $generatorPublicKey, $blockSignature)";
+
+// dbClient.query("INSERT INTO blocks (id, version) VALUES ('8593810399212843182', 0)", {
+//     type: Sequelize.QueryTypes.INSERT
+// });
+
+var txObj = {
+    "type": 0,
+    "amount": 10000000000000000,
+    "fee": 0,
+    "timestamp": 0,
+    "recipientId": "14837479272589364523L",
+    "senderId": "5231662701023218905L",
+    "senderPublicKey": "b7b46c08c24d0f91df5387f84b068ec67b8bfff8f7f4762631894fce4aff6c75",
+    "signature": "aa413208c32d00b89895049ff21797048fa41c1b2ffc866900ffd97570f8d87e852c87074ed77c6b914f47449ba3f9d6dca99874d9f235ee4c1c83d1d81b6e07",
+    "id": "5534571359943011068"
+};
+txObj.blockId = '8593810399212843182';
+//
+//
+dbClient.query("INSERT INTO transactions (id, blockId, type, timestamp, senderPublicKey, requesterPublicKey, senderId, recipientId, senderUsername, recipientUsername, amount, fee, signature, signSignature, signatures) VALUES ($id, $blockId, $type, $timestamp, $senderPublicKey, $requesterPublicKey, $senderId, $recipientId, $senderUsername, $recipientUsername, $amount, $fee, $signature, $signSignature, $signatures)", {
+    type: Sequelize.QueryTypes.INSERT,
+    bind: {
+        id: txObj.id,
+        blockId: txObj.blockId,
+        type: txObj.type,
+        timestamp: txObj.timestamp,
+        senderPublicKey: txObj.senderPublicKey,
+        requesterPublicKey: txObj.requesterPublicKey ? txObj.requesterPublicKey : null,
+        senderId: txObj.senderId,
+        recipientId: txObj.recipientId || null,
+        senderUsername: txObj.senderUsername || null,
+        recipientUsername: txObj.recipientUsername || null,
+        amount: txObj.amount,
+        fee: txObj.fee,
+        signature: txObj.signature ? txObj.signature : null,
+        signSignature: txObj.signSignature ? txObj.signSignature : null,
+        signatures: txObj.signatures ? txObj.signatures.join(',') : null
+    },
+    transaction: null
+}).then(function (rows) {
+    console.log(rows);
+}, function (err) {
+    console.log(err.toString());
+});

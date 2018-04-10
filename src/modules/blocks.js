@@ -1,31 +1,190 @@
-var util = require('util');
-var extend = require('extend');
 var async = require('async');
+var constants = require('../utils/constants.js');
 var path = require('path');
 var fs = require('fs');
 var sandboxHelper = require('../utils/sandbox.js');
-var constants = require('../utils/constants.js');
-var	blockStatus = require("../utils/blockStatus.js");
+var Sequelize = require('sequelize');
+var util = require('util');
+var crypto = require('crypto');
+var ed = require('ed25519');
+var ByteBuffer = require('bytebuffer');
+var slots = require('../utils/slots.js');
+var TransactionTypes = require('../utils/transaction-types.js');
+var blockStatus = require('../utils/blockStatus.js');
+
+require('array.prototype.findindex'); // Old node fix
 
 // private objects
-var modules_loaded, library, self, privated = {}, shared = {};
+var modules_loaded, library, self, privated = {}, shared = {}, genesisblock = null;
 
+privated.loaded = false;
+privated.isActive = false;
 privated.lastBlock = {};
 privated.blockStatus = new blockStatus();
-
-//block的数据字段
+// @formatter: off
 privated.blocksDataFields = {
-
+    'b_id': String,
+    'b_version': String,
+    'b_timestamp': Number,
+    'b_height': Number,
+    'b_previousBlock': String,
+    'b_numberOfTransactions': String,
+    'b_totalAmount': String,
+    'b_totalFee': String,
+    'b_reward': String,
+    'b_payloadLength': String,
+    'b_payloadHash': String,
+    'b_generatorPublicKey': String,
+    'b_blockSignature': String,
+    't_id': String,
+    't_type': Number,
+    't_timestamp': Number,
+    't_senderPublicKey': String,
+    't_requesterPublicKey': String,
+    't_senderId': String,
+    't_recipientId': String,
+    't_senderUsername': String,
+    't_recipientUsername': String,
+    't_amount': String,
+    't_fee': String,
+    't_signature': String,
+    't_signSignautre': String,
+    't_signatures': String,
+    's_publicKey': String,
+    'd_username': String,
+    'v_votes': String,
+    'u_alias': String,
+    'm_min': Number,
+    'm_lifetime': Number,
+    'm_keysgroup': String,
+    'dapp_name': String,
+    'dapp_description': String,
+    'dapp_tags': String,
+    'dapp_type': Number,
+    'dapp_category': Number,
+    'dapp_git': String,
+    'dapp_icon': String,
+    'dapp_saiAscii': String,
+    'dapp_saiIcon': String,
 };
 
 // constructor
 function Blocks(cb, scope) {
     library = scope;
+    genesisblock = library.genesisblock;
     self = this;
     self.__private = privated;
 
-    setImmediate(cb, null, self);
+    privated.saveGenesisBlock(function (err) {
+        setImmediate(cb, err, self);
+    });
 }
+
+// private methods
+privated.saveGenesisBlock = function (cb) {
+    library.dbClient.query("SELECT id FROM blocks WHERE id = $id", {
+        type: Sequelize.QueryTypes.SELECT,
+        bind: {
+            id: genesisblock.block.id
+        }
+    }).then(function (rows) {
+        var blockId = rows.length && rows[0].id;
+
+        if (!blockId) {
+            privated.saveBlock(genesisblock.block, function (err) {
+                if (err) {
+                    library.log.Error("saveBlock", "Error", err.toString());
+                }
+
+                return cb(err);
+            });
+        } else {
+            return cb();
+        }
+    }, function (err) {
+        cb(err, undefined);
+    });
+};
+
+privated.saveBlock = function (blockObj, cb) {
+    // library.dbClient.transaction(function (t) {
+    //     library.base.block.save(blockObj, t, function (err) {
+    //         if (err) {
+    //             library.log.Error("block.save", "Error", err.toString());
+    //             return cb(err);
+    //         }
+    //         async.eachSeries(blockObj.transactions, function (txObj, cb1) {
+    //             txObj.blockId = blockObj.id;
+    //             library.base.transaction.save(txObj, t, function (err) {
+    //                 if (err) {
+    //                     return cb1(err);
+    //                 }
+    //                 cb1();
+    //             });
+    //         }, function (err) {
+    //             if (err) {
+    //                 return cb(err);
+    //             }
+    //             cb();
+    //         });
+    //     });
+    //     async.eachSeries(blockObj.transactions, function (txObj, cb1) {
+    //         txObj.blockId = blockObj.id;
+    //         library.base.transaction.save(txObj, t, function (err) {
+    //             if (err) {
+    //                 return cb1(err);
+    //             }
+    //             cb1();
+    //         });
+    //     }, function (err) {
+    //         if (err) {
+    //             return cb(err);
+    //         }
+    //         cb();
+    //     });
+    // }).catch(function (err) {
+    //     cb(err);
+    // });
+
+    library.dbClient.transaction(function (t) {
+        return;
+    }).then(function (data) {
+        console.log('come to then')
+        cb();
+    }).catch(function (err) {
+        console.log('come to err' + err.toString())
+        cb(err);
+    });
+};
+
+privated.deleteBlock = function (blockId, cb) {
+
+};
+
+privated.list = function (filter, cb) {
+
+};
+
+privated.getById = function (blockId, cb) {
+
+};
+
+privated.popLastBlock = function (oldLastBlock, cb) {
+
+};
+
+privated.getIdSequence = function (height, cb) {
+
+};
+
+privated.readDbRows = function (rows) {
+
+};
+
+privated.applyTransaction = function (txObj, blockObj, sender, cb) {
+
+};
+
 
 // public methods
 Blocks.prototype.sandboxApi = function (call, args, cb) {
@@ -43,178 +202,12 @@ Blocks.prototype.onInit = function (scope) {
     modules_loaded = scope && scope != undefined ? true : false;
 };
 
-//privated methods
-privated.saveGenesisBlock = function (cb) {
+Blocks.prototype.onReceiveBlock = function (blockObj) {
 
 };
 
-privated.deleteBlock = function (blockId, cb) {
-    library.dbClient.query('DELETE FROM blocks where id = $id', {id: blockId}, function (err, res) {
-        cb(err, res);
-    });
-};
+Blocks.prototype.onEnd = function (cb) {
 
-privated.list = function (filter, cb) {
-
-};
-
-privated.getById = function (id, cb) {
-    library.dbClient.query("select b.id, b.version, b.timestamp, b.height, b.previousBlock, b.numberOfTransactions, b.totalAmount, b.totalFee, b.reward, b.payloadLength,  lower(hex(b.payloadHash)), lower(hex(b.generatorPublicKey)), lower(hex(b.blockSignature)), (select max(height) + 1 from blocks) - b.height " +
-        "from blocks b " +
-        "where b.id = $id", {id: id}, ['b_id', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee', 'b_reward', 'b_payloadLength', 'b_payloadHash', 'b_generatorPublicKey', 'b_blockSignature', 'b_confirmations'], function (err, rows) {
-        if (err || !rows.length) {
-            return cb(err || "Block not found");
-        }
-
-        var block = library.logic.block.dbRead(rows[0]);
-        cb(null, block);
-    });
-};
-
-privated.saveBlock = function (block, cb) {
-    library.dbClient.query('BEGIN TRANSACTION;');
-    self.dbSave(block, (err) => {
-        if(err) {
-            library.dbClient.query('ROLLBACK;', function (rollbackErr) {
-                cb(rollbackErr || err);
-            });
-            return;
-        }
-
-        async.eachSeries(block.transactions, function (transaction, cb) {
-            transaction.blockId = block.id;
-            //交易保存
-            // library.logic.transaction.dbSave(transaction, cb);
-        }, (err) => {
-            if(err) {
-                library.dbClient.query('ROLLBACK;', function (rollbackErr) {
-                    cb(rollbackErr || err);
-                });
-                return;
-            }
-
-            library.dbClient.query('COMMIT;', cb);
-        });
-    });
-};
-
-privated.popLastBlock = function (oldLastBlock, cb) {
-    library.balancesSequence.add(function (cb) {
-        self.loadBlocksPart({id: oldLastBlock.previousBlock}, function (err, previousBlock) {
-            if(err || !previousBlock.length) {
-                return cb(err || 'previousBlock is null');
-            }
-            previousBlock = previousBlock[0];
-
-            async.eachSeries(oldLastBlock.transactions.reverse(), function (transaction, cb) {
-                async.series([
-                    function (cb) {
-                        library.accounts.getAccount({publicKey: transaction.senderPublicKey}, function (err, sender) {
-                            if(err) {
-                                return cb(err);
-                            }
-                            library.transactions.undo(transaction, oldLastBlock, sender, cb);
-                        });
-                    }, function (cb) {
-                        library.transactions.undoUnconfirmed(transaction, cb);
-                    }, function (cb) {
-                        library.transactions.pushHiddenTransaction(transaction);
-                        setImmediate(cb);
-                    }
-                ], cb);
-            }, (err) => {
-                library.round.backwardTick(oldLastBlock, previousBlock, function () {
-                    privated.deleteBlock(oldLastBlock.id, function (err) {
-                        if (err) {
-                            return cb(err);
-                        }
-
-                        cb(null, previousBlock);
-                    });
-                });
-            });
-        })
-    }, cb);
-};
-
-// Public methods
-
-Blocks.prototype.getLastBlock = function () {
-    return privated.lastBlock;
-};
-
-Blocks.prototype.dbRead = function (row) {
-    if(!row.b_id) {
-        return null;
-    } else {
-        var block = {
-            id: row.b_id,
-            version: parseInt(row.b_version),
-            timestamp: parseInt(row.b_timestamp),
-            height: parseInt(row.b_height),
-            previousBlock: row.b_previousBlock,
-            numberOfTransactions: parseInt(row.b_numberOfTransactions),
-            totalAmount: parseInt(row.b_totalAmount),
-            totalFee: parseInt(row.b_totalFee),
-            reward: parseInt(row.b_reward),
-            payloadLength: parseInt(row.b_payloadLength),
-            payloadHash: row.b_payloadHash,
-            generatorPublicKey: row.b_generatorPublicKey,
-            generatorId: privated.getAddressByPublicKey(row.b_generatorPublicKey),
-            blockSignature: row.b_blockSignature,
-            confirmations: row.b_confirmations
-        };
-        block.totalForged = (block.totalFee + block.reward);
-        return block;
-    }
-};
-
-Blocks.prototype.loadBlocksPart = function (filter, cb) {
-    self.loadBlocksData(filter, function (err, rows) {
-        // Notes:
-        // If while loading we encounter an error, for example, an invalid signature on
-        // a block & transaction, then we need to stop loading and remove all blocks
-        // after the last good block. We also need to process all transactions within
-        // the block.
-
-        var blocks = [];
-
-        if (!err) {
-            blocks = privated.readDbRows(rows);
-        }
-
-        cb(err, blocks);
-    });
-};
-
-Blocks.prototype.dbSave = function (block, cb) {
-    try {
-        var payloadHash = new Buffer(block.payloadHash, 'hex'); // 防止block被恶意修改，所以这里选择重新计算
-        var generatorPublicKey = new Buffer(block.generatorPublicKey, 'hex');
-        var blockSignature = new Buffer(block.blockSignature, 'hex');
-    } catch (e) {
-        return cb(e.toString())
-    }
-
-    this.scope.dbClient.query("INSERT INTO blocks(id, version, timestamp, height, previousBlock," +
-        " numberOfTransactions, totalAmount, totalFee, reward, payloadLength, payloadHash," +
-        " generatorPublicKey, blockSignature) VALUES($id, $version, $timestamp, $height," +
-        " $previousBlock, $numberOfTransactions, $totalAmount, $totalFee, $reward, $payloadLength," +
-        " $payloadHash, $generatorPublicKey, $blockSignature)", {
-        id: block.id,
-        version: block.version,
-        timestamp: block.timestamp,
-        height: block.height,
-        previousBlock: block.previousBlock || null,
-        numberOfTransactions: block.numberOfTransactions,
-        totalAmount: block.totalAmount,
-        totalFee: block.totalFee,
-        reward: block.reward || 0,
-        payloadLength: block.payloadLength,
-        payloadHash: payloadHash,
-        generatorPublicKey: generatorPublicKey,
-        blockSignature: blockSignature
-    }, cb);
 };
 
 // export

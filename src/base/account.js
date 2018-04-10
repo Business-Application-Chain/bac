@@ -168,6 +168,24 @@ function Account(scope, cb) {
             conv: String
         },
         {
+            name: 'isDelegate',
+            type: 'Boolean',
+            filter: {
+                type: 'boolean'
+            },
+            conv: Boolean,
+            default: 0
+        },
+        {
+            name: 'isDelegate_unconfirmed',
+            type: 'Boolean',
+            filter: {
+                type: 'boolean'
+            },
+            conv: Boolean,
+            default: 0
+        },
+        {
             name: 'name_exist',
             type: 'Boolean',
             filter: {
@@ -876,7 +894,8 @@ Account.prototype.merge = function (master_address, fields, cb) {
             self.scope.dbClient.transaction(function (t) {
                 async.eachSeries(sqles, function (sql, cb) {
                     self.scope.dbClient.query(sql.query, {
-                        bind: sql.values
+                        bind: sql.values,
+                        transaction: t
                     }).then(function (data) {
                         cb(null, data);
                     }, function (err) {
