@@ -29,18 +29,20 @@ CREATE TABLE `blocks` (
   `version` int(11) NOT NULL,
   `timestamp` int(11) NOT NULL,
   `height` int(11) NOT NULL,
-  `previousBlock` varchar(45) DEFAULT NULL,
+  `previousBlock` varchar(20) DEFAULT NULL,
   `numberOfTransactions` int(11) NOT NULL,
   `totalAmount` bigint(20) NOT NULL,
   `totalFee` bigint(20) NOT NULL,
   `reward` bigint(20) NOT NULL,
   `payloadLength` int(11) NOT NULL,
-  `payloadHash` varchar(32) NOT NULL,
-  `generatorPublicKey` varchar(32) NOT NULL,
-  `blockSignature` varchar(32) NOT NULL,
+  `payloadHash` varchar(64) NOT NULL,
+  `generatorPublicKey` varchar(64) NOT NULL,
+  `blockSignature` varchar(128) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id_UNIQUE` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
 
 --
 -- Table structure for table `dapps`
@@ -145,22 +147,24 @@ DROP TABLE IF EXISTS `transactions`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `transactions` (
   `id` varchar(20) NOT NULL,
-  `blockId` varchar(20) DEFAULT NULL,
-  `type` tinyint(4) DEFAULT NULL,
-  `timestamp` int(11) DEFAULT NULL,
-  `senderPublicKey` varchar(64) DEFAULT NULL,
+  `blockId` varchar(20) NOT NULL,
+  `type` tinyint(4) NOT NULL,
+  `timestamp` int(11) NOT NULL,
+  `senderPublicKey` varchar(64) NOT NULL,
   `requesterPublicKey` varchar(64) DEFAULT NULL,
-  `senderId` varchar(21) DEFAULT NULL,
+  `senderId` varchar(21) NOT NULL,
   `recipientId` varchar(21) DEFAULT NULL,
   `senderUsername` varchar(20) DEFAULT NULL,
   `recipientUsername` varchar(20) DEFAULT NULL,
-  `amount` bigint(20) DEFAULT NULL,
-  `fee` bigint(20) DEFAULT NULL,
-  `signature` varchar(64) DEFAULT NULL,
-  `signSignature` varchar(64) DEFAULT NULL,
+  `amount` bigint(20) NOT NULL,
+  `fee` bigint(20) NOT NULL,
+  `signature` varchar(128) NOT NULL,
+  `signSignature` varchar(128) DEFAULT NULL,
   `signatures` text,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
 
 --
 -- Table structure for table `usernames`

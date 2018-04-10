@@ -189,9 +189,9 @@ Block.prototype.getHash = function (blockObj) {
     return crypto.createHash('sha256').update(this.getBytes(blockObj)).digest();
 };
 
-Block.prototype.getBytes = function (blockObj, skipSignature, skipSecondSignature) {
+Block.prototype.getBytes = function (blockObj) {
     try {
-        var bb = new ByteBuffer(4 + 4 + 8 + 4 + 4 + 8 + 8 + 4 + 4 + 4 + 32 + 32 + 64/*4 + 4 + 8 + 4 + 8 + 8 + 8 + 4 + 32 + 32 + 64*/, true);
+        var bb = new ByteBuffer(4 + 4 + 8 + 4 + 8 + 8 + 8 + 4 + 32 + 32 + 64, true);
         // 4:version
         // 4:timestamp
         // 8:previousBlock
@@ -203,7 +203,7 @@ Block.prototype.getBytes = function (blockObj, skipSignature, skipSecondSignatur
         // 32:payloadHash
         // 32:generatorPublicKey
         // 64:blockSignature
-        bb.writeByte(blockObj.version);
+        bb.writeInt(blockObj.version);
         bb.writeInt(blockObj.timestamp);
 
         if (blockObj.previousBlock) {
@@ -272,6 +272,7 @@ Block.prototype.verifySignature = function (blockObj) {
             data2[i] = data1[i];
         }
         var hash = crypto.createHash('sha256').update(data2).digest();
+        console.log(crypto.createHash('sha256').update(data1).digest().toString('hex'));
         var blockSignatureBuffer = new Buffer(blockObj.blockSignature, 'hex');
         var generatorPublicKeyBuffer = new Buffer(blockObj.generatorPublicKey, 'hex');
         var res = ed.Verify(hash, blockSignatureBuffer || ' ', generatorPublicKeyBuffer || ' ');
@@ -308,37 +309,34 @@ Block.prototype.load = function (raw) {
     }
 };
 
-Block.prototype.save = function (blockObj, cb) {
-    // try {
-    //     var payloadHash = new Buffer(block.payloadHash, 'hex');
-    //     var generatorPublicKey = new Buffer(block.generatorPublicKey, 'hex');
-    //     var blockSignature = new Buffer(block.blockSignature, 'hex');
-    // } catch (e) {
-    //     return cb(e.toString())
-    // }
+Block.prototype.save = function (blockObj, t, cb) {
+    if (typeof t == 'function') {
+        cb = t;
+        t = null;
+    }
 
-    self.verifySignature(blockObj, function (err) {
-        if (err) {
-            return cb(err);
-        }
-
-        self.scope.dbClient.query("INSERT INTO blocks (id, version, timestamp, height, previousBlock, numberOfTransactions, totalAmount, totalFee, reward, payloadLength, payloadHash, generatorPublicKey, blockSignature) VALUES ($id, $version, $timestamp, $height, $previousBlock, $numberOfTransactions, $totalAmount, $totalFee, $reward, $payloadLength, $payloadHash, $generatorPublicKey, $blockSignature)", {
-            bind: {
-                id: blockObj.id,
-                version: blockObj.version,
-                timestamp: blockObj.timestamp,
-                height: blockObj.height,
-                previousBlock: blockObj.previousBlock,
-                numberOfTransactions: blockObj.numberOfTransactions,
-                totalAmount: blockObj.totalAmount,
-                totalFee: blockObj.totalFee,
-                reward: blockObj.reward || 0,
-                payloadLength: blockObj.payloadLength,
-                payloadHash: blockObj.payloadHash,
-                generatorPublicKey: blockObj.generatorPublicKey,
-                blockSignature: blockObj.blockSignature
-            }
-        }, cb);
+    this.scope.dbClient.query("INSERT INTO blocks (id, version, timestamp, height, previousBlock, numberOfTransactions, totalAmount, totalFee, reward, payloadLength, payloadHash, generatorPublicKey, blockSignature) VALUES ($id, $version, $timestamp, $height, $previousBlock, $numberOfTransactions, $totalAmount, $totalFee, $reward, $payloadLength, $payloadHash, $generatorPublicKey, $blockSignature)", {
+        type: Sequelize.QueryTypes.INSERT,
+        bind: {
+            id: blockObj.id,
+            version: blockObj.version,
+            timestamp: blockObj.timestamp,
+            height: blockObj.height,
+            previousBlock: blockObj.previousBlock,
+            numberOfTransactions: blockObj.numberOfTransactions,
+            totalAmount: blockObj.totalAmount,
+            totalFee: blockObj.totalFee,
+            reward: blockObj.reward || 0,
+            payloadLength: blockObj.payloadLength,
+            payloadHash: blockObj.payloadHash,
+            generatorPublicKey: blockObj.generatorPublicKey,
+            blockSignature: blockObj.blockSignature
+        },
+        transaction: t
+    }).then(function (rows) {
+        cb();
+    }, function (err) {
+        cb(err, undefined);
     });
 };
 

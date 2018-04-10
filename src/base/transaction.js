@@ -725,19 +725,15 @@ Transaction.prototype.load = function (raw) {
     }
 };
 
-Transaction.prototype.save = function (txObj, cb) {
+Transaction.prototype.save = function (txObj, t, cb) {
     if (!privated.types[txObj.type]) {
         throw new Error("Unknown transaction type " + txObj.type);
     }
 
-    // try {
-    //     var senderPublicKeyBuffer = new Buffer(txObj.senderPublicKey, 'hex');
-    //     var signatureBuffer = new Buffer(txObj.signature, 'hex');
-    //     var signSignatureBuffer = txObj.signSignature ? new Buffer(txObj.signSignature, 'hex') : null;
-    //     var requesterPublicKeyBuffer = txObj.requesterPublicKey ? new Buffer(txObj.requesterPublicKey, 'hex') : null;
-    // } catch (err) {
-    //     return cb(err.toString());
-    // }
+    if (typeof t == 'function') {
+        cb = t;
+        t = null;
+    }
 
     this.scope.dbClient.query("INSERT INTO transactions (id, blockId, type, timestamp, senderPublicKey, requesterPublicKey, senderId, recipientId, senderUsername, recipientUsername, amount, fee, signature, signSignature, signatures) VALUES ($id, $blockId, $type, $timestamp, $senderPublicKey, $requesterPublicKey, $senderId, $recipientId, $senderUsername, $recipientUsername, $amount, $fee, $signature, $signSignature, $signatures)", {
         type: Sequelize.QueryTypes.INSERT,
@@ -757,7 +753,8 @@ Transaction.prototype.save = function (txObj, cb) {
             signature: txObj.signature ? txObj.signature : null,
             signSignature: txObj.signSignature ? txObj.signSignature : null,
             signatures: txObj.signatures ? txObj.signatures.join(',') : null
-        }
+        },
+        transaction: t
     }).then(function (rows) {
         privated.types[txObj.type].save.call(this, txObj, cb);
     }, function (err) {

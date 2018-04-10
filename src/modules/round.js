@@ -426,24 +426,24 @@ Round.prototype.onInit = function (modules_loaded) {
 };
 
 Round.prototype.onBlockchainReady = function () {
-    var round = self.calc(library.block.getLastBlock().height);
-    var sql = 'SELECT SUM(b.totalFee), GROUP_CONCAT(b.reward), GROUP_CONCAT(lower(b.generatorPublicKey)) FROM blocks b WHERE (SELECT (CAST(b.height / 101 AS INTEGER) + (CASE WHEN b.height % 101 > 0 THEN 1 ELSE 0 END))) = $round';
-
-    library.dbClient.query(sql, {
-        type: Sequelize.QueryTypes.SELECT,
-        bind: {
-            round: round
-        }
-    }).then(function (rows) {
-        if (rows.length) {
-            privated.feesByRound[round] = rows[0].fees;
-            privated.rewardsByRound[round] = rows[0].rewards;
-            privated.delegatesByRound[round] = rows[0].delegates;
-            privated.loaded = true;
-        }
-    }, function (err) {
-        library.log.Error("Round [onBlockchainReady]", "Error", err.toString());
-    });
+    // var round = self.calc(library.base.block.getLastBlock().height);
+    // var sql = 'SELECT SUM(b.totalFee), GROUP_CONCAT(b.reward), GROUP_CONCAT(lower(b.generatorPublicKey)) FROM blocks b WHERE (SELECT (CAST(b.height / 101 AS INTEGER) + (CASE WHEN b.height % 101 > 0 THEN 1 ELSE 0 END))) = $round';
+    //
+    // library.dbClient.query(sql, {
+    //     type: Sequelize.QueryTypes.SELECT,
+    //     bind: {
+    //         round: round
+    //     }
+    // }).then(function (rows) {
+    //     if (rows.length) {
+    //         privated.feesByRound[round] = rows[0].fees;
+    //         privated.rewardsByRound[round] = rows[0].rewards;
+    //         privated.delegatesByRound[round] = rows[0].delegates;
+    //         privated.loaded = true;
+    //     }
+    // }, function (err) {
+    //     library.log.Error("Round [onBlockchainReady]", "Error", err.toString());
+    // });
 };
 
 Round.prototype.onFinishRound = function () {
