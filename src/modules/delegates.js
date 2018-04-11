@@ -3,6 +3,7 @@ var constants = require('../utils/constants.js');
 var path = require('path');
 var fs = require('fs');
 var sandboxHelper = require('../utils/sandbox.js');
+var Sequelize = require('sequelize');
 var TransactionTypes = require('../utils/transaction-types.js');
 
 require('array.prototype.find'); // Old node fix
@@ -239,8 +240,17 @@ function Delegate() {
     };
 
     this.save = function (txObj, cb) {
-
-
+        library.dbClient.query("INSERT INTO delegates (transactionId, username) VALUES ($transactionId, $username)", {
+            type: Sequelize.QueryTypes.INSERT,
+            bind: {
+                transactionId: txObj.id,
+                username: txObj.asset.delegate.username
+            }
+        }).then(function (rows) {
+            cb();
+        }, function (err) {
+            cb(err, undefined);
+        });
     };
 }
 
@@ -269,6 +279,14 @@ Delegates.prototype.callApi = function (call, args, cb) {
 Delegates.prototype.generateDelegateList = function (height, cb) {
 
     cb(null, []);
+};
+
+Delegates.prototype.checkDelegates = function (publicKey, votes, cb) {
+
+};
+
+Delegates.prototype.checkUnconfirmedDelegates = function (publicKey, votes, cb) {
+
 };
 
 // Events

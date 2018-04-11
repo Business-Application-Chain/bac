@@ -107,53 +107,27 @@ privated.saveGenesisBlock = function (cb) {
 };
 
 privated.saveBlock = function (blockObj, cb) {
-    // library.dbClient.transaction(function (t) {
-    //     library.base.block.save(blockObj, t, function (err) {
-    //         if (err) {
-    //             library.log.Error("block.save", "Error", err.toString());
-    //             return cb(err);
-    //         }
-    //         async.eachSeries(blockObj.transactions, function (txObj, cb1) {
-    //             txObj.blockId = blockObj.id;
-    //             library.base.transaction.save(txObj, t, function (err) {
-    //                 if (err) {
-    //                     return cb1(err);
-    //                 }
-    //                 cb1();
-    //             });
-    //         }, function (err) {
-    //             if (err) {
-    //                 return cb(err);
-    //             }
-    //             cb();
-    //         });
-    //     });
-    //     async.eachSeries(blockObj.transactions, function (txObj, cb1) {
-    //         txObj.blockId = blockObj.id;
-    //         library.base.transaction.save(txObj, t, function (err) {
-    //             if (err) {
-    //                 return cb1(err);
-    //             }
-    //             cb1();
-    //         });
-    //     }, function (err) {
-    //         if (err) {
-    //             return cb(err);
-    //         }
-    //         cb();
-    //     });
-    // }).catch(function (err) {
-    //     cb(err);
-    // });
 
-    library.dbClient.transaction(function (t) {
-        return;
-    }).then(function (data) {
-        console.log('come to then')
-        cb();
-    }).catch(function (err) {
-        console.log('come to err' + err.toString())
-        cb(err);
+    library.dbClient.transaction(function (t1) {
+        var save_records = [];
+        save_records.push(library.base.block.save(blockObj, t1, function (err) {
+            if (err) {
+                library.log.Error("saveBlock", "Error", err.toString());
+            }
+        }));
+        blockObj.transactions.forEach(function (txObj) {
+            txObj.blockId = blockObj.id;
+            save_records.push(library.base.transaction.save(txObj, t1, function (err) {
+                if (err) {
+                    library.log.Error("saveBlock", "Error", err.toString());
+                }
+            }));
+        });
+        return Promise.all(save_records).then(() => {
+            library.log.Debug("saveBlock successed");
+        }).catch((err) => {
+            library.log.Error("saveBlock failed", "Error", err.toString());
+        });
     });
 };
 
