@@ -16,9 +16,19 @@
         "list": [
             {"ip": "192.168.18.101", "port": 9000}
         ],
-        "blankList": [],
+        "blackList": [],
         "optional": {
           "timeout": 4000
+        }
+    },
+    "forging": {
+        "secret": [
+
+        ],
+        "access": {
+            "whiteList": [
+                "127.0.0.1"
+            ]
         }
     }
 }

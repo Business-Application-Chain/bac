@@ -558,10 +558,6 @@ Account.prototype.removeTables = function (cb) {
     }.bind(this));
 };
 
-Account.prototype.create = function () {
-
-};
-
 Account.prototype.objectNormalize = function (account) {
     var report = this.scope.schema.validate(account, {
         object: true,
@@ -701,6 +697,8 @@ Account.prototype.merge = function (master_address, fields, cb) {
     }
 
     var insert = {}, remove = {}, update = {}, insert_object = {}, remove_object = {}, round = [];
+
+    var self = this;
 
     this.editable.forEach(function (key) {
         if (fields[key]) {
