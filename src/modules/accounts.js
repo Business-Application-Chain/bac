@@ -155,13 +155,19 @@ function Vote() {
     };
 
     this.save = function (txObj, cb) {
+
         library.dbClient.query("INSERT INTO votes (transactionId, votes) VALUES ($transactionId, $votes)", {
             type: Sequelize.QueryTypes.INSERT,
             bind: {
                 transactionId: txObj.id,
                 votes: util.isArray(txObj.asset.votes) ? txObj.asset.votes.join(',') : null
             }
-        }, cb);
+        }).then(function (rows) {
+            console.log(txObj.id+": "+rows);
+            cb();
+        }, function (err) {
+            console.log(err.toString());
+        });
     };
 }
 
