@@ -13,6 +13,7 @@ var Diff = require('../utils/diff.js');
 var bitcoinJs = require('bitcoinjs-lib');
 var bitcoinMessage = require('bitcoinjs-message');
 var bip39 = require('bip39');
+var util = require('util');
 
 // private objects
 var modules_loaded, library, self, privated = {}, shared = {};

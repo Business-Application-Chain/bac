@@ -76,6 +76,7 @@ function Blocks(cb, scope) {
     self.__private = privated;
 
     privated.saveGenesisBlock(function (err) {
+        console.log('saveGenesisBlock');
         setImmediate(cb, err, self);
     });
 }
