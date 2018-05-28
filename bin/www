@@ -1,9 +1,5 @@
 #!/usr/bin/env node
 
-/**
- * Module dependencies.
- */
-
 var app = require('../app');
 var debug = require('debug')('entu:server');
 var http = require('http');
@@ -12,6 +8,7 @@ var genesisblock = require('../genesisBlock.json');
 var async = require('async');
 var path = require('path');
 var fs = require('fs');
+var os = require('os');
 var Log15 = require('../src/utils/log15.js');
 var changeCase = require('change-case');
 var WorkQueue = require('../src/utils/workqueue.js');
@@ -27,7 +24,7 @@ var versionBuild = fs.readFileSync(path.join(__dirname, '../build'), 'utf8');
 var log = new Log15({echo: appConfig.echoLogLevel, recLevel: appConfig.outputLogLevel});
 
 var params = {
-    "db": appConfig.db.uri,
+    "db": appConfig.db.host,
     "modules": {
         "accounts": "../src/modules/accounts.js",
         "blocks": "../src/modules/blocks.js",
@@ -57,15 +54,25 @@ d.on('error', function (err) {
 });
 d.run(function () {
     var modules = [];
+    var modules_name = [];
+
+    log.Info("Starting peer-to-peer node", "instance", "Entu/v0.1.3-stable-66432f38/darwin-amd64/javascript");
 
     async.auto({
-        config: function (cb) {
-            cb(null, appConfig);
-        },
 
         log: function (cb) {
             cb(null, log);
         },
+
+        config: ['log', function (scope, cb) {
+            scope.log.Info("Initialized chain confirguration", "port", appConfig.port);
+
+            if (appConfig.peers) {
+                scope.log.Info("Maximum peer count", "peer", appConfig.peers.list.length, "blacklist", appConfig.peers.blackList.length, "timeout", appConfig.peers.optional.timeout);
+            }
+
+            cb(null, appConfig);
+        }],
 
         build: function (cb) {
             cb(null, versionBuild);
@@ -188,6 +195,8 @@ d.run(function () {
         }],
 
         dbClient: ['config', 'log', 'genesisblock', function (scope, cb) {
+            scope.log.Info("Database opened", "database", scope.config.db.name, "host", scope.config.db.host, "port", scope.config.db.port);
+
             var sequelize = new Sequelize(scope.config.db.name, scope.config.db.user, scope.config.db.password, {
                 host: scope.config.db.host,
                 dialect: 'mysql',
@@ -212,11 +221,13 @@ d.run(function () {
         // }],
 
         network: ['dbWorkQueue', 'mainWorkQueue', 'balancesWorkQueue', 'dbClient', function (scope, cb) {
+            scope.log.Info("Starting P2P networking");
+
             app.use(require('../src/utils/zscheme-express.js')(scope.schema));
             var server = http.createServer(app);
             server.on('error', onError);
             server.listen(scope.config.port, scope.config.address, function (err) {
-                scope.log.Info("Entu is listening", "version", scope.config.version, "address", scope.config.address, 'port', scope.config.port);
+                scope.log.Info("HTTP endpoint opened", "url", "http://"+getPublicIp()+":8000");
 
                 cb(err, {
                     app: app,
@@ -281,12 +292,12 @@ d.run(function () {
                         scope.log.Fatal('Domain ' + module_name, "Error", err.message, "Stack", err.stack);
                     });
                     d.run(function () {
-                        scope.log.Debug("Loading module " + module_name);
                         var Klass = require(params.modules[module_name]);
                         var obj = new Klass(cb, scope);
                         modules.push(obj);
                     });
                 }
+                modules_name.push(module_name);
             });
             async.parallel(__modules, function (err, modules) {
                 cb(err, modules);
@@ -302,11 +313,13 @@ d.run(function () {
             scope.log.Fatal(err.toString());
         }
 
-        scope.log.Info("Modules are initialized and launched");
+        scope.log.Info("Modules are initialized and launched", "modules", "{"+modules_name.join(',')+"}");
 
         process.once('cleanup', function () {
-            scope.log.Info("Cleaning up...");
-
+            scope.log.Info("Got interrupt, shutting down...");
+            scope.log.Info("HTTP endpoint closed", "url", "http://"+getPublicIp()+":8000");
+            scope.log.Info("Blockchain manager stopped");
+            scope.log.Info("Database closed", "database", scope.config.db.name, "host", scope.config.db.host, "port", scope.config.db.port);
 
             process.exit(1);
         });
@@ -343,4 +356,25 @@ function onError(error) {
     default:
         throw new Error(error);
   }
+}
+
+function getPublicIp() {
+    var publicIp = null;
+    try {
+        var ifaces = os.networkInterfaces();
+        Object.keys(ifaces).forEach(function (ifname) {
+            ifaces[ifname].forEach(function (iface) {
+                if ('IPv4' !== iface.family || iface.internal !== false) {
+                    // skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
+                    return;
+                }
+                // if (!ip.isPrivate(iface.address)) {
+                //     publicIp = iface.address;
+                // }
+                publicIp = iface.address;
+            });
+        });
+    } catch (e) {
+    }
+    return publicIp;
 }

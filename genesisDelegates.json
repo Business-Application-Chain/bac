@@ -1,0 +1,26 @@
+{
+  "accounts": [
+    {
+      "address": "14837479272589364523L",
+      "publicKey": "d16198cd553243dae7d8e421107d9887e270eb1cc6e4c072adea0f0442b65ace",
+      "balance": 10000000000000000,
+      "secondPublicKey": null
+    }
+  ],
+  "delegates": [
+    {
+      "secret": "wKyoJM1vS4ucHmWvxDSdcpC23mJwqfg3G6MKZoXaFfcnWHTqo7",
+      "address": "12008943494300102578L",
+      "publicKey": "3319e5bb7b26eda2f3ba91d55536e8260b58bb37b968233823c2ba588200459f",
+      "username": "genesisDelegate1"
+    }
+  ],
+  "votes": {
+    "publicKeys": [
+      "3ed4d689ced148a97017e2f611b5c4aa28de1564a92fca8234d32290319dbdb3"
+    ],
+    "votes": [
+      "+3319e5bb7b26eda2f3ba91d55536e8260b58bb37b968233823c2ba588200459f"
+    ]
+  }
+}

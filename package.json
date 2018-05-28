@@ -32,6 +32,7 @@
     "express-query-int": "^3.0.0",
     "extend": "^3.0.1",
     "ip": "^1.1.5",
+    "knuth-shuffle": "^1.0.8",
     "method-override": "^2.3.10",
     "moment": "^2.22.0",
     "moment-timezone": "^0.5.14",

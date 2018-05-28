@@ -283,8 +283,8 @@ function Username() {
     this.apply = function (txObj, blockObj, sender, cb) {
         self.setAccountAndGet({
             master_address: sender.master_address,
-            username_unconfirmed: null,
             username: txObj.asset.username.alias,
+            username_unconfirmed: null,
             name_exist: 1,
             name_exist_unconfirmed: 0
         }, cb);

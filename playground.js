@@ -165,3 +165,5 @@ dbClient.query("INSERT INTO transactions (id, blockId, type, timestamp, senderPu
 }, function (err) {
     console.log(err.toString());
 });
+
+
