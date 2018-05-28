@@ -8,7 +8,7 @@ var TransactionTypes = require('../utils/transaction-types.js');
 var util = require('util');
 var shuffle = require('knuth-shuffle').knuthShuffle;
 var ed = require('ed25519');
-var slots = require('../helpers/slots.js');
+var slots = require('../utils/slots.js');
 
 require('array.prototype.find'); // Old node fix
 
