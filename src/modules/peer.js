@@ -235,6 +235,21 @@ Peer.prototype.addDapp = function (config, cb) {
     });
 };
 
+Peer.prototype.list = function (options, cb) {
+    options.limit = options.limit || 100;
+
+    library.dbClient.query("select p.ip, p.port, p.state, p.os, p.sharePort, p.version from peers p " + (options.dappid ? " inner join peers_dapp pd on p.id = pd.peerId and pd.dappid = $dappid " : "") + " where p.state > 0 and p.sharePort = 1 ORDER BY RANDOM() LIMIT 100" , {
+        "ip": String,
+        "port": Number,
+        "state": Number,
+        "os": String,
+        "sharePort": Number,
+        "version": String
+    }).then(function (data) {
+        cb(null, data);
+    })
+}
+
 Peer.prototype.update = function (peer, cb) {
     var dappId = peer.dappId;
     var options = {
@@ -312,7 +327,7 @@ Peer.prototype.onBlockchainReady = function () {
             cb();
         });
     }, (err) => {
-        if(err) {
+        if (err) {
             library.log.Error("Peer onBlockchainReady", "Error", err.toString());
         }
 
@@ -330,7 +345,7 @@ Peer.prototype.onBlockchainReady = function () {
     });
 };
 
-Peer.prototype.onPeerReady = function() {
+Peer.prototype.onPeerReady = function () {
     setImmediate(function nextUpdatePeerList() {
         privated.updatePeerList(function (err) {
             err && library.log.Error("updatePeerList timer", "Error", err.toString());

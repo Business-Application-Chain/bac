@@ -39,7 +39,7 @@ privated.attachApi = function () {
 
     router.use(function (req, res, next) {
         var peerIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-
+        
         if (peerIp == "127.0.0.1") {
             return next();
         }
@@ -126,9 +126,66 @@ privated.attachApi = function () {
     });
 };
 
+router.post("/transactions", function (req, res) {
+    res.set(privated.headers,req);
+    var report = library.schema.validate(req.headers, {
+        type: "object",
+        properties: {
+            port: {
+                type: "integer",
+                minimum: 1,
+                maximum: 65535
+            }
+        },
+        required: ['port']
+    });
+    var transaction;
+    try {
+        transaction = library.base.transaction.objectNormalize(req.body.transaction);
+    } catch (e) {
+        var peerIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        var peerStr = peerIp ? peerIp + ":" + (isNaN(req.headers.port) ? 'unknown' : req.headers.port) : 'unknown';
+        library.logger.log('Received transaction ' + (transaction ? transaction.id : 'null') + ' is not valid, ban 60 min', peerStr);
+
+        if (peerIp && report) {
+            modules.peer.state(ip.toLong(peerIp), req.headers.port, 0, 3600);
+        }
+
+        return res.status(200).json({success: false, message: "Invalid transaction body"});
+    }
+
+    library.balancesWorkQueue.add(function (cb) {
+        modules.transactions.receiveTransactions([transaction], cb);
+    }, function (err) {
+        if (err) {
+            res.status(200).json({success: false, message: err});
+        } else {
+            res.status(200).json({success: true});
+        }
+    });
+});
+
+
 // public methods
 Kernel.prototype.sandboxApi = function (call, args, cb) {
     sandboxHelper.callMethod(shared, call, args, cb);
+};
+
+Kernel.prototype.broadcast = function (config, options, cb) {
+    config.limit = config.limit || 1;
+    modules.peer.list(config, function (err, peers) {
+        if (!err) {
+            async.eachLimit(peers, 3, function (peer, cb) {
+                self.getFromPeer(peer, options);
+
+                setImmediate(cb);
+            }, function () {
+                cb && cb(null, {body: null, peer: peers});
+            })
+        } else {
+            cb && setImmediate(cb, err);
+        }
+    });
 };
 
 Kernel.prototype.callApi = function (call, args, cb) {
@@ -268,6 +325,12 @@ Kernel.prototype.onInit = function (scope) {
 Kernel.prototype.onBlockchainReady = function () {
 
 };
+
+Kernel.prototype.onUnconfirmedTransaction = function (transaction, broadcast) {
+    if (broadcast) {
+        self.broadcast({limit: 100}, {api: '/transactions', data: {transaction: transaction}, method: "POST"});
+    }
+}
 
 // export
 module.exports = Kernel;
