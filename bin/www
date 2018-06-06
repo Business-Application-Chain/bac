@@ -245,7 +245,7 @@ d.run(function () {
             var server = http.createServer(app);
             server.on('error', onError);
             server.listen(scope.config.port, scope.config.address, function (err) {
-                scope.log.Info("HTTP endpoint opened", "url", "http://"+getPublicIp()+":8000");
+                scope.log.Info("HTTP endpoint opened", "url", "http://"+getPublicIp()+":"+scope.config.port);
 
                 cb(err, {
                     app: app,
@@ -338,7 +338,7 @@ d.run(function () {
 
         process.once('cleanup', function () {
             scope.log.Info("Got interrupt, shutting down...");
-            scope.log.Info("HTTP endpoint closed", "url", "http://"+getPublicIp()+":8000");
+            scope.log.Info("HTTP endpoint closed", "url", "http://"+getPublicIp()+":"+scope.config.port);
             scope.log.Info("Blockchain manager stopped");
             scope.log.Info("Database closed", "database", scope.config.db.name, "host", scope.config.db.host, "port", scope.config.db.port);
 

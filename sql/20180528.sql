@@ -67,6 +67,20 @@ CREATE TABLE `delegates` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ----------------------------
+-- Table structure for forks_stat
+-- ----------------------------
+DROP TABLE IF EXISTS `forks_stat`;
+CREATE TABLE `forks_stat` (
+  `delegatePublicKey` varchar(64) NOT NULL,
+  `blockTimestamp` int(11) NOT NULL,
+  `blockId` varchar(20) NOT NULL,
+  `blockHeight` int(11) NOT NULL,
+  `previousBlock` varchar(20) NOT NULL,
+  `cause` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+-- ----------------------------
 -- Table structure for multisignatures
 -- ----------------------------
 DROP TABLE IF EXISTS `multisignatures`;
