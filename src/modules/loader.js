@@ -5,104 +5,67 @@ var path = require('path');
 var fs = require('fs');
 var sandboxHelper = require('../utils/sandbox.js');
 var ip = require('ip');
-
+var bignum = require('../utils/bignum');
 // private objects
 var modules_loaded, library, self, privated = {}, shared = {};
 
 privated.loaded = false;
-
+privated.genesisBlock = null;
+privated.loadingLastBlock = null;
 // constructor
 function Loader(cb, scope) {
     library = scope;
     self = this;
     self.__private = privated;
-
+    privated.genesisBlock = privated.loadingLastBlock = library.genesisblock;
     setImmediate(cb, null, self);
 }
 
 // private methods
 privated.loadApp = function () {
-
+    privated.loaded = true;
     library.notification_center.notify('blockchainReady');
+};
 
-    // library.base.account.createTables(function (err) {
-    //     if (err) {
-    //         throw new Error(err.toString());
-    //     } else {
-    //         library.base.account.removeTables(function (err) {
-    //             if (err) {
-    //                 throw new Error(err.toString());
-    //             } else {
-    //                 library.base.account.createTables(function (err) {
-    //                     if (err) {
-    //                         throw new Error(err.toString());
-    //                     }
-    //                 });
-    //             }
-    //         });
-    //         library.notification_center.notify('blockchainReady');
-    //     }
-    // });
+privated.loadBlocks = function(lastBlock, cb) {
+    library.modules.kernel.getFromRandomPeer({
+        api: '/height',
+        method: 'GET'
+    }, function (err, data) {
+        var peerStr = data && data.peer ? ip.fromLong(data.peer.ip) + ":" + data.peer.port : 'unknown';
+        if (err || !data.body) {
+            library.log.Info("Failed to get height from peer: " + peerStr);
+            return cb();
+        }
+        library.log.Info("Check blockchain on " + peerStr);
+        data.body.height = parseInt(data.body.height);
 
-    // library.base.account.createTables(function (err) {
-    //     if (err) {
-    //         throw new Error(err.toString());
-    //     } else {
-    //         library.base.account.findAll({master_address: '6202245275956910442L'}, function (err, data) {
-    //             console.log(JSON.stringify(data));
-    //         });
-    //     }
-    // });
+        if (data.body.height <= 0) {
+            library.log.Info("Failed to parse blockchain height: " + peerStr + "\n" + library.scheme.getLastError());
+            return cb();
+        }
 
-    // library.base.account.createTables(function (err) {
-    //     if (err) {
-    //         throw new Error(err.toString());
-    //     } else {
-    //         library.base.account.insertOrUpdate('6202245275956910442L', {
-    //             username: 'alex444'
-    //         }, function (err, data) {
-    //             console.log(">>>>> output: ");
-    //         });
-    //     }
-    // });
+        if (bignum(library.modules.blocks.getLastBlock().height).lt(data.body.height)) { // Diff in chainbases
+            privated.blocksToSync = data.body.height;
 
-    // library.base.account.createTables(function (err) {
-    //     if (err) {
-    //         throw new Error(err.toString());
-    //     } else {
-    //         library.base.account.remove('6202245275956910443L', function (err, data) {
-    //             console.log(">>>>> output: ");
-    //         });
-    //     }
-    // });
+            if (lastBlock.id != privated.genesisBlock.block.id) { // Have to find common block
+                console.log('findUpdate');
+            } else { // Have to load full db
+                privated.loadFullDb(data.peer, cb);
+            }
+        } else {
+            cb();
+        }
 
+    });
+};
 
-    // library.base.account.createTables(function (err) {
-    //     if (err) {
-    //         throw new Error(err.toString());
-    //     } else {
-    //         library.base.account.merge('6202245275956910442L', {
-    //             master_pub: '3319e5bb7b26eda2f3ba91d55536e8260b58bb37b968233823c2ba588200459f',
-    //             balance: 10000,
-    //             blockId: '8593810399212843182',
-    //
-    //         }, function (err, data) {
-    //
-    //         });
-    //     }
-    // });
+privated.loadFullDb = function(peer, cb) {
+    var peerStr = peer ? ip.fromLong(peer.ip) + ":" + peer.port : 'unknown';
+    var commonBlockId = privated.genesisBlock.block.id;
+    library.log.Debug("Loading blocks from genesis from " + peerStr);
 
-    // var Sequelize = require('sequelize');
-    // library.dbClient.query('SELECT COUNT(master_pub) AS count FROM accounts WHERE master_address = $master_address', {
-    //     type: Sequelize.QueryTypes.SELECT,
-    //     bind: {
-    //         master_address: '6202245275956910442L'
-    //     }
-    // }).then(function (data) {
-    //     console.log(data);
-    // }, function (err) {
-    //     console.log(err.toString());
-    // });
+    library.modules.blocks.loadBlocksFromPeer(peer, commonBlockId, cb);
 };
 
 // public methods
@@ -128,7 +91,19 @@ Loader.prototype.onInit = function (scope) {
 };
 
 Loader.prototype.onBlockchainReady = function () {
-    privated.loaded = true;
+
+};
+
+Loader.prototype.onPeerReady = function() {
+    setImmediate(function nextLoadBlock() {
+        if(!privated.loaded) return;
+        privated.isActive = true;
+        library.sequence.add(function (cb) {
+            let lastBlock = library.modules.blocks.getLastBlock();
+            privated.loadBlocks(lastBlock, cb);
+        });
+        setTimeout(nextLoadBlock, 9*1000);
+    });
 };
 
 Loader.prototype.onEnd = function (cb) {

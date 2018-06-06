@@ -288,9 +288,7 @@ privated.getKeysSortByVote = function (cb) {
         if (err) {
             cb(err);
         }
-        cb(null, rows.map(function (el) {
-            return el.publicKey;
-        }));
+        cb();
     });
 };
 
@@ -525,7 +523,7 @@ Delegates.prototype.fork = function (block, cause) {
         block: {id: block.id, timestamp: block.timestamp, height: block.height, previousBlock: block.previousBlock},
         cause: cause
     }));
-    library.dbLite.query("INSERT INTO forks_stat (delegatePublicKey, blockTimestamp, blockId, blockHeight, previousBlock, cause) " +
+    library.dbClient.query("INSERT INTO forks_stat (delegatePublicKey, blockTimestamp, blockId, blockHeight, previousBlock, cause) " +
         "VALUES ($delegatePublicKey, $blockTimestamp, $blockId, $blockHeight, $previousBlock, $cause);", {
         delegatePublicKey: block.generatorPublicKey,
         blockTimestamp: block.timestamp,

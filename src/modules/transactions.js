@@ -10,7 +10,7 @@ var bignum = require('../utils/bignum.js');
 var slots = require('../utils/slots.js');
 var TransactionTypes = require('../utils/transaction-types.js');
 
-var modules_loaded, library, self, privated = {}, shared = {};
+var modules_loaded, library, self, privated = {}, shared = {}, genesisblock = null;
 
 privated.hiddenTransactions = [];
 privated.unconfirmedTransactions = [];
@@ -126,7 +126,7 @@ function Transactions(cb, scope) {
     library = scope;
     self = this;
     self.__private = privated;
-
+    genesisblock = library.genesisblock;
     library.base.transaction.attachAssetType(TransactionTypes.SEND, new Transaction());
 
     setImmediate(cb, null, self);
@@ -282,6 +282,20 @@ Transactions.prototype.getUnconfirmedTransactionById = function (id) {
     return privated.unconfirmedTransactions[index];
 };
 
+Transactions.prototype.undoUnconfirmedList = function (cb) {
+    var ids = [];
+    async.eachSeries(privated.unconfirmedTransactions, function (transaction, cb) {
+        if (transaction !== false) {
+            ids.push(transaction.id);
+            self.undoUnconfirmed(transaction, cb);
+        } else {
+            setImmediate(cb);
+        }
+    }, function (err) {
+        cb(err, ids);
+    })
+};
+
 Transactions.prototype.addDoubleSpendingTransaction = function (txObj) {
     privated.doubleSpendingTransactions[txObj.id] = txObj;
 };
@@ -375,40 +389,6 @@ Transactions.prototype.processUnconfirmedTransaction = function (txObj, broadcas
     });
 };
 
-Transactions.prototype.applyUnconfirmedTransactionList = function (ids, cb) {
-    async.eachSeries(ids, function (id, cb) {
-        var txObj = self.getUnconfirmedTransactionById(id);
-        library.modules.accounts.setAccoutAndGet({master_pub: txObj.senderPublicKey}, function (err, sender) {
-            if (err) {
-                self.removeUnconfirmTransactionById(id);
-                self.addDoubleSpendingTransaction(txObj);
-                return setImmediate(cb);
-            }
-            self.applyUnconfirmed(txObj, sender, function (err) {
-                if (err) {
-                    self.removeUnconfirmTransactionById(id);
-                    self.addDoubleSpendingTransaction(txObj);
-                }
-                setImmediate(cb);
-            });
-        });
-    }, cb);
-};
-
-Transactions.prototype.undoUnconfirmedTransactionList = function (cb) {
-    var ids = [];
-    async.eachSeries(privated.unconfirmedTransactions, function (txObj, cb) {
-        if (txObj !== false) {
-            ids.push(txObj.id);
-            self.undoUnconfirmed(txObj, cb);
-        } else {
-            setImmediate(cb);
-        }
-    }, function (err) {
-        cb(err, ids);
-    });
-};
-
 Transactions.prototype.apply = function (txObj, blockObj, sender, cb) {
     library.base.transaction.apply(txObj, blockObj, sender, cb);
 };
@@ -446,6 +426,40 @@ Transactions.prototype.undoUnconfirmed = function (txObj, cb) {
         }
         library.base.transaction.undoUnconfirmed(txObj, sender, cb);
     });
+};
+Transactions.prototype.getUnconfirmedTransaction = function (id) {
+    var index = privated.unconfirmedTransactionsIdIndex[id];
+    return privated.unconfirmedTransactions[index];
+};
+
+Transactions.prototype.removeUnconfirmedTransaction = function (id) {
+    var index = privated.unconfirmedTransactionsIdIndex[id];
+    delete privated.unconfirmedTransactionsIdIndex[id];
+    privated.unconfirmedTransactions[index] = false;
+};
+
+Transactions.prototype.addDoubleSpending = function (transaction) {
+    privated.doubleSpendingTransactions[transaction.id] = transaction;
+};
+
+Transactions.prototype.applyUnconfirmedList = function (ids, cb) {
+    async.eachSeries(ids, function (id, cb) {
+        var transaction = self.getUnconfirmedTransaction(id);
+        library.modules.accounts.setAccountAndGet({publicKey: transaction.senderPublicKey}, function (err, sender) {
+            if (err) {
+                self.removeUnconfirmedTransaction(id);
+                self.addDoubleSpending(transaction);
+                return setImmediate(cb);
+            }
+            self.applyUnconfirmed(transaction, sender, function (err) {
+                if (err) {
+                    self.removeUnconfirmedTransaction(id);
+                    self.addDoubleSpending(transaction);
+                }
+                setImmediate(cb);
+            });
+        });
+    }, cb);
 };
 
 Transactions.prototype.receiveTransactions = function (transactions, cb) {

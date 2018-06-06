@@ -211,14 +211,32 @@ d.run(function () {
             cb(null, sequelize);
         }],
 
-        // balancesSequence: ["logger", function (scope, cb) {
-        //     var sequence = new Sequence({
-        //         onWarning: function (current, limit) {
-        //             scope.logger.warn("Balance queue", current)
-        //         }
-        //     });
-        //     cb(null, sequence);
-        // }],
+        sequence: ["log", function (scope, cb) {
+            var sequence = new Sequence({
+                onWarning: function (current, limit) {
+                    scope.logger.warn("Main queue", current)
+                }
+            });
+            cb(null, sequence);
+        }],
+
+        dbSequence: ["log", function (scope, cb) {
+            var sequence = new Sequence({
+                onWarning: function (current, limit) {
+                    scope.logger.warn("DB queue", current)
+                }
+            });
+            cb(null, sequence);
+        }],
+
+        balancesSequence: ["log", function (scope, cb) {
+            var sequence = new Sequence({
+                onWarning: function (current, limit) {
+                    // scope.logger.warn("Balance queue", current)
+                }
+            });
+            cb(null, sequence);
+        }],
 
         network: ['dbWorkQueue', 'mainWorkQueue', 'balancesWorkQueue', 'dbClient', function (scope, cb) {
             scope.log.Info("Starting P2P networking");
@@ -253,7 +271,7 @@ d.run(function () {
             cb(null, new ncenter);
         },
 
-        base: ['config', 'genesisblock', 'dbClient', 'notification_center', function (scope, cb) {
+        base: ['config', 'genesisblock', 'dbClient', 'schema', 'notification_center', function (scope, cb) {
             var Account = require('../src/base/Account.js');
             var Block = require('../src/base/block.js');
             var Transaction = require('../src/base/transaction.js');
@@ -267,6 +285,9 @@ d.run(function () {
                 },
                 dbClient: function (cb) {
                     cb(null, scope.dbClient);
+                },
+                schema: function (cb) {
+                    cb(null, scope.schema);
                 },
                 notification_center: function (cb) {
                     cb(null, scope.notification_center);
@@ -283,7 +304,7 @@ d.run(function () {
             }, cb);
         }],
 
-        modules: ['network', 'notification_center', 'base', function (scope, cb) {
+        modules: ['network', 'notification_center', 'base', 'sequence', 'balancesSequence', 'dbSequence', function (scope, cb) {
             var __modules = {};
             Object.keys(params.modules).forEach(function (module_name) {
                 __modules[module_name] = function (cb) {

@@ -761,6 +761,45 @@ Transaction.prototype.save = function (txObj, t, cb) {
     });
 };
 
+Transaction.prototype.dbRead = function (raw) {
+    if (!raw.t_id) {
+        return null
+    } else {
+        var tx = {
+            id: raw.t_id,
+            height: raw.b_height,
+            blockId: raw.b_id || raw.t_blockId,
+            type: parseInt(raw.t_type),
+            timestamp: parseInt(raw.t_timestamp),
+            senderPublicKey: raw.t_senderPublicKey,
+            requesterPublicKey: raw.t_requesterPublicKey,
+            senderId: raw.t_senderId,
+            recipientId: raw.t_recipientId,
+            senderUsername: raw.t_senderUsername,
+            recipientUsername: raw.t_recipientUsername,
+            amount: parseInt(raw.t_amount),
+            fee: parseInt(raw.t_fee),
+            signature: raw.t_signature,
+            signSignature: raw.t_signSignature,
+            signatures: raw.t_signatures ? raw.t_signatures.split(',') : null,
+            confirmations: raw.confirmations,
+            asset: {}
+        }
+
+        if (!privated.types[tx.type]) {
+            throw Error('Unknown transaction type ' + tx.type);
+        }
+
+        var asset = privated.types[tx.type].dbRead.call(this, raw);
+
+        if (asset) {
+            tx.asset = extend(tx.asset, asset);
+        }
+
+        return tx;
+    }
+};
+
 // export
 module.exports = Transaction;
 

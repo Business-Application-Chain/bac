@@ -16,7 +16,7 @@ privated.blockStatus = new blockStatus();
 
 privated.getAddressByPublicKey = function (publicKey) {
     var publicKeyHash = crypto.createHash('sha256').update(publicKey, 'hex').digest();
-    var temp = new Buffer[8];
+    var temp = new Buffer(8);
     for (var i = 0; i < 8; i++) {
         temp[i] = publicKeyHash[7 - i];
     }
@@ -95,68 +95,67 @@ Block.prototype.create = function (data) {
     return blockObj;
 };
 
-Block.prototype.objectNormalize = function (blockObj) {
-    for (var i in blockObj) {
-        if (blockObj[i] === null || typeof blockObj[i] === 'undefined') {
-            delete blockObj[i];
+Block.prototype.objectNormalize = function (block) {
+    for (var i in block) {
+        if (block[i] === null || typeof block[i] === 'undefined') {
+            delete block[i];
         }
     }
 
-    var report = this.scope.schema.validate(blockObj, {
-        type: 'object',
+    var report = this.scope.schema.validate(block, {
+        type: "object",
         properties: {
             id: {
-                type: 'string'
+                type: "string"
             },
             height: {
-                type: 'integer'
+                type: "integer"
             },
             blockSignature: {
-                type: 'string',
-                format: 'signature'
+                type: "string",
+                format: "signature"
             },
             generatorPublicKey: {
-                type: 'string',
-                format: 'publicKey'
+                type: "string",
             },
             numberOfTransactions: {
-                type: 'integer'
+                type: "integer"
             },
             payloadHash: {
-                type: 'string',
-                format: 'hex'
+                type: "string",
+                format: "hex"
             },
             payloadLength: {
-                type: 'integer'
+                type: "integer"
             },
             previousBlock: {
-                type: 'string'
+                type: "string"
             },
             timestamp: {
-                type: 'integer'
+                type: "integer"
             },
             totalAmount: {
-                type: 'integer',
+                type: "integer",
                 minimum: 0
             },
             totalFee: {
-                type: 'integer',
+                type: "integer",
                 minimum: 0
             },
             reward: {
-                type: 'integer',
+                type: "integer",
                 minimum: 0
             },
             transactions: {
-                type: 'array',
+                type: "array",
                 uniqueItems: true
             },
             version: {
-                type: 'integer',
+                type: "integer",
                 minimum: 0
             }
         },
-        required: ['blockSignature', 'generatorPublicKey', 'numberOfTransactions', 'payloadHash', 'payloadLength', 'timestamp', 'totalAmout', 'totalFee', 'reward', 'transactions', 'version']
+        required: ['blockSignature', 'generatorPublicKey', 'numberOfTransactions', 'payloadHash', 'payloadLength', 'timestamp', 'totalAmount', 'totalFee', 'reward', 'transactions', 'version']
     });
 
     if (!report) {
@@ -171,7 +170,7 @@ Block.prototype.objectNormalize = function (blockObj) {
         throw new Error(err.toString());
     }
 
-    return blockObj;
+    return block;
 };
 
 Block.prototype.getId = function (blockObj) {
@@ -188,6 +187,32 @@ Block.prototype.getId = function (blockObj) {
 Block.prototype.getHash = function (blockObj) {
     return crypto.createHash('sha256').update(this.getBytes(blockObj)).digest();
 };
+
+Block.prototype.dbRead = function (raw) {
+    if (!raw.b_id) {
+        return null
+    } else {
+        var block = {
+            id: raw.b_id,
+            version: parseInt(raw.b_version),
+            timestamp: parseInt(raw.b_timestamp),
+            height: parseInt(raw.b_height),
+            previousBlock: raw.b_previousBlock,
+            numberOfTransactions: parseInt(raw.b_numberOfTransactions),
+            totalAmount: parseInt(raw.b_totalAmount),
+            totalFee: parseInt(raw.b_totalFee),
+            reward: parseInt(raw.b_reward),
+            payloadLength: parseInt(raw.b_payloadLength),
+            payloadHash: raw.b_payloadHash,
+            generatorPublicKey: raw.b_generatorPublicKey,
+            generatorId: privated.getAddressByPublicKey(raw.b_generatorPublicKey),
+            blockSignature: raw.b_blockSignature,
+            confirmations: raw.b_confirmations
+        }
+        block.totalForged = (block.totalFee + block.reward);
+        return block;
+    }
+}
 
 Block.prototype.getBytes = function (blockObj) {
     try {
