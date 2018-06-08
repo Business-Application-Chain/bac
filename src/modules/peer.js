@@ -232,17 +232,13 @@ Peer.prototype.addDapp = function (config, cb) {
 Peer.prototype.list = function (options, cb) {
     options.limit = options.limit || 100;
 
-    library.dbClient.query("select p.ip, p.port, p.state, p.os, p.sharePort, p.version from peers p " + (options.dappid ? " inner join peers_dapp pd on p.id = pd.peerId and pd.dappid = $dappid " : "") + " where p.state > 0 and p.sharePort = 1 ORDER BY RANDOM() LIMIT 100" , {
-        "ip": String,
-        "port": Number,
-        "state": Number,
-        "os": String,
-        "sharePort": Number,
-        "version": String
+    library.dbClient.query("select p.ip, p.port, p.state, p.os, p.sharePort, p.version from peers p  where p.state > 0 and p.sharePort = 1 ORDER BY rand()" , {
+        type: Sequelize.QueryTypes.SELECT
     }).then(function (data) {
         cb(null, data);
-    })
-}
+    });
+    // cb(null, []);
+};
 
 Peer.prototype.update = function (peer, cb) {
     var dappId = peer.dappId;
