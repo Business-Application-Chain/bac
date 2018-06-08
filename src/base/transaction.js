@@ -108,11 +108,11 @@ Transaction.prototype.objectNormalize = function (txObj) {
             },
             senderPublicKey: {
                 type: 'string',
-                format: 'publicKey'
+                // format: 'publicKey'
             },
             requesterPublicKey: {
                 type: 'string',
-                format: 'publicKey'
+                // format: 'publicKey'
             },
             senderId: {
                 type: 'string'
@@ -767,7 +767,7 @@ Transaction.prototype.dbRead = function (raw) {
     } else {
         var tx = {
             id: raw.t_id,
-            height: raw.b_height,
+            height: parseInt(raw.b_height),
             blockId: raw.b_id || raw.t_blockId,
             type: parseInt(raw.t_type),
             timestamp: parseInt(raw.t_timestamp),
@@ -790,7 +790,7 @@ Transaction.prototype.dbRead = function (raw) {
             throw Error('Unknown transaction type ' + tx.type);
         }
 
-        var asset = privated.types[tx.type].dbRead.call(this, raw);
+        var asset = privated.types[tx.type].load.call(this, raw);
 
         if (asset) {
             tx.asset = extend(tx.asset, asset);

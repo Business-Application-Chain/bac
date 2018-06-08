@@ -156,7 +156,13 @@ privated.popLastBlock = function (oldLastBlock, cb) {
 };
 
 privated.getIdSequence = function (height, cb) {
-
+    library.dbClient.query('SELECT height AS firstHeight, id AS ids FROM blocks ORDER BY height DESC LIMIT 1',{
+        type: Sequelize.QueryTypes.SELECT
+    }).then((rows) => {
+        cb(null, rows[0]);
+    }).catch((error) => {
+        cb(error);
+    });
 };
 
 privated.readDbRows = function (rows) {
@@ -223,6 +229,75 @@ Blocks.prototype.onInit = function (scope) {
     });
 };
 
+Blocks.prototype.getCommonBlock = function(peer, height, cb) {
+    var commonBlock = null;
+    var lastBlockHeight = height;
+    var count = 0;
+
+    async.whilst(
+        function () {
+            return !commonBlock && count < 30 && lastBlockHeight > 1;
+        },
+        function (next) {
+            count++;
+            privated.getIdSequence(lastBlockHeight, function (err, data) {
+                if(err) {
+                    return next(err);
+                }
+                let max = lastBlockHeight;
+                lastBlockHeight = data.firstHeight;
+                library.modules.kernel.getFromPeer(peer, {
+                    api: `/blocks/common?ids=${data.ids},&max=${max}&min=${lastBlockHeight}`,
+                    method: 'GET',
+                }, function (err, data) {
+                    if (err || data.body.error) {
+                        return next(err || data.body.error.toString());
+                    }
+                    if (!data.body.common) {
+                        return next();
+                    }
+                    library.dbClient.query(`SELECT COUNT(*) as cnt from blocks where id="${data.body.common.id}" and height=${data.body.common.height}`,{
+                        type:Sequelize.QueryTypes.SELECT
+                    }).then((rows) => {
+                        if(!rows.length) {
+                            return next("Can't compare blocks");
+                        }
+                        if (rows[0].cnt) {
+                            commonBlock = data.body.common;
+                        }
+                        next();
+                    }).catch((err) => {
+                        setImmediate(cb, err, commonBlock);
+                    });
+                });
+            });
+        },
+        function (err) {
+            setImmediate(cb, err, commonBlock);
+        }
+    );
+};
+
+Blocks.prototype.deleteBlocksBefore = function (block, cb) {
+    var blocks = [];
+
+    async.whilst(
+        function () {
+            return !(block.height >= privated.lastBlock.height);
+        },
+        function (next) {
+            blocks.unshift(privated.lastBlock);
+            privated.popLastBlock(privated.lastBlock, function (err, newLastBlock) {
+                privated.lastBlock = newLastBlock;
+                next(err);
+            });
+        },
+        function (err) {
+            setImmediate(cb, err, blocks);
+        }
+    );
+};
+
 Blocks.prototype.getLastBlock = function() {
     return privated.lastBlock;
 };
@@ -283,10 +358,11 @@ Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
                                 lastValidBlock = block;
                                 cb();
                             } else {
+                                console.log(err.stack);
                                 var peerStr = data.peer ? ip.fromLong(data.peer.ip) + ":" + data.peer.port : 'unknown';
                                 library.log.Info('Block ' + (block ? block.id : 'null') + ' is not valid, ban 60 min', peerStr);
                                 library.modules.peer.state(peer.ip, peer.port, 0, 3600);
-                                cb(err);
+                                // cb(err);
                             }
                         });
                     }, cb);
@@ -295,7 +371,7 @@ Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
                 if(err) {
                     return setImmediate(cb, err);
                 } else {
-                    next();
+                    cb();
                 }
             });
         },
@@ -396,61 +472,63 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                     var totalAmount = 0, totalFee = 0, payloadHash = crypto.createHash('sha256'), appliedTransactions = {}, acceptedRequests = {}, acceptedConfirmations = {};
                     async.eachSeries(block.transactions, function (transaction, cb) {
                         try {
-                            transaction.id = library.base().transaction.getId(transaction);
+                            transaction.id = library.base.transaction.getId(transaction);
                         } catch (e) {
                             return setImmediate(cb, e.toString());
                         }
                         transaction.blockId = block.id;
-                        library.dbClient.query("SELECT id FROM transactions WHERE id=$id", {id: transaction.id}, ['id'], function (err, rows) {
-                            if (err) {
-                                return cb(err);
-                            }
+                        library.dbClient.query(`SELECT id FROM transactions WHERE id="${transaction.id}"`,{
+                            type: Sequelize.QueryTypes.SELECT
+                        }).then((rows) => {
                             var tId = rows.length && rows[0].id;
                             if (tId) {
                                 // Fork transactions already exist
                                 library.modules.delegates.fork(block, 2);
                                 setImmediate(cb, "Transaction already exists: " + transaction.id);
                             } else {
-                                if (appliedTransactions[transaction.id]) {
-                                    return setImmediate(cb, "Duplicated transaction in block: " + transaction.id);
-                                }
-                                library.modules.accounts.getAccount({publicKey: transaction.senderPublicKey}, function (err, sender) {
-                                    if (err) {
-                                        return cb(err);
-                                    }
-                                    library.logic.transaction.verify(transaction, sender, function (err) {
-                                        if (err) {
-                                            return setImmediate(cb, err);
-                                        }
-
-                                        library.modules.transactions.applyUnconfirmed(transaction, sender, function (err) {
-                                            if (err) {
-                                                return setImmediate(cb, "Failed to apply transaction: " + transaction.id);
-                                            }
-
-                                            try {
-                                                var bytes = library.logic.transaction.getBytes(transaction);
-                                            } catch (e) {
-                                                return setImmediate(cb, e.toString());
-                                            }
-
-                                            appliedTransactions[transaction.id] = transaction;
-
-                                            var index = unconfirmedTransactions.indexOf(transaction.id);
-                                            if (index >= 0) {
-                                                unconfirmedTransactions.splice(index, 1);
-                                            }
-
-                                            payloadHash.update(bytes);
-
-                                            totalAmount += transaction.amount;
-                                            totalFee += transaction.fee;
-
-                                            setImmediate(cb);
-                                        });
-                                    });
-                                });
+                                cb();
+                                // if (appliedTransactions[transaction.id]) {
+                                //     return setImmediate(cb, "Duplicated transaction in block: " + transaction.id);
+                                // }
+                        //         library.modules.accounts.getAccount({publicKey: transaction.senderPublicKey}, function (err, sender) {
+                        //             if (err) {
+                        //                 return cb(err);
+                        //             }
+                        //             library.base.transaction.verify(transaction, sender, function (err) {
+                        //                 if (err) {
+                        //                     return setImmediate(cb, err);
+                        //                 }
+                        //
+                        //                 library.modules.transactions.applyUnconfirmed(transaction, sender, function (err) {
+                        //                     if (err) {
+                        //                         return setImmediate(cb, "Failed to apply transaction: " + transaction.id);
+                        //                     }
+                        //
+                        //                     try {
+                        //                         var bytes = library.logic.transaction.getBytes(transaction);
+                        //                     } catch (e) {
+                        //                         return setImmediate(cb, e.toString());
+                        //                     }
+                        //
+                        //                     appliedTransactions[transaction.id] = transaction;
+                        //
+                        //                     var index = unconfirmedTransactions.indexOf(transaction.id);
+                        //                     if (index >= 0) {
+                        //                         unconfirmedTransactions.splice(index, 1);
+                        //                     }
+                        //
+                        //                     payloadHash.update(bytes);
+                        //
+                        //                     totalAmount += transaction.amount;
+                        //                     totalFee += transaction.fee;
+                        //
+                        //                     setImmediate(cb);
+                        //                 });
+                        //             });
+                        //         });
                             }
+                        }).catch((err) => {
+                            cb(err);
                         });
                     }, function (err) {
                         var errors = [];
@@ -459,17 +537,17 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                             errors.push(err);
                         }
 
-                        if (payloadHash.digest().toString('hex') !== block.payloadHash) {
-                            errors.push("Invalid payload hash: " + block.id);
-                        }
-
-                        if (totalAmount != block.totalAmount) {
-                            errors.push("Invalid total amount: " + block.id);
-                        }
-
-                        if (totalFee != block.totalFee) {
-                            errors.push("Invalid total fee: " + block.id);
-                        }
+                        // if (payloadHash.digest().toString('hex') !== block.payloadHash) {
+                        //     errors.push("Invalid payload hash: " + block.id);
+                        // }
+                        //
+                        // if (totalAmount != block.totalAmount) {
+                        //     errors.push("Invalid total amount: " + block.id);
+                        // }
+                        //
+                        // if (totalFee != block.totalFee) {
+                        //     errors.push("Invalid total fee: " + block.id);
+                        // }
 
                         if (errors.length > 0) {
                             async.eachSeries(block.transactions, function (transaction, cb) {

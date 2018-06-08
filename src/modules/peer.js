@@ -174,18 +174,12 @@ Peer.prototype.state = function (pip, port, state, timeout, cb) {
     } else {
         clock = null;
     }
-    library.dbClient.query("UPDATE peers SET state = $state, clock = $clock WHERE ip = $ip AND port = $port", {
+    library.dbClient.query(`UPDATE peers SET state = ${state}, clock = ${clock} WHERE ip = ${pip} AND ${port} = $port`, {
         type: Sequelize.QueryTypes.UPDATE,
-        bind: {
-            state: state,
-            clock: clock,
-            ip: pip,
-            port: port
-        }
     }).then(function (data) {
         cb(null, "update successed");
-    }, function (err) {
-        cb(err, undefined);
+    }).catch((err) => {
+        cb(err);
     });
 };
 
