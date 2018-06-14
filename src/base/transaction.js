@@ -427,7 +427,7 @@ Transaction.prototype.verify = function (txObj, sender, requester, cb) {
             return setImmediate(cb, "Encountered duplicate signatures");
         }
     }
-
+     //多重签名的验证的
     var multisignatures = sender.multisignatures || sender.multisignatures_unconfirmed;
 
     if (multisignatures == 0) {
