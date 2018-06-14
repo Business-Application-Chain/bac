@@ -297,7 +297,6 @@ Block.prototype.verifySignature = function (blockObj) {
             data2[i] = data1[i];
         }
         var hash = crypto.createHash('sha256').update(data2).digest();
-        console.log(crypto.createHash('sha256').update(data1).digest().toString('hex'));
         var blockSignatureBuffer = new Buffer(blockObj.blockSignature, 'hex');
         var generatorPublicKeyBuffer = new Buffer(blockObj.generatorPublicKey, 'hex');
         var res = ed.Verify(hash, blockSignatureBuffer || ' ', generatorPublicKeyBuffer || ' ');
