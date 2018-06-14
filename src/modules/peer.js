@@ -309,10 +309,11 @@ Peer.prototype.onBlockchainReady = function () {
                 port: peer.port,
                 state: 2, // default is 2, means health peer
                 sharePort: Number(true)
-            }
+            },
+            type:Sequelize.QueryTypes.INSERT
         }).then((data) => {
             cb();
-        }, (err) => {
+        }).catch((err) => {
             library.log.Error("Peer onBlockchainReady", "Error", err.toString());
             cb();
         });
@@ -323,7 +324,7 @@ Peer.prototype.onBlockchainReady = function () {
 
         privated.count((err, count) => {
             if (count) {
-                privated.updatePeerList((err) => {
+                privated.updatePeerList(function (err) {
                     err && library.log.Error("updatePeerList", "Error", err.toString());
                     library.notification_center.notify('peerReady');
                 });

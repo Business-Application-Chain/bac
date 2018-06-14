@@ -34,6 +34,7 @@ var params = {
         "loader": "../src/modules/loader.js",
         "multisignatures": "../src/modules/multisignatures.js",
         "peer": "../src/modules/peer.js",
+        "round": "../src/modules/round.js",
         "server": "../src/modules/server.js",
         "signatures": "../src/modules/signatures.js",
         "system": "../src/modules/system.js",

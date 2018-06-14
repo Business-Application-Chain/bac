@@ -64,7 +64,7 @@ function Vote() {
     };
 
     this.ready = function (txObj, sender) {
-        if (sender.multisignatures.length) {
+        if (sender.multisignatures) {
             if (!txObj.signatures) {
                 return false;
             }
@@ -409,7 +409,7 @@ Accounts.prototype.callApi = function (call, args, cb) {
 
 Accounts.prototype.generateAddressByPublicKey = function (publicKey) {
     var publicKeyHash = crypto.createHash('sha256').update(publicKey, 'hex').digest();
-    var temp = new Buffer[8];
+    var temp = new Buffer(8);
     for (var i = 0; i < 8; i++) {
         temp[i] = publicKeyHash[7 - i];
     }
@@ -438,7 +438,7 @@ Accounts.prototype.getAccountAll = function (filter, fields, cb) {
 Accounts.prototype.setAccountAndGet = function (fields, cb) {
     var master_address = fields.master_address || null;
     if (master_address === null) {
-        if (fileds.master_pub) {
+        if (fields.master_pub) {
             master_address = self.generateAddressByPublicKey(fields.master_pub);
         } else {
             return cb("Missing master_address and master_pub");

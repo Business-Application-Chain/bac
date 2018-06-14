@@ -41,7 +41,7 @@ function Transaction() {
     };
 
     this.ready = function (txObj, sender) {
-        if (sender.multisignatures.length) {
+        if (sender.multisignatures) {
             if (!txObj.signatures) {
                 return false;
             }

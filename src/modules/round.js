@@ -10,11 +10,11 @@ var modules_loaded, library, self, privated = {}, shared = {};
 privated.loaded = false;
 
 privated.feesByRound = {};
-privated.rewardsByRound = {};
-privated.delegatesByRound = {};
+privated.rewardsByRound = [];
+privated.delegatesByRound = [];
 privated.unFeesByRound = {};
-privated.unRewardsByRound = {};
-privated.unDelegatesByRound = {};
+privated.unRewardsByRound = [];
+privated.unDelegatesByRound = [];
 
 // constructor
 function Round(cb, scope) {
@@ -54,7 +54,7 @@ Round.prototype.calc = function (height) {
 };
 
 Round.prototype.getVotes = function (round, cb) {
-    var sql = 'SELECT delegate, amount FROM (SELECT m.delegate, SUM(m.amount), m.round FROM accounts_round m GROUP BY m.delegate, m.round) WHERE round = $round';
+    var sql = 'SELECT delegate, amount FROM (SELECT m.delegate, SUM(m.amount) as amount , m.round FROM accounts_round m GROUP BY m.delegate, m.round) a WHERE round = $round';
 
     library.dbClient.query(sql, {
         type: Sequelize.QueryTypes.SELECT,
@@ -259,7 +259,7 @@ Round.prototype.backwardTick = function (blockObj, previousBlockObj, cb) {
     });
 };
 
-Round.prototype.tick = function (blockObj) {
+Round.prototype.tick = function (blockObj, cb) {
     function done(err) {
         cb && setImmediate(cb, err);
     }
@@ -285,7 +285,7 @@ Round.prototype.tick = function (blockObj) {
         privated.delegatesByRound[round].push(blockObj.generatorPublicKey);
 
         var nextRound = self.calc(blockObj.height + 1);
-
+        return done();
         if (round !== nextRound || blockObj.height == 1) { // means it is the last item in current round
             if (privated.delegatesByRound[round].length == constants.delegates || blockObj.height == 1 || blockObj.height == 101) {
                 var outsiders = [];
@@ -405,6 +405,7 @@ Round.prototype.tick = function (blockObj) {
                         });
                     }
                 ], function (err) {
+                    done(err);
                     delete privated.feesByRound[round];
                     delete privated.rewardsByRound[round];
                     delete privated.delegatesByRound[round];

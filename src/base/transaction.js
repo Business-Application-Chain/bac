@@ -8,6 +8,7 @@ var jsonSql = require('../json-sql')({dialect: 'mysql'});
 var ed = require('ed25519');
 var slots = require('../utils/slots.js');
 var ByteBuffer = require('bytebuffer');
+var extend = require('util-extend');
 
 // constructor
 function Transaction(scope, cb) {

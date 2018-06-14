@@ -200,10 +200,28 @@ privated.readDbRows = function (rows) {
     return blocks;
 };
 
-privated.applyTransaction = function (txObj, blockObj, sender, cb) {
+privated.applyTransaction = function (block, transaction, sender, cb) {
+    library.modules.transactions.applyUnconfirmed(transaction, sender, function (err) {
+        if (err) {
+            return setImmediate(cb, {
+                message: err,
+                transaction: transaction,
+                block: block
+            });
+        }
 
+        library.modules.transactions.apply(transaction, block, sender, function (err) {
+            if (err) {
+                return setImmediate(cb, {
+                    message: "Can't apply transaction: " + transaction.id,
+                    transaction: transaction,
+                    block: block
+                });
+            }
+            setImmediate(cb);
+        });
+    });
 };
-
 
 // public methods
 Blocks.prototype.sandboxApi = function (call, args, cb) {
@@ -219,14 +237,14 @@ Blocks.prototype.callApi = function (call, args, cb) {
 // Events
 Blocks.prototype.onInit = function (scope) {
     modules_loaded = scope && scope != undefined ? true : false;
-    self.loadBlocksOffset(function (err, block) {
-        if(err) {
-            console.log('loadBlocksOffset error -> ', err.toString());
-        } else {
-            privated.lastBlock = block[0];
-            library.notification_center.notify('peerReady');
-        }
-    });
+    // self.loadBlocksOffset(function (err, block) {
+    //     if(err) {
+    //         console.log('loadBlocksOffset error -> ', err.toString());
+    //     } else {
+    //         privated.lastBlock = block[0];
+    //         library.notification_center.notify('peerReady');
+    //     }
+    // });
 };
 
 Blocks.prototype.getCommonBlock = function(peer, height, cb) {
@@ -380,17 +398,167 @@ Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
         });
 };
 
-Blocks.prototype.loadBlocksOffset = function(cb) {
+Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
+    var newLimit = limit + (offset || 0);
+    var params = {limit: newLimit, offset: offset || 0};
 
     library.dbSequence.add(function (cb) {
-        library.dbClient.query('SELECT * FROM blocks ORDER BY height DESC LIMIT 1').then((rows) => {
-            let block = rows[0];
-            privated.lastBlock = block;
-            return cb(null, block);
-        }).catch((error) => {
-            return cb(error);
+        library.dbClient.query('SELECT b.id as b_id, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward, b.payloadLength as b_payloadLength, b.payloadHash as b_payloadHash, b.generatorPublicKey as b_generatorPublicKey,  lower(b.blockSignature) as b_blockSignature, ' +
+            't.id as t_id, t.type as t_type, t.timestamp as t_timestamp, t.senderPublicKey as t_senderPublicKey, t.senderId as t_senderId, t.recipientId as t_recipientId, t.senderUsername as t_senderUsername, t.recipientUsername as t_recipientUsername, t.amount as t_amount, t.fee as t_fee, t.signature as t_signature, t.signSignature as t_signSignature,  ' +
+            's.publicKey as s_publicKey, ' +
+            'd.username as d_username, ' +
+            'c.address as c_address, ' +
+            'u.username as u_alias,' +
+            'm.min as m_min, m.lifetime as m_lifetime, m.keysgroup as m_keysgroup, ' +
+            't.requesterPublicKey as t_requesterPublicKey, t.signatures as t_signatures ' +
+            "FROM blocks b " +
+            "left outer join transactions as t on t.blockId=b.id " +
+            "left outer join delegates as d on d.transactionId=t.id " +
+            "left outer join signatures as s on s.transactionId=t.id " +
+            "left outer join contacts as c on c.transactionId=t.id " +
+            "left outer join usernames as u on u.transactionId=t.id " +
+            "left outer join multisignatures as m on m.transactionId=t.id " +
+            `where b.height >= ${params.offset} and b.height < ${params.limit} ` +
+            "ORDER BY b.height, t.id", {
+            type: Sequelize.QueryTypes.SELECT
+        }).then((rows) => {
+            var blocks = privated.readDbRows(rows);
+            blocks.forEach(function (block) {
+                block.blockSignature = block.blockSignature.toString('utf8');
+                block.generatorPublicKey = block.generatorPublicKey.toString('utf8');
+                block.payloadHash = block.payloadHash.toString('utf8');
+            });
+            async.eachSeries(blocks, function (block, cb) {
+                async.series([
+                    function (cb) {
+                        if (block.id !== genesisblock.block.id) {
+                            if (verify) {
+                                if (block.previousBlock !== privated.lastBlock.id) {
+                                    return cb({
+                                        message: "Can't verify previous block",
+                                        block: block
+                                    });
+                                }
+                                try {
+                                    var valid = library.base.block.verifySignature(block);
+                                } catch (e) {
+                                    return setImmediate(cb, {
+                                        message: e.toString(),
+                                        block: block
+                                    });
+                                }
+                                if (!valid) {
+                                    // Need to break cycle and delete this block and blocks after this block
+                                    return cb({
+                                        message: "Can't verify signature",
+                                        block: block
+                                    });
+                                }
+                                cb();
+                            } else {
+                                setImmediate(cb);
+                            }
+                        } else {
+                            setImmediate(cb);
+                        }
+                    }, function (cb) {
+                        block.transactions = block.transactions.sort(function (a, b) {
+                            if (block.id === genesisblock.block.id) {
+                                if (a.type === TransactionTypes.VOTE)
+                                    return 1;
+                            }
+
+                            if (a.type === TransactionTypes.SIGNATURE) {
+                                return 1;
+                            }
+
+                            return 0;
+                        });
+                        async.eachSeries(block.transactions, function (transaction, cb) {
+                            if (verify) {
+                                library.modules.accounts.setAccountAndGet({master_pub: transaction.senderPublicKey}, function (err, sender) {
+                                    if (err) {
+                                        return cb({
+                                            message: err,
+                                            transaction: transaction,
+                                            block: block
+                                        });
+                                    }
+                                    if (block.id !== genesisblock.block.id) {
+                                        library.base.transaction.verify(transaction, sender, function (err) {
+                                            if (err) {
+                                                return setImmediate(cb, {
+                                                    message: err,
+                                                    transaction: transaction,
+                                                    block: block
+                                                });
+                                            }
+                                            privated.applyTransaction(block, transaction, sender, cb);
+                                        });
+                                    } else {
+                                        privated.applyTransaction(block, transaction, sender, cb);
+                                    }
+                                });
+                            } else {
+                                setImmediate(cb);
+                            }
+                        }, function (err) {
+                            if(err) {
+                                // library.log.Error(err.message.stack);
+                                console.log(err.message.stack);
+                                var lastValidTransaction = block.transactions.findIndex(function (trs) {
+                                    return trs.id == err.transaction.id;
+                                });
+                                var transactions = block.transactions.slice(0, lastValidTransaction + 1);
+                                async.eachSeries(transactions.reverse(), function (transaction, cb) {
+                                    async.series([
+                                        function (cb) {
+                                            library.modules.accounts.getAccount({publicKey: transaction.senderPublicKey}, function (err, sender) {
+                                                if (err) {
+                                                    return cb(err);
+                                                }
+                                                library.modules.transactions.undo(transaction, block, sender, cb);
+                                            });
+                                        }, function (cb) {
+                                            library.modules.transactions.undoUnconfirmed(transaction, cb);
+                                        }
+                                    ], cb);
+                                }, cb);
+                            } else {
+                                privated.lastBlock = block;
+                                library.modules.round.tick(privated.lastBlock, cb);
+                            }
+                        });
+                    }
+                ], cb);
+            }, function (err) {
+                cb(err, privated.lastBlock);
+            });
+        }).catch((err) => {
+            console.log(err);
         });
     }, cb);
+};
+
+Blocks.prototype.simpleDeleteAfterBlock = function (blockId, cb) {
+    library.dbClient.query(`DELETE FROM blocks WHERE height >= (SELECT height FROM blocks where id = ${blockId})`, {
+        type: Sequelize.QueryTypes.DELETE
+    }).then((rows) => {
+        cb(null, rows);
+    }).catch((err) => {
+        cb(err);
+    });
+};
+
+
+Blocks.prototype.count = function(cb) {
+    library.dbClient.query('SELECT count(id) as Number from blocks', {
+        type: Sequelize.QueryTypes.SELECT
+    }).then((rows) => {
+        cb(null, rows[0].Number);
+    }).catch((err) => {
+        return cb(err);
+    });
 };
 
 Blocks.prototype.processBlock = function(block, broadcast, cb) {

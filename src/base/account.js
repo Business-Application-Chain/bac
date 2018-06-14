@@ -157,7 +157,7 @@ function Account(scope, cb) {
             expression: "(select GROUP_CONCAT(dependentId) from " + this.table + "2delegates_unconfirmed where accountId = a.master_address)"
         },
         {
-            name: 'createat_block',
+            name: 'create_block',
             type: 'String',
             length: 20,
             filter: {
@@ -890,53 +890,39 @@ Account.prototype.merge = function (master_address, fields, cb) {
     async.series([
         function (cb) {
             self.scope.dbClient.transaction(function (t) {
-                async.eachSeries(sqles, function (sql, cb) {
-                    self.scope.dbClient.query(sql.query, {
-                        bind: sql.values,
-                        transaction: t
-                    }).then(function (data) {
-                        cb(null, data);
-                    }, function (err) {
-                        cb(err, undefined);
-                    });
-                }, function (err) {
-                    if (err) {
-                        cb(err);
-                    }
-                    cb();
+                var promiseList = [];
+                sqles.forEach(function (sql) {
+                    promiseList.push(
+                        self.scope.dbClient.query(sql.query, {bind: sql.values, transaction: t})
+                    );
                 });
-            }).then(function (data) {
+                return Promise.all(promiseList);
+            }).then(() => {
                 cb();
-            }).catch(function (err) {
+            }).catch((err) => {
+                console.log('iserrrrrrrrrrr');
                 cb(err);
             });
         },
         function (cb) {
             self.scope.dbClient.transaction(function (t) {
-                async.eachSeries(round, function (sql, cb) {
-                    self.scope.dbClient.query(sql.query, {
-                        bind: sql.values,
-                        transaction: t
-                    }).then(function (data) {
-                        cb();
-                    }, function (err) {
-                        cb(err, undefined);
-                    });
-                }, function (err) {
-                    if (err) {
-                        cb(err);
-                    }
-                    cb();
+                let promiseList = [];
+                round.forEach(function (sql) {
+                    promiseList.push(
+                        self.scope.dbClient.query(sql.query, {
+                            bind: sql.values,
+                            transaction: t
+                        })
+                    );
                 });
-            }).then(function (data) {
+                return Promise.all(promiseList);
+            }).then(() => {
                 cb();
-            }).catch(function (err) {
+            }).catch((err) => {
                 cb(err);
             });
         }
     ], done);
-
-    var self = this;
 };
 
 Account.prototype.remove = function (master_address, cb) {

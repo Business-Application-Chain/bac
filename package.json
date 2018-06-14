@@ -44,6 +44,7 @@
     "strftime": "^0.10.0",
     "underscore": "^1.8.3",
     "util": "^0.10.3",
+    "util-extend": "^1.0.3",
     "uuid": "^3.2.1",
     "z-schema": "^3.19.1"
   },

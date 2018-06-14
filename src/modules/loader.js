@@ -8,6 +8,7 @@ var ip = require('ip');
 var bignum = require('../utils/bignum');
 // private objects
 var modules_loaded, library, self, privated = {}, shared = {};
+var Sequelize = require('sequelize');
 
 privated.loaded = false;
 privated.genesisBlock = null;
@@ -56,6 +57,118 @@ privated.loadBlocks = function(lastBlock, cb) {
             }
         } else {
             cb();
+        }
+    });
+};
+
+privated.loadBlockChain = function () {
+    var offset = 0, limit = library.config.loading.loadPerIteration;
+    var verify = library.config.loading.verifyOnLoading;
+    function load(count) {
+        verify = true;
+        privated.total = count;
+        library.base.account.removeTables(function (err) {
+            if (err) {
+                throw err;
+            } else {
+                library.base.account.createTables(function (err) {
+                    if(err) {
+                        throw err;
+                    } else {
+                        async.until(
+                            function () {
+                                return count < offset;
+                            }, function (cb) {
+                                library.log.Info('Current ', offset);
+                                setImmediate(function () {
+                                    library.modules.blocks.loadBlocksOffset(limit, offset, verify, function (err, lastBlockOffset) {
+                                        if(err) {
+                                            console.log('Err !!!!!!!!!!!!!!!!!!!');
+                                            console.log(err);
+                                            return cb(err);
+                                        }
+                                        offset = offset + limit;
+                                        privated.loadingLastBlock = lastBlockOffset;
+                                        return cb();
+                                    });
+                                });
+                            }, function (err) {
+                                if(err) {
+                                    library.log.Error('loadBlocksOffset', err);
+                                    if (err.block) {
+                                        library.log.Error('Blockchain failed at ', err.block.height);
+                                        library.modules.blocks.simpleDeleteAfterBlock(err.block.id, function (err, res) {
+                                            if(err) {
+                                                console.log('simpleDeleteAfterBlock is err');
+                                                console.log(err);
+                                            } else {
+                                                console.log('simpleDeleteAfterBlock is Success!');
+                                                console.log(res);
+                                                library.log.Error('Blockchain clipped');
+                                                library.notification_center.notify('blockchainReady');
+                                            }
+                                        });
+                                    }
+                                } else {
+                                    library.log.Info('Blockchain ready');
+                                    library.notification_center.notify('blockchainReady');
+                                }
+                            }
+                        );
+                    }
+                });
+            }
+        });
+    }
+    library.base.account.createTables(function (err) {
+        if (err) {
+            throw err;
+        } else {
+            library.dbClient.query('SELECT count(*) as Number from accounts where create_block = (select id from blocks where numberOfTransactions > 0 order by height desc limit 1)', {
+                type: Sequelize.QueryTypes.SELECT
+            }).then((rows) => {
+                var reject = !(rows[0].Number);
+                library.modules.blocks.count(function (err, count) {
+                    // console.log(count);
+                    if (err) {
+                        return library.log.Error('Failed to count blocks', err);
+                    } else {
+                        library.dbClient.query('UPDATE accounts SET isDelegate_unconfirmed=isDelegate,secondsign_unconfirmed=secondsign,username_unconfirmed=username,balance_unconfirmed=balance,delegates_unconfirmed=delegates,multisignatures_unconfirmed=multisignatures', {
+                            type:Sequelize.QueryTypes.UPDATE
+                        }).then((rows) => {
+                            if(rows) {
+                                library.log.Error("Encountered missing block, looks like node went down during block processing");
+                                library.log.Info("Unable to load without verifying, clearing accounts from database and loading");
+                                load(count);
+                            } else {
+                                library.dbClient.query('SELECT master_pub FROM accounts WHERE isDelegate=1', {
+                                    type: Sequelize.QueryTypes.SELECT
+                                }).then((rows) => {
+                                    if(rows.length === 0) {
+                                        library.log.Error("No delegates, reload database");
+                                        library.log.Info("Unable to load without verifying, clearing accounts from database and loading");
+                                        load(count);
+                                    } else {
+                                        library.modules.blocks.loadBlocksOffset(1, count, verify, function (err, lastBlock) {
+
+                                        });
+                                    }
+                                }).catch((err) => {
+                                    library.log.Error(err);
+                                    library.log.Info("Unable to load without verifying, clearing accounts from database and loading");
+                                    load(count);
+                                });
+                            }
+                        }).catch((err) => {
+                            library.log.Info("Unable to load without verifying, clearing accounts from database and loading");
+                            library.log.Error(err);
+                            load(count);
+                        })
+                    }
+                });
+            }).catch((err) => {
+                console.log(err);
+            });
         }
     });
 };
@@ -165,11 +278,12 @@ Loader.prototype.callApi = function (args) {
 Loader.prototype.onInit = function (scope) {
     modules_loaded = scope && scope != undefined ? true : false;
 
-    privated.loadApp();
+    // privated.loadApp();
+    privated.loadBlockChain();
 };
 
 Loader.prototype.onBlockchainReady = function () {
-
+    privated.loaded = true;
 };
 
 Loader.prototype.onPeerReady = function() {
