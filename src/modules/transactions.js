@@ -57,7 +57,7 @@ function Transaction() {
     };
 
     this.verify = function (txObj, sender, cb) {
-        if ('/^[0-9]+[L|l]$/g'.test(txObj.recipientId.toLowerCase()) <= 0) {
+        if(txObj.recipientId.toLowerCase().match('/^[0-9]+[L|l]$/g')) {
             return cb("Invalid recipient master_address");
         }
 

@@ -399,6 +399,7 @@ Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
 };
 
 Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
+    debugger;
     var newLimit = limit + (offset || 0);
     var params = {limit: newLimit, offset: offset || 0};
 

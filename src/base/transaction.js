@@ -430,7 +430,7 @@ Transaction.prototype.verify = function (txObj, sender, requester, cb) {
 
     var multisignatures = sender.multisignatures || sender.multisignatures_unconfirmed;
 
-    if (multisignatures.length == 0) {
+    if (multisignatures == 0) {
         if (txObj.asset && txObj.asset.multisignature && txObj.asset.multisignature.keysgroup) {
 
             multisignatures = txObj.asset.multisignature.keysgroup.map(function (key) {
@@ -534,7 +534,7 @@ Transaction.prototype.verifyBytes = function (bytes, master_pub, signature) {
 
         var hash = crypto.createHash('sha256').update(data2).digest();
         var signatureBuffer = new Buffer(signature, 'hex');
-        var publicKeyBuffer = new Buffer(publicKey, 'hex');
+        var publicKeyBuffer = new Buffer(master_pub, 'hex');
         var res = ed.Verify(hash, signatureBuffer || ' ', publicKeyBuffer || ' ');
     } catch (err) {
         throw new Error(err.toString());
