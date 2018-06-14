@@ -215,7 +215,7 @@ d.run(function () {
         sequence: ["log", function (scope, cb) {
             var sequence = new Sequence({
                 onWarning: function (current, limit) {
-                    scope.logger.warn("Main queue", current)
+                    scope.log.Warn("Main queue", current)
                 }
             });
             cb(null, sequence);
@@ -224,7 +224,7 @@ d.run(function () {
         dbSequence: ["log", function (scope, cb) {
             var sequence = new Sequence({
                 onWarning: function (current, limit) {
-                    scope.logger.warn("DB queue", current)
+                    scope.log.Warn("DB queue", current)
                 }
             });
             cb(null, sequence);
