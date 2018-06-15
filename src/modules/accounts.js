@@ -68,7 +68,7 @@ function Vote() {
             if (!txObj.signatures) {
                 return false;
             }
-            return txObj.signatures.length >= sender.multimin - 1;
+            return txObj.signatures.length >= sender.multisign_min - 1;
         } else {
             return true;
         }
@@ -199,7 +199,7 @@ function Username() {
                 },
                 publicKey: {
                     type: 'string',
-                    format: 'publicKey'
+                    // format: 'publicKey'
                 }
             },
             required: ['alias', 'publicKey']
@@ -223,11 +223,11 @@ function Username() {
     };
 
     this.ready = function (txObj, sender) {
-        if (sender.multisignatures.length) {
+        if (sender.multisignatures) {
             if (!txObj.signatures) {
                 return false;
             }
-            return txObj.signatures.length >= sender.multimin - 1;
+            return txObj.signatures.length >= sender.multisign_min - 1;
         } else {
             return true;
         }
@@ -283,7 +283,7 @@ function Username() {
                 return cb("Account already has a username");
             }
 
-            cb(null, trs);
+            cb(null, txObj);
         });
     };
 
@@ -357,7 +357,7 @@ function Username() {
     };
 
     this.save = function (txObj, cb) {
-        library.dbClient.query("INSERT INTO usernames (transactionId, username) VALUES ($transactionId, username)", {
+        library.dbClient.query("INSERT INTO usernames (transactionId, username) VALUES ($transactionId, $username)", {
             type: Sequelize.QueryTypes.INSERT,
             bind: {
                 transactionId: txObj.id,
@@ -458,7 +458,7 @@ Accounts.prototype.setAccountAndGet = function (fields, cb) {
 Accounts.prototype.mergeAccountAndGet = function (fields, cb) {
     var master_address = fields.master_address || null;
     if (master_address === null) {
-        if (fileds.master_pub) {
+        if (fields.master_pub) {
             master_address = self.generateAddressByPublicKey(fields.master_pub);
         } else {
             return cb("Missing master_address and master_pub");

@@ -46,7 +46,7 @@ function Transaction() {
                 return false;
             }
 
-            return txObj.signatures.length >= sender.multimin - 1;
+            return txObj.signatures.length >= sender.multisign - 1;
         } else {
             return true;
         }
@@ -137,7 +137,7 @@ privated.list = function (filter, cb) {
     var sortFields = ['t.id', 't.blockId', 't.amount', 't.fee', 't.type', 't.timestamp', 't.senderPublicKey', 't.senderId', 't.recipientId', 't.senderUsername', 't.recipientUsername', 't.confirmations', 'b.height'];
     var fields = {}, fields_or = [], owner = '';
 
-    if (filers.blockId) {
+    if (filter.blockId) {
         fields_or.push('blockId = $blockId');
         fields.blockId = filter.blockId;
     }
@@ -533,7 +533,7 @@ shared.addTransactions = function (req, cb) {
         }
 
         library.balancesWorkQueue.add(function (cb) {
-            modules.accounts.getAccount(query, function (err, recipient) {
+            library.modules.accounts.getAccount(query, function (err, recipient) {
                 if (err) {
                     return cb(err.toString());
                 }
@@ -544,7 +544,7 @@ shared.addTransactions = function (req, cb) {
                 var recipientUsername = recipient ? recipient.username : null;
 
                 if (body.multisigAccountPublicKey && body.multisigAccountPublicKey != keypair.publicKey.toString('hex')) {
-                    modules.accounts.getAccount({publicKey: body.multisigAccountPublicKey},function (err, account) {
+                    library.modules.accounts.getAccount({publicKey: body.multisigAccountPublicKey},function (err, account) {
                         if (err) {
                             return cb(err.toString());
                         }
@@ -561,7 +561,7 @@ shared.addTransactions = function (req, cb) {
                             return cb("Account does not belong to multisignature group");
                         }
 
-                        modules.accounts.getAccount({publicKey: keypair.publicKey}, function (err, requester) {
+                        library.modules.accounts.getAccount({publicKey: keypair.publicKey}, function (err, requester) {
                             if (err) {
                                 return cb(err.toString());
                             }
@@ -570,7 +570,7 @@ shared.addTransactions = function (req, cb) {
                                 return cb("Invalid requester");
                             }
 
-                            if (requester.secondSignature && !body.secondSecret) {
+                            if (requester.secondsign && !body.secondSecret) {
                                 return cb("Invalid second passphrase");
                             }
 
@@ -580,7 +580,7 @@ shared.addTransactions = function (req, cb) {
 
                             var secondKeypair = null;
 
-                            if (requester.secondSignature) {
+                            if (requester.secondsign) {
                                 var secondHash = crypto.createHash('sha256').update(body.secondSecret, 'utf8').digest();
                                 secondKeypair = ed.MakeKeypair(secondHash);
                             }
@@ -599,11 +599,11 @@ shared.addTransactions = function (req, cb) {
                             } catch (e) {
                                 return cb(e.toString());
                             }
-                            modules.transactions.receiveTransactions([transaction], cb);
+                            library.modules.transactions.receiveTransactions([transaction], cb);
                         });
                     });
                 } else {
-                    modules.accounts.getAccount({publicKey: keypair.publicKey.toString('hex')}, function (err, account) {
+                    library.modules.accounts.getAccount({publicKey: keypair.publicKey.toString('hex')}, function (err, account) {
                         if (err) {
                             return cb(err.toString());
                         }
@@ -611,13 +611,13 @@ shared.addTransactions = function (req, cb) {
                             return cb("Invalid account");
                         }
 
-                        if (account.secondSignature && !body.secondSecret) {
+                        if (account.secondsign && !body.secondSecret) {
                             return cb("Invalid second passphrase");
                         }
 
                         var secondKeypair = null;
 
-                        if (account.secondSignature) {
+                        if (account.secondsign) {
                             var secondHash = crypto.createHash('sha256').update(body.secondSecret, 'utf8').digest();
                             secondKeypair = ed.MakeKeypair(secondHash);
                         }
@@ -635,7 +635,7 @@ shared.addTransactions = function (req, cb) {
                         } catch (e) {
                             return cb(e.toString());
                         }
-                        modules.transactions.receiveTransactions([transaction], cb);
+                        library.modules.transactions.receiveTransactions([transaction], cb);
                     });
                 }
             });
@@ -647,7 +647,7 @@ shared.addTransactions = function (req, cb) {
             cb(null, {transactionId: transaction[0].id});
         });
     });
-}
+};
 
 // export
 module.exports = Transactions;

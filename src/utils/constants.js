@@ -16,7 +16,7 @@ module.exports = {
     maxMultiSignaturesLength: 196 * 256,
     maxConfiramtions: 77 * 100,
     confirmationLength: 77,
-    fiexedPoint: Math.pow(10, 8),
+    fixedPoint: Math.pow(10, 8),
     totalAmount: 10000000000000000,
 
     // slots

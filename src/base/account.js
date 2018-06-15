@@ -621,7 +621,7 @@ Account.prototype.findAll = function (filter, fields, cb) {
     }
     delete filter.limit;
     if (filter.offset > 0) {
-        offset = filter.offet;
+        offset = filter.offset;
     }
     delete filter.offset;
     if (filter.sort) {
@@ -900,7 +900,6 @@ Account.prototype.merge = function (master_address, fields, cb) {
             }).then(() => {
                 cb();
             }).catch((err) => {
-                console.log('iserrrrrrrrrrr');
                 cb(err);
             });
         },
@@ -919,6 +918,8 @@ Account.prototype.merge = function (master_address, fields, cb) {
             }).then(() => {
                 cb();
             }).catch((err) => {
+                console.log('iserrrrrrrrrrr');
+                console.log(err);
                 cb(err);
             });
         }

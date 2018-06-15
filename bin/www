@@ -44,7 +44,7 @@ var params = {
 
 process.on('uncaughtException', function (err) {
     // handle the error safely
-    log.fatal('System error', { message: err.message, stack: err.stack });
+    log.Fatal('System error', { message: err.message, stack: err.stack });
     process.emit('cleanup');
 });
 

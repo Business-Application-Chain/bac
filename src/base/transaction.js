@@ -43,7 +43,7 @@ Transaction.prototype.create = function (data) {
         type: data.type,
         amount: 0,
         senderPublicKey: data.sender.master_pub,
-        requesterPublicKey: data.requester ? data.requester.publicKey : null,
+        requesterPublicKey: data.requester ? data.requester.master_pub : null,
         timestamp: slots.getTime(),
         asset: {}
     };
@@ -52,7 +52,7 @@ Transaction.prototype.create = function (data) {
 
     txObj.signature = this.sign(data.keypair, txObj);
 
-    if (data.sender.secondSignature && data.secondKeypair) {
+    if (data.sender.secondsign && data.secondKeypair) {
         txObj.signSignature = this.sign(data.secondKeypair, txObj);
     }
 
@@ -470,6 +470,7 @@ Transaction.prototype.verify = function (txObj, sender, requester, cb) {
 
     // Calculate fee
     var fee = privated.types[txObj.type].calculateFee.call(this, txObj, sender) || false;
+    // var fee = privated.types[txObj.type].calculateFee(txObj, sender) || false;
     if (!fee || txObj.fee != fee) {
         return setImmediate(cb, "Invalid transaction type/fee: " + txObj.id);
     }
@@ -575,6 +576,30 @@ Transaction.prototype.apply = function (txObj, blockObj, sender, cb) {
                     round: calc(blockObj.height)
                 }, function (err2) {
                     cb(err2);
+                });
+            } else {
+                setImmediate(cb, err);
+            }
+        }.bind(this));
+    }.bind(this));
+};
+
+Transaction.prototype.undoUnconfirmed = function (trs, sender, cb) {
+    if (!privated.types[trs.type]) {
+        return setImmediate(cb, "Unknown transaction type " + trs.type);
+    }
+
+    var amount = trs.amount + trs.fee;
+
+    this.scope.account.merge(sender.address, {u_balance: amount}, function (err, sender) {
+        if (err) {
+            return cb(err);
+        }
+
+        privated.types[trs.type].undoUnconfirmed.call(this, trs, sender, function (err) {
+            if (err) {
+                this.scope.account.merge(sender.address, {u_balance: -amount}, function (err) {
+                    cb(err);
                 });
             } else {
                 setImmediate(cb, err);

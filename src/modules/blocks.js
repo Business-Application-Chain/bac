@@ -140,15 +140,115 @@ privated.saveBlock = function (blockObj, cb) {
 };
 
 privated.deleteBlock = function (blockId, cb) {
-
+    library.dbClient.query(`DELETE FROM blocks WHERE id = ${blockId}`, {
+        type: Sequelize.QueryTypes.DELETE
+    }).then((data) => {
+        cb(null, data);
+    }).catch((err) => {
+        cb(err);
+    });
 };
 
 privated.list = function (filter, cb) {
-
+    var sortFields = ['b.id', 'b.timestamp', 'b.height', 'b.previousBlock', 'b.totalAmount', 'b.totalFee', 'b.reward', 'b.numberOfTransactions', 'b.generatorPublicKey'];
+    var params = {}, fields = [], sortMethod = '', sortBy = '';
+    if (filter.generatorPublicKey) {
+        fields.push('lower(hex(generatorPublicKey)) = $generatorPublicKey');
+        params.generatorPublicKey = filter.generatorPublicKey;
+    }
+    if (filter.numberOfTransactions) {
+        fields.push('numberOfTransactions = $numberOfTransactions');
+        params.numberOfTransactions = filter.numberOfTransactions;
+    }
+    if (filter.previousBlock) {
+        fields.push('previousBlock = $previousBlock');
+        params.previousBlock = filter.previousBlock;
+    }
+    if (filter.height === 0 || filter.height > 0) {
+        fields.push('height = $height');
+        params.height = filter.height;
+    }
+    if (filter.totalAmount >= 0) {
+        fields.push('totalAmount = $totalAmount');
+        params.totalAmount = filter.totalAmount;
+    }
+    if (filter.totalFee >= 0) {
+        fields.push('totalFee = $totalFee');
+        params.totalFee = filter.totalFee;
+    }
+    if (filter.reward >= 0) {
+        fields.push('reward = $reward');
+        params.reward = filter.reward;
+    }
+    if (filter.orderBy) {
+        var sort = filter.orderBy.split(':');
+        sortBy = sort[0].replace(/[^\w\s]/gi, '');
+        sortBy = "b." + sortBy;
+        if (sort.length == 2) {
+            sortMethod = sort[1] == 'desc' ? 'desc' : 'asc';
+        } else {
+            sortMethod = 'desc';
+        }
+    }
+    if (sortBy) {
+        if (sortFields.indexOf(sortBy) < 0) {
+            return cb("Invalid sort field");
+        }
+    }
+    if (!filter.limit) {
+        filter.limit = 100;
+    }
+    if (!filter.offset) {
+        filter.offset = 0;
+    }
+    params.limit = filter.limit;
+    params.offset = filter.offset;
+    if (filter.limit > 100) {
+        return cb("Invalid limit. Maximum is 100");
+    }
+    library.dbClient.query(`SELECT count(b.id) as Number FROM blocks b ${fields.length ? "WHERE " + fields.join(' and ') : ''}`, {
+        type: Sequelize.QueryTypes.SELECT
+    }).then((rows) => {
+        let count = rows[0].count;
+        library.dbClient.query('SELECT b.id, b.version, b.timestamp, b.height, b.previousBlock, b.numberOfTransactions, b.totalAmount, b.totalFee, b.reward, b.payloadLength, lower(hex(b.payloadHash)), lower(hex(b.generatorPublicKey)), lower(hex(b.blockSignature)), (select max(height) + 1 from blocks) - b.height' +
+        "from blocks b " + (fields.length ? "where " + fields.join(' and ') : '') + " " +
+        (filter.orderBy ? 'order by ' + sortBy + ' ' + sortMethod : '') + ` limit ${params.limit} offset ${params.offset} `, {
+            type: Sequelize.QueryTypes.SELECT
+        }).then((rows) => {
+            var blocks = [];
+            for (var i = 0; i < rows.length; i++) {
+                blocks.push(library.base.block.dbRead(rows[i]));
+            }
+            var data = {
+                blocks: blocks,
+                count: count
+            };
+            cb(null, data);
+        }).catch((err) => {
+            library.log.Error(err);
+            return cb(err);
+        });
+    }).catch((err) => {
+        return cb(err);
+    });
 };
 
-privated.getById = function (blockId, cb) {
-
+privated.getById = function (id, cb) {
+    library.dbClient.query('SELECT b.id, b.version, b.timestamp, b.height, b.previousBlock, b.numberOfTransactions, b.totalAmount, b.totalFee, b.reward, b.payloadLength,  b.payloadHash, b.generatorPublicKey, b.blockSignature, (select max(height) + 1 from blocks) - b.height ' +
+        'from blocks b ' +
+        `where b.id = ${id}`, {
+            type: Sequelize.QueryTypes.SELECT
+    }).then((rows) => {
+        rows.forEach(function (block) {
+            block.blockSignature = block.blockSignature.toString('utf8');
+            block.generatorPublicKey = block.generatorPublicKey.toString('utf8');
+            block.payloadHash = block.payloadHash.toString('utf8');
+        });
+        var block = library.base.block.dbRead(rows[0]);
+        cb(null, block);
+    }).catch((err) => {
+        cb(err);
+    });
 };
 
 privated.popLastBlock = function (oldLastBlock, cb) {
@@ -237,14 +337,6 @@ Blocks.prototype.callApi = function (call, args, cb) {
 // Events
 Blocks.prototype.onInit = function (scope) {
     modules_loaded = scope && scope != undefined ? true : false;
-    // self.loadBlocksOffset(function (err, block) {
-    //     if(err) {
-    //         console.log('loadBlocksOffset error -> ', err.toString());
-    //     } else {
-    //         privated.lastBlock = block[0];
-    //         library.notification_center.notify('peerReady');
-    //     }
-    // });
 };
 
 Blocks.prototype.getCommonBlock = function(peer, height, cb) {
@@ -376,11 +468,12 @@ Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
                                 lastValidBlock = block;
                                 cb();
                             } else {
+                                debugger;
                                 console.log(err.stack);
                                 var peerStr = data.peer ? ip.fromLong(data.peer.ip) + ":" + data.peer.port : 'unknown';
                                 library.log.Info('Block ' + (block ? block.id : 'null') + ' is not valid, ban 60 min', peerStr);
                                 library.modules.peer.state(peer.ip, peer.port, 0, 3600);
-                                // cb(err);
+                                cb(err);
                             }
                         });
                     }, cb);
@@ -399,7 +492,6 @@ Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
 };
 
 Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
-    debugger;
     var newLimit = limit + (offset || 0);
     var params = {limit: newLimit, offset: offset || 0};
 
@@ -514,7 +606,7 @@ Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
                                 async.eachSeries(transactions.reverse(), function (transaction, cb) {
                                     async.series([
                                         function (cb) {
-                                            library.modules.accounts.getAccount({publicKey: transaction.senderPublicKey}, function (err, sender) {
+                                            library.modules.accounts.getAccount({master_pub: transaction.senderPublicKey}, function (err, sender) {
                                                 if (err) {
                                                     return cb(err);
                                                 }
@@ -542,7 +634,8 @@ Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
 };
 
 Blocks.prototype.simpleDeleteAfterBlock = function (blockId, cb) {
-    library.dbClient.query(`DELETE FROM blocks WHERE height >= (SELECT height FROM blocks where id = ${blockId})`, {
+    // library.dbClient.query(`DELETE FROM blocks WHERE height not in (SELECT height FROM blocks where id = ${blockId}) `, {
+    library.dbClient.query(`DELETE FROM blocks WHERE height >= (SELECT height from (SELECT height FROM blocks where id = ${blockId}) a) `, {
         type: Sequelize.QueryTypes.DELETE
     }).then((rows) => {
         cb(null, rows);
@@ -582,11 +675,11 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                 return process.exit(0);
             }
             function done(err) {
-                setImmediate(cb, err);
-                // library.modules.transactions.applyUnconfirmedList(unconfirmedTransactions, function () {
-                //     privated.isActive = false;
-                //     setImmediate(cb, err);
-                // });
+                // setImmediate(cb, err);
+                library.modules.transactions.applyUnconfirmedList(unconfirmedTransactions, function () {
+                    privated.isActive = false;
+                    setImmediate(cb, err);
+                });
             }
 
             if (!block.previousBlock && block.height != 1) {
@@ -599,7 +692,6 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
             library.dbClient.query(`SELECT id FROM blocks WHERE id=${block.id}`,{
                 type:Sequelize.QueryTypes.SELECT
             }).then((rows) => {
-                debugger;
                 let bId = rows.length && rows[0].id;
                 if (bId) {
                     return done("Block already exists: " + block.id);
@@ -655,46 +747,46 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                 library.modules.delegates.fork(block, 2);
                                 setImmediate(cb, "Transaction already exists: " + transaction.id);
                             } else {
-                                cb();
+                                // cb();
                                 // if (appliedTransactions[transaction.id]) {
                                 //     return setImmediate(cb, "Duplicated transaction in block: " + transaction.id);
                                 // }
-                        //         library.modules.accounts.getAccount({publicKey: transaction.senderPublicKey}, function (err, sender) {
-                        //             if (err) {
-                        //                 return cb(err);
-                        //             }
-                        //             library.base.transaction.verify(transaction, sender, function (err) {
-                        //                 if (err) {
-                        //                     return setImmediate(cb, err);
-                        //                 }
-                        //
-                        //                 library.modules.transactions.applyUnconfirmed(transaction, sender, function (err) {
-                        //                     if (err) {
-                        //                         return setImmediate(cb, "Failed to apply transaction: " + transaction.id);
-                        //                     }
-                        //
-                        //                     try {
-                        //                         var bytes = library.logic.transaction.getBytes(transaction);
-                        //                     } catch (e) {
-                        //                         return setImmediate(cb, e.toString());
-                        //                     }
-                        //
-                        //                     appliedTransactions[transaction.id] = transaction;
-                        //
-                        //                     var index = unconfirmedTransactions.indexOf(transaction.id);
-                        //                     if (index >= 0) {
-                        //                         unconfirmedTransactions.splice(index, 1);
-                        //                     }
-                        //
-                        //                     payloadHash.update(bytes);
-                        //
-                        //                     totalAmount += transaction.amount;
-                        //                     totalFee += transaction.fee;
-                        //
-                        //                     setImmediate(cb);
-                        //                 });
-                        //             });
-                        //         });
+                                library.modules.accounts.getAccount({master_pub: transaction.senderPublicKey}, function (err, sender) {
+                                    if (err) {
+                                        return cb(err);
+                                    }
+                                    library.base.transaction.verify(transaction, sender, function (err) {
+                                        if (err) {
+                                            return setImmediate(cb, err);
+                                        }
+
+                                        library.modules.transactions.applyUnconfirmed(transaction, sender, function (err) {
+                                            if (err) {
+                                                return setImmediate(cb, "Failed to apply transaction: " + transaction.id);
+                                            }
+
+                                            try {
+                                                var bytes = library.base.transaction.getBytes(transaction);
+                                            } catch (e) {
+                                                return setImmediate(cb, e.toString());
+                                            }
+
+                                            appliedTransactions[transaction.id] = transaction;
+
+                                            var index = unconfirmedTransactions.indexOf(transaction.id);
+                                            if (index >= 0) {
+                                                unconfirmedTransactions.splice(index, 1);
+                                            }
+
+                                            // payloadHash.update(bytes);
+
+                                            totalAmount += transaction.amount;
+                                            totalFee += transaction.fee;
+
+                                            setImmediate(cb);
+                                        });
+                                    });
+                                });
                             }
                         }).catch((err) => {
                             cb(err);
@@ -709,14 +801,14 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                         // if (payloadHash.digest().toString('hex') !== block.payloadHash) {
                         //     errors.push("Invalid payload hash: " + block.id);
                         // }
-                        //
-                        // if (totalAmount != block.totalAmount) {
-                        //     errors.push("Invalid total amount: " + block.id);
-                        // }
-                        //
-                        // if (totalFee != block.totalFee) {
-                        //     errors.push("Invalid total fee: " + block.id);
-                        // }
+
+                        if (totalAmount != block.totalAmount) {
+                            errors.push("Invalid total amount: " + block.id);
+                        }
+
+                        if (totalFee != block.totalFee) {
+                            errors.push("Invalid total fee: " + block.id);
+                        }
 
                         if (errors.length > 0) {
                             async.eachSeries(block.transactions, function (transaction, cb) {
@@ -736,34 +828,34 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                             }
 
                             async.eachSeries(block.transactions, function (transaction, cb) {
-                                setImmediate(cb);
-                                // library.modules.accounts.setAccountAndGet({publicKey: transaction.senderPublicKey}, function (err, sender) {
-                                //     if (err) {
-                                //         library.log.error("Failed to apply transactions: " + transaction.id);
-                                //         process.exit(0);
-                                //     }
-                                //     library.modules.transactions.apply(transaction, block, sender, function (err) {
-                                //         if (err) {
-                                //             library.log.error("Failed to apply transactions: " + transaction.id);
-                                //             process.exit(0);
-                                //         }
-                                //         library.modules.transactions.removeUnconfirmedTransaction(transaction.id);
-                                //         setImmediate(cb);
-                                //     });
-                                // });
+                                // setImmediate(cb);
+                                library.modules.accounts.setAccountAndGet({master_pub: transaction.senderPublicKey}, function (err, sender) {
+                                    if (err) {
+                                        library.log.Error("Failed to apply transactions: " + transaction.id);
+                                        process.exit(0);
+                                    }
+                                    library.modules.transactions.apply(transaction, block, sender, function (err) {
+                                        if (err) {
+                                            library.log.Error("Failed to apply transactions: " + transaction.id);
+                                            process.exit(0);
+                                        }
+                                        library.modules.transactions.removeUnconfirmedTransaction(transaction.id);
+                                        setImmediate(cb);
+                                    });
+                                });
                             }, function (err) {
                                 privated.saveBlock(block, function (err) {
                                     if (err) {
-                                        library.log.error("Failed to save block...");
-                                        library.log.error(err);
+                                        library.log.Error("Failed to save block...");
+                                        library.log.Error(err);
                                         process.exit(0);
                                     }
 
                                     // library.bus.message('newBlock', block, broadcast);
                                     library.notification_center.notify('newBlock', block, broadcast);
                                     privated.lastBlock = block;
-                                    done();
-                                    // library.modules.round.tick(block, done);
+                                    // done();
+                                    library.modules.round.tick(block, done);
                                 });
                             });
                         }

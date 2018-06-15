@@ -121,7 +121,7 @@ privated.attachApi = function () {
 
     library.network.app.use(function (err, req, res, next) {
         if (!err) return next();
-        library.logger.error(req.url, err.toString());
+        library.log.error(req.url, err.toString());
         res.status(500).send({success: false, error: err.toString()});
     });
 };
@@ -145,17 +145,17 @@ router.post("/transactions", function (req, res) {
     } catch (e) {
         var peerIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
         var peerStr = peerIp ? peerIp + ":" + (isNaN(req.headers.port) ? 'unknown' : req.headers.port) : 'unknown';
-        library.logger.log('Received transaction ' + (transaction ? transaction.id : 'null') + ' is not valid, ban 60 min', peerStr);
+        library.log.Debug('Received transaction ' + (transaction ? transaction.id : 'null') + ' is not valid, ban 60 min', peerStr);
 
         if (peerIp && report) {
-            modules.peer.state(ip.toLong(peerIp), req.headers.port, 0, 3600);
+            library.modules.peer.state(ip.toLong(peerIp), req.headers.port, 0, 3600);
         }
 
         return res.status(200).json({success: false, message: "Invalid transaction body"});
     }
 
     library.balancesWorkQueue.add(function (cb) {
-        modules.transactions.receiveTransactions([transaction], cb);
+        library.modules.transactions.receiveTransactions([transaction], cb);
     }, function (err) {
         if (err) {
             res.status(200).json({success: false, message: err});
@@ -173,7 +173,7 @@ Kernel.prototype.sandboxApi = function (call, args, cb) {
 
 Kernel.prototype.broadcast = function (config, options, cb) {
     config.limit = config.limit || 1;
-    modules.peer.list(config, function (err, peers) {
+    library.modules.peer.list(config, function (err, peers) {
         if (!err) {
             async.eachLimit(peers, 3, function (peer, cb) {
                 self.getFromPeer(peer, options);
@@ -222,7 +222,6 @@ Kernel.prototype.getFromPeer = function (peer, options, cb) {
     } else {
         url = options.url;
     }
-
     var req = {
         url: 'http://' + ip.fromLong(peer.ip) + ':' + peer.port + url,
         method: options.method,

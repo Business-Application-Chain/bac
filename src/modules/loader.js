@@ -173,6 +173,45 @@ privated.loadBlockChain = function () {
     });
 };
 
+privated.loadUnconfirmedTransactions = function (cb) {
+    library.modules.kernel.getFromRandomPeer({
+        api: '/transactions',
+        method: 'GET'
+    }, function (err, data) {
+        if(err) {
+            return cb();
+        }
+        var report = library.schema.validate(data.body, {
+            type: "object",
+            properties: {
+                transactions: {
+                    type: "array",
+                    uniqueItems: true
+                }
+            },
+            required: ['transactions']
+        });
+        if (!report) {
+            return cb();
+        }
+        var transactions = data.body.transactions;
+
+        for (var i = 0; i < transactions.length; i++) {
+            try {
+                transactions[i] = library.base.transaction.objectNormalize(transactions[i]);
+            } catch (e) {
+                var peerStr = data.peer ? ip.fromLong(data.peer.ip) + ":" + data.peer.port : 'unknown';
+                library.log.Debug('Transaction ' + (transactions[i] ? transactions[i].id : 'null') + ' is not valid, ban 60 min', peerStr);
+                library.modules.peer.state(data.peer.ip, data.peer.port, 0, 3600);
+                return setImmediate(cb);
+            }
+        }
+        library.balancesSequence.add(function (cb) {
+            library.modules.transactions.receiveTransactions(transactions, cb);
+        }, cb);
+    });
+};
+
 privated.findUpdate = function(lastBlock, peer, cb) {
     var peerStr = peer ? ip.fromLong(peer.ip) + ":" + peer.port : 'unknown';
     library.log.Info("Looking for common block with " + peerStr);
@@ -224,6 +263,7 @@ privated.findUpdate = function(lastBlock, peer, cb) {
                     library.log.Debug("Loading blocks from peer " + peerStr);
                     library.modules.blocks.loadBlocksFromPeer(peer, commonBlock.id, function (err, lastValidBlock) {
                         if(err) {
+                            console.log(err);
                             //撤销操作
                             console.log('loadBlocksFromPeer is error!!!!!!!!!!!!!');
                         } else {
@@ -247,6 +287,45 @@ privated.findUpdate = function(lastBlock, peer, cb) {
                     });
                 }
             ], cb)
+        });
+    });
+};
+
+privated.loadSignatures = function (cb) {
+    library.modules.kernel.getFromRandomPeer({
+        api: '/signatures',
+        method: 'GET',
+        not_ban: true
+    }, function (err, data) {
+        if (err) {
+            return cb();
+        }
+        library.scheme.validate(data.body, {
+            type: "object",
+            properties: {
+                signatures: {
+                    type: "array",
+                    uniqueItems: true
+                }
+            },
+            required: ['signatures']
+        }, function (err) {
+            if (err) {
+                return cb();
+            }
+
+            // library.sequence.add(function (cb) {
+            //     async.eachSeries(data.body.signatures, function (signature, cb) {
+            //         async.eachSeries(signature.signatures, function (s, cb) {
+            //             library.modules.multisignatures.processSignature({
+            //                 signature: s,
+            //                 transaction: signature.transaction
+            //             }, function (err) {
+            //                 setImmediate(cb);
+            //             });
+            //         }, cb);
+            //     }, cb);
+            // }, cb);
         });
     });
 };
@@ -293,9 +372,33 @@ Loader.prototype.onPeerReady = function() {
         library.sequence.add(function (cb) {
             let lastBlock = library.modules.blocks.getLastBlock();
             privated.loadBlocks(lastBlock, cb);
+        }, function (err) {
+            err && library.log.Error('loadBlocks timer', err);
+            privated.isActive = false;
+            if (!privated.loaded)
+                return;
+            setTimeout(nextLoadBlock, 9 * 1000);
         });
-        setTimeout(nextLoadBlock, 9*1000);
     });
+
+    // setImmediate(function nextLoadUnconfirmedTransactions() {
+    //     if (!privated.loaded)
+    //         return;
+    //     privated.loadUnconfirmedTransactions(function (err) {
+    //         err && library.log.Error('loadUnconfirmedTransactions timer', err);
+    //         setTimeout(nextLoadUnconfirmedTransactions, 14 * 1000);
+    //     });
+    // });
+
+    // setImmediate(function nextLoadSignatures() {
+    //     if (!privated.loaded)
+    //         return;
+    //     privated.loadSignatures(function (err) {
+    //         err && library.log.Error('loadSignatures timer', err);
+    //
+    //         setTimeout(nextLoadSignatures, 14 * 1000);
+    //     });
+    // });
 };
 
 Loader.prototype.onEnd = function (cb) {

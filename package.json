@@ -23,7 +23,7 @@
     "bytebuffer": "^5.0.1",
     "change-case": "^3.0.2",
     "cookie-parser": "~1.4.3",
-    "crypto": "^1.0.1",
+    "crypto-browserify": "^3.9.13",
     "csvtojson": "^2.0.3",
     "debug": "~2.6.9",
     "ed25519": "0.0.4",
