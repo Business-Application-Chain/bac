@@ -357,13 +357,13 @@ function Username() {
     };
 
     this.save = function (txObj, cb) {
-        library.dbClient.query("INSERT INTO usernames (transactionId, username) VALUES ($transactionId, $username)", {
+        library.dbClient.query(`INSERT INTO usernames (transactionId, username) VALUES ("${txObj.id}", "${txObj.asset.username.alias}")`, {
             type: Sequelize.QueryTypes.INSERT,
-            bind: {
-                transactionId: txObj.id,
-                username: txObj.asset.username.alias
-            }
-        }, cb);
+        }).then(() => {
+            cb();
+        }).catch((err) => {
+            cb(err);
+        });
     };
 }
 

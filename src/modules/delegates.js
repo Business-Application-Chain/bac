@@ -525,12 +525,15 @@ Delegates.prototype.fork = function (block, cause) {
     }));
     library.dbClient.query("INSERT INTO forks_stat (delegatePublicKey, blockTimestamp, blockId, blockHeight, previousBlock, cause) " +
         "VALUES ($delegatePublicKey, $blockTimestamp, $blockId, $blockHeight, $previousBlock, $cause);", {
-        delegatePublicKey: block.generatorPublicKey,
-        blockTimestamp: block.timestamp,
-        blockId: block.id,
-        blockHeight: block.height,
-        previousBlock: block.previousBlock,
-        cause: cause
+        type: Sequelize.QueryTypes.INSERT,
+        bind: {
+            delegatePublicKey: block.generatorPublicKey,
+            blockTimestamp: block.timestamp,
+            blockId: block.id,
+            blockHeight: block.height,
+            previousBlock: block.previousBlock,
+            cause: cause
+        }
     });
 };
 

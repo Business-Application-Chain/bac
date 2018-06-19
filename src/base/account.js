@@ -377,6 +377,7 @@ Account.prototype.createTables = function (cb) {
         tableFields: this.model
     });
     sqles.push(sql.query);
+    sqles.push(`ALTER TABLE ${this.table} CHARACTER SET utf8 COLLATE utf8_general_ci;`);
 
     var sql = jsonSql.build({
         type: 'create',
@@ -405,6 +406,7 @@ Account.prototype.createTables = function (cb) {
         ]
     });
     sqles.push(sql.query);
+    sqles.push(`ALTER TABLE ${this.table + '2delegates'} CHARACTER SET utf8 COLLATE utf8_general_ci;`);
 
     var sql = jsonSql.build({
         type: 'create',
@@ -433,6 +435,7 @@ Account.prototype.createTables = function (cb) {
         ]
     });
     sqles.push(sql.query);
+    sqles.push(`ALTER TABLE ${this.table + '2delegates_unconfirmed'} CHARACTER SET utf8 COLLATE utf8_general_ci;`);
 
     var sql = jsonSql.build({
         type: 'create',
@@ -461,6 +464,7 @@ Account.prototype.createTables = function (cb) {
         ]
     });
     sqles.push(sql.query);
+    sqles.push(`ALTER TABLE ${this.table + '2multisignatures'} CHARACTER SET utf8 COLLATE utf8_general_ci;`);
 
     var sql = jsonSql.build({
         type: 'create',
@@ -489,6 +493,7 @@ Account.prototype.createTables = function (cb) {
         ]
     });
     sqles.push(sql.query);
+    sqles.push(`ALTER TABLE ${this.table + '2multisignatures_unconfirmed'} CHARACTER SET utf8 COLLATE utf8_general_ci;`);
 
     var sql = jsonSql.build({
         type: 'create',
@@ -520,6 +525,7 @@ Account.prototype.createTables = function (cb) {
         ]
     });
     sqles.push(sql.query);
+    sqles.push(`ALTER TABLE ${this.table + '_round'} CHARACTER SET utf8 COLLATE utf8_general_ci;`);
 
     sqles.push("INSERT INTO accounts2delegates_unconfirmed SELECT * FROM accounts2delegates;");
 
@@ -918,7 +924,6 @@ Account.prototype.merge = function (master_address, fields, cb) {
             }).then(() => {
                 cb();
             }).catch((err) => {
-                console.log('iserrrrrrrrrrr');
                 console.log(err);
                 cb(err);
             });

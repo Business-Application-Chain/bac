@@ -11,7 +11,7 @@
  Target Server Version : 50721
  File Encoding         : 65001
 
- Date: 28/05/2018 19:18:45
+ Date: 19/06/2018 14:05:12
 */
 
 SET NAMES utf8mb4;
@@ -38,6 +38,17 @@ CREATE TABLE `blocks` (
   PRIMARY KEY (`id`),
   KEY `previousBlock` (`previousBlock`),
   CONSTRAINT `blocks_ibfk_1` FOREIGN KEY (`previousBlock`) REFERENCES `blocks` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Table structure for contacts
+-- ----------------------------
+DROP TABLE IF EXISTS `contacts`;
+CREATE TABLE `contacts` (
+  `address` varchar(21) NOT NULL,
+  `transactionId` varchar(20) NOT NULL,
+  KEY `transactionId` (`transactionId`),
+  CONSTRAINT `contacts_ibfk_1` FOREIGN KEY (`transactionId`) REFERENCES `transactions` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ----------------------------
@@ -79,7 +90,6 @@ CREATE TABLE `forks_stat` (
   `cause` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-
 -- ----------------------------
 -- Table structure for multisignatures
 -- ----------------------------
@@ -106,7 +116,7 @@ CREATE TABLE `peers` (
   `clock` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `ip_UNIQUE` (`ip`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=4676879 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for peers_dapp

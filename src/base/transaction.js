@@ -779,8 +779,9 @@ Transaction.prototype.save = function (txObj, t, cb) {
             signSignature: txObj.signSignature ? txObj.signSignature : null,
             signatures: txObj.signatures ? txObj.signatures.join(',') : null
         },
+        type: Sequelize.QueryTypes.INSERT,
         transaction: t
-    }).then(function (rows) {
+    }).then(function () {
         privated.types[txObj.type].save.call(this, txObj, cb);
     }, function (err) {
         cb(err, undefined);
