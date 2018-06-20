@@ -6,7 +6,7 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var methodOverride = require('method-override');
 var config = require('./config.json');
-
+var index = require('./routes/index');
 var app = express();
 
 app.engine('html', require('ejs').renderFile);
@@ -41,14 +41,11 @@ app.use(expressQueryInt({
 // checking blank list
 app.use(function(req, res, next) {
     var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    if (config.peers.blankList.length && config.peers.blankList.indexOf(ip) >= 0) {
-        if (req.method == 'POST' && req.body.method.substring(0, 5) == 'peer_') {
-            var err = new Error('Forbidden');
-            err.status = 403;
-            next(err);
-        } else {
-            next();
-        }
+    if (!(req.method === 'POST')) {
+        // var err = new Error('Forbidden');
+        // err.status = 403;
+        // next(err);
+        next();
     } else {
         next();
     }

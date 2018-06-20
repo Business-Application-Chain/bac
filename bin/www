@@ -233,7 +233,7 @@ d.run(function () {
         balancesSequence: ["log", function (scope, cb) {
             var sequence = new Sequence({
                 onWarning: function (current, limit) {
-                    // scope.logger.warn("Balance queue", current)
+                    scope.log.Warn("Balance queue", current)
                 }
             });
             cb(null, sequence);
