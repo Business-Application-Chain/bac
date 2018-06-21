@@ -356,7 +356,7 @@ Blocks.prototype.getCommonBlock = function(peer, height, cb) {
                 }
                 let max = lastBlockHeight;
                 lastBlockHeight = data.firstHeight;
-                library.modules.kernel.getFromPeer(peer, {
+                library.modules.kernel.getFromPeerNews(peer, {
                     api: `/blocks/common?ids=${data.ids},&max=${max}&min=${lastBlockHeight}`,
                     method: 'GET',
                 }, function (err, data) {

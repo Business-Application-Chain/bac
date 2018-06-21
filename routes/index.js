@@ -40,7 +40,7 @@ function checkHeaders(req, scope, cb) {
         type: "object",
         properties: {
             port: {
-                type: "integer",
+                type: "string",
                 minimum: 1,
                 maximum: 65535
             },
@@ -49,7 +49,7 @@ function checkHeaders(req, scope, cb) {
                 maxLength: 64
             },
             'share-port': {
-                type: 'integer',
+                type: 'string',
                 minimum: 0,
                 maximum: 1
             },
@@ -102,7 +102,7 @@ module.exports = function (scope) {
             if(err) {
                 return res.json({
                     'responseData': null,
-                    'message': 'server is error',
+                    'message': err,
                     'code': 21000
                 });
             }

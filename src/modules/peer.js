@@ -25,8 +25,11 @@ function Peer(cb, scope) {
 // private methods
 privated.updatePeerList = function (cb) {
     library.modules.kernel.getFromRandomPeer({
-        api: '/list',
-        method: 'GET'
+        // api: '/list',
+        // method: 'GET'
+        api:'kernel',
+        method:'POST',
+        methods:'list'
     }, function (err, data) {
         if (err) {
             return cb();

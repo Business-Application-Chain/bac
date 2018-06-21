@@ -68,7 +68,7 @@ Kernel.prototype.getFromRandomPeer = function (config, options, cb) {
         library.modules.peer.list(config, function (err, peers) {
             if (!err && peers.length) {
                 var peer = peers[0];
-                self.getFromPeer(peer, options, cb);
+                self.getFromPeerNews(peer, options, cb);
             } else {
                 return cb(err || "No peers in database");
             }
@@ -76,6 +76,97 @@ Kernel.prototype.getFromRandomPeer = function (config, options, cb) {
     }, function (err, result) {
         cb(err, result);
     });
+};
+
+Kernel.prototype.getFromPeerNews = function(peer, options, cb) {
+    var req = {
+        url: 'http://' + ip.fromLong(peer.ip) + ':' + peer.port + '/rpc',
+        method: options.method,
+        json: true,
+        body: {
+            api: options.api,
+            method: options.methods,
+            params: options.data
+        },
+        headers: _.extend({}, privated.headers, options.headers),
+        timeout: library.config.peers.optional.timeout,
+        pool: { maxSockets: 1000 },
+    };
+    console.log(req);
+    return request(req, function (err, response, body) {
+        console.log('body! body! body! body!');
+        console.log(body);
+        if (err || response.statusCode !== 200 || body.code !== 200) {
+            library.log.Debug("Request", "Error", err);
+
+            if (peer) {
+                if (err && (err.code == 'ETIMEOUT' || err.code == 'ESOCKETTIMEOUT' || err.code == 'ECONNREFUSED')) {
+                    library.modules.peer.remove(peer.ip, peer.port, function (err) {
+                        if (!err) {
+                            library.log.Info("Removing peer", "ip", peer.ip, "port", peer.port);
+                        }
+                    });
+                } else {
+                    if (!options.no_ban) {
+                        library.modules.peer.state(peer.ip, peer.port, 0, 600, function (err) {
+                            if (!err) {
+                                library.log.Info("Ban peer for 10 minutes", "ip", peer.ip, "port", peer.port);
+                            }
+                        });
+                    }
+                }
+            }
+
+            cb && cb(err || ("Request status code " + response.statusCode));
+            return;
+        }
+
+        response.headers.port = parseInt(response.headers.port);
+        response.headers['share-port'] = parseInt(response.headers['share-port']);
+
+        var report = library.schema.validate(response.headers, {
+            type: 'object',
+            properties: {
+                'version': {
+                    type: 'string',
+                    maxLength: 11
+                },
+                'os': {
+                    type: 'string',
+                    maxLength: 64
+                },
+                'port': {
+                    type: 'integer',
+                    minimum: 1,
+                    maximum: 65535
+                },
+                'share-port': {
+                    type: 'integer',
+                    minimum: 0,
+                    maximum: 1
+                }
+            },
+            required: ['port', 'share-port', 'version']
+        });
+        if (!report) {
+            return cb && cb(null, {body: body, peer: peer});
+        }
+
+        var port = response.headers.port;
+        if (port > 0 && port < 65535 && response.headers['version'] == library.config.version) {
+            library.modules.peer.update({
+                ip: peer.ip,
+                port: port,
+                state: 2,
+                os: response.headers['os'],
+                sharePort: Number(!!response.headers['share-port']),
+                version: response.headers['version']
+            });
+        }
+
+        return cb && cb(null, {body: body, peer: peer});
+    });
+
 };
 
 Kernel.prototype.getFromPeer = function (peer, options, cb) {
