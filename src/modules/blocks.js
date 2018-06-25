@@ -356,17 +356,26 @@ Blocks.prototype.getCommonBlock = function(peer, height, cb) {
                 }
                 let max = lastBlockHeight;
                 lastBlockHeight = data.firstHeight;
-                library.modules.kernel.getFromPeer(peer, {
-                    api: `/blocks/common?ids=${data.ids},&max=${max}&min=${lastBlockHeight}`,
-                    method: 'GET',
-                }, function (err, data) {
-                    if (err || data.body.error) {
-                        return next(err || data.body.error.toString());
+                library.modules.kernel.getFromPeerNews(peer, {
+                    // api: `/blocks/common?ids=${data.ids},&max=${max}&min=${lastBlockHeight}`,
+                    // method: 'GET',
+                    api:'kernel',
+                    method:'POST',
+                    func:'blocks_common',
+                    data: {
+                        ids: data.ids,
+                        max: max,
+                        min: lastBlockHeight
                     }
-                    if (!data.body.common) {
+                }, function (err, data) {
+                    if (err || data.code !== 200) {
+                        return next(err || data.message);
+                    }
+                    let commomBlock = Json.parse(data.resData).commomBlock || null;
+                    if (!commomBlock) {
                         return next();
                     }
-                    library.dbClient.query(`SELECT COUNT(*) as cnt from blocks where id="${data.body.common.id}" and height=${data.body.common.height}`,{
+                    library.dbClient.query(`SELECT COUNT(*) as cnt from blocks where id="${data.commomBlock.id}" and height=${data.commomBlock.height}`,{
                         type:Sequelize.QueryTypes.SELECT
                     }).then((rows) => {
                         if(!rows.length) {

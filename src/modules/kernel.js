@@ -332,7 +332,7 @@ shared.blocks_common = function(params, cb) {
         type: Sequelize.QueryTypes.SELECT,
     }).then((rows) => {
         var commonBlock = rows.length ? rows[0] : null;
-        return cb(null, commonBlock);
+        return cb('success', 200, JSON.stringify({commonBlock: commonBlock}));
     }).catch((err) => {
         cb(err);
     });
