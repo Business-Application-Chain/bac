@@ -161,7 +161,7 @@ Kernel.prototype.getFromPeerNews = function(peer, options, cb) {
                 version: response.headers['version']
             });
         }
-        return cb && cb(null, {body: body, peer: peer});
+        return cb && cb(null, {code: body.code, message: body.message, resData: body.responseData, peer: peer,})
     });
 
 };

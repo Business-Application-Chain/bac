@@ -432,17 +432,15 @@ Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
                     library.modules.kernel.getFromPeerNews(peer, {
                         api:'kernel',
                         method:'POST',
-                        func:'height',
+                        func:'blocks',
                         params: {
                             lastBlockId: lastCommonBlockId
                         }
-                        // method: 'GET',
-                        // api: '/blocks?lastBlockId=' + lastCommonBlockId
                     }, function (err, data) {
-                        if (err || data.body.code != 200) {
-                            return next(err || data.body.message);
+                        if (err || data.code !== 200) {
+                            return next(err || data.message);
                         }
-                        var blocks = JSON.parse(data.body.responseData).blocks;
+                        let blocks = JSON.parse(data.resData).blocks;
                         let blocksTemp = [];
                         if (typeof blocks === 'string') {
                             csvtojson({

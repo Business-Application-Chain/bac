@@ -30,26 +30,24 @@ privated.loadApp = function () {
 
 privated.loadBlocks = function(lastBlock, cb) {
     library.modules.kernel.getFromRandomPeer({
-        // api: '/height',
-        // method: 'GET'
         api:'kernel',
         method:'POST',
         func:'height'
     }, function (err, data) {
         var peerStr = data && data.peer ? ip.fromLong(data.peer.ip) + ":" + data.peer.port : 'unknown';
-        if (err || !data.body) {
+        if (err || data.code !== 200) {
             library.log.Info("Failed to get height from peer: " + peerStr);
             return cb();
         }
         library.log.Info("Check blockchain on " + peerStr);
-        data.body.height = parseInt(data.body.height);
 
-        if (data.body.height <= 0) {
+        let height = parseInt(JSON.parse(data.resData).height);
+        if (height <= 0) {
             library.log.Info("Failed to parse blockchain height: " + peerStr + "\n" + library.scheme.getLastError());
             return cb();
         }
 
-        if (bignum(library.modules.blocks.getLastBlock().height).lt(data.body.height)) { // Diff in chainbases
+        if (bignum(library.modules.blocks.getLastBlock().height).lt(height)) { // Diff in chainbases
             privated.blocksToSync = data.body.height;
 
             if (lastBlock.id != privated.genesisBlock.block.id) { // Have to find common block

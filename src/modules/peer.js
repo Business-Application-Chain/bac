@@ -25,8 +25,6 @@ function Peer(cb, scope) {
 // private methods
 privated.updatePeerList = function (cb) {
     library.modules.kernel.getFromRandomPeer({
-        // api: '/list',
-        // method: 'GET'
         api:'kernel',
         method:'POST',
         func:'list'
@@ -35,71 +33,59 @@ privated.updatePeerList = function (cb) {
             return cb();
         }
 
-        library.schema.validate(data.body, {
-            type: 'object',
-            properties: {
-                peers: {
-                    type: 'array',
-                    uniqueItems: true
-                }
-            },
-            required: ['peers']
-        }, function (err) {
-            if (err) {
-                return cb();
-            }
+        let peers = JSON.parse(data.resData).peers || [];
+        if(!peers) {
+            return cb();
+        }
 
-            var peers = data.body.peers;
-
-            async.eachLimit(peers, 2, function (peer, cb) {
-                library.schema.validate(peer, {
-                    type: 'object',
-                    properties: {
-                        ip: {
-                            type: 'string'
-                        },
-                        port: {
-                            type: 'integer',
-                            minimum: 1,
-                            maximum: 65535
-                        },
-                        state: {
-                            type: 'integer',
-                            minimum: 0,
-                            maximum: 3
-                        },
-                        os: {
-                            type: 'string'
-                        },
-                        sharePort: {
-                            type: 'integer',
-                            minimum: 0,
-                            maximum: 1
-                        },
-                        version: {
-                            type: 'string'
-                        }
+        async.eachLimit(peers, 2, function (peer, cb) {
+            library.schema.validate(peer, {
+                type: 'object',
+                properties: {
+                    ip: {
+                        type: 'integer'
                     },
-                    required: ['ip', 'port', 'state']
-                }, function (err) {
-                    if (err) {
-                        return setImmediate(cb, "Invalid peer: " + err.toString());
+                    port: {
+                        type: 'integer',
+                        minimum: 1,
+                        maximum: 65535
+                    },
+                    state: {
+                        type: 'integer',
+                        minimum: 0,
+                        maximum: 3
+                    },
+                    os: {
+                        type: 'string'
+                    },
+                    sharePort: {
+                        type: 'integer',
+                        minimum: 0,
+                        maximum: 1
+                    },
+                    version: {
+                        type: 'string'
                     }
+                },
+                required: ['ip', 'port', 'state']
+            }, function (err) {
+                if (err) {
+                    return setImmediate(cb, "Invalid peer: " + err.toString());
+                }
 
-                    peer.ip = parseInt(peer.ip);
+                peer.ip = parseInt(peer.ip);
 
-                    if (isNaN(peer.ip)) {
-                        return setImmediate(cb);
-                    }
+                if (isNaN(peer.ip)) {
+                    return setImmediate(cb);
+                }
 
-                    if (ip.toLong("127.0.0.1") === peer.ip || peer.port === 0 || peer.port > 65535) {
-                        return setImmediate(cb);
-                    }
+                if (ip.toLong("127.0.0.1") === peer.ip || peer.port === 0 || peer.port > 65535) {
+                    return setImmediate(cb);
+                }
 
-                    self.update(peer, cb);
-                });
-            }, cb);
-        });
+                self.update(peer, cb);
+            });
+        }, cb);
     });
 };
 
