@@ -34,7 +34,7 @@ privated.loadBlocks = function(lastBlock, cb) {
         // method: 'GET'
         api:'kernel',
         method:'POST',
-        methods:'height'
+        func:'height'
     }, function (err, data) {
         var peerStr = data && data.peer ? ip.fromLong(data.peer.ip) + ":" + data.peer.port : 'unknown';
         if (err || !data.body) {

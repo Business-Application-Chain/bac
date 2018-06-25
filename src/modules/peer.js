@@ -29,7 +29,7 @@ privated.updatePeerList = function (cb) {
         // method: 'GET'
         api:'kernel',
         method:'POST',
-        methods:'list'
+        func:'list'
     }, function (err, data) {
         if (err) {
             return cb();

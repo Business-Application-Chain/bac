@@ -13,6 +13,7 @@ var TransactionTypes = require('../utils/transaction-types.js');
 var blockStatus = require('../utils/blockStatus.js');
 var csvtojson = require('csvtojson');
 var	ip = require('ip');
+var Json2csv = require('json2csv').Parser;
 
 var header = ['b_id', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward', 'b_payloadLength', 'b_payloadHash','b_generatorPublicKey','b_blockSignature','t_id',
     't_type','t_timestamp','t_senderPublicKey','t_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature','s_publicKey','d_username','v_votes','c_address','u_alias',
@@ -275,7 +276,6 @@ privated.readDbRows = function (rows) {
                 if (__block.id == genesisblock.block.id) {
                     __block.generationSignature = (new Array(65)).join('0');
                 }
-
                 order.push(__block.id);
                 blocks[__block.id] = __block;
             }
@@ -356,7 +356,7 @@ Blocks.prototype.getCommonBlock = function(peer, height, cb) {
                 }
                 let max = lastBlockHeight;
                 lastBlockHeight = data.firstHeight;
-                library.modules.kernel.getFromPeerNews(peer, {
+                library.modules.kernel.getFromPeer(peer, {
                     api: `/blocks/common?ids=${data.ids},&max=${max}&min=${lastBlockHeight}`,
                     method: 'GET',
                 }, function (err, data) {
@@ -429,14 +429,20 @@ Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
             async.waterfall([
                 function (cb) {
                     count++;
-                    library.modules.kernel.getFromPeer(peer, {
-                        method: 'GET',
-                        api: '/blocks?lastBlockId=' + lastCommonBlockId
-                    }, function (err, data) {
-                        if (err || data.body.error) {
-                            return next(err || data.body.error.toString());
+                    library.modules.kernel.getFromPeerNews(peer, {
+                        api:'kernel',
+                        method:'POST',
+                        func:'height',
+                        params: {
+                            lastBlockId: lastCommonBlockId
                         }
-                        var blocks = data.body.blocks;
+                        // method: 'GET',
+                        // api: '/blocks?lastBlockId=' + lastCommonBlockId
+                    }, function (err, data) {
+                        if (err || data.body.code != 200) {
+                            return next(err || data.body.message);
+                        }
+                        var blocks = JSON.parse(data.body.responseData).blocks;
                         let blocksTemp = [];
                         if (typeof blocks === 'string') {
                             csvtojson({
@@ -867,6 +873,82 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                 }
             });
         });
+    }, cb);
+};
+
+Blocks.prototype.loadBlocksData = function(filter, options, cb) {
+    if (arguments.length < 3) {
+        cb = options;
+        options = {};
+    }
+    options = options || {};
+    if (filter.lastId && filter.id) {
+        return cb("Invalid filter");
+    }
+    var params = {limit: filter.limit || 1};
+    filter.lastId && (params.lastId = filter.lastId);
+    filter.id && !filter.lastId && (params.id = filter.id);
+    var fields = privated.blocksDataFields;
+    var method;
+
+    if (options.plain) {
+        method = true;
+        fields = false;
+    } else {
+        method = false;
+    }
+    library.dbSequence.add(function (cb) {
+        library.dbClient.query(`SELECT height as Number FROM blocks WHERE id = ${filter.lastId || null}`, {
+            type: Sequelize.QueryTypes.SELECT
+        }).then((rows) => {
+            var height = rows.length ? rows[0].Number : 0;
+            if(height === 0) {
+                return cb('id is error, height is 0');
+            }
+            var realLimit = height + (parseInt(filter.limit) || 1);
+            params.limit = realLimit;
+            params.height = height;
+            var limitPart = "";
+
+            if (!filter.id && !filter.lastId) {
+                limitPart = "where b.height < $limit ";
+            }
+            library.dbClient.query('SELECT '+
+                'b.id , b.version , b.timestamp , b.height , b.previousBlock , b.numberOfTransactions , b.totalAmount , b.totalFee , b.reward , b.payloadLength , b.payloadHash , b.generatorPublicKey ,lower(b.blockSignature) as blockSignature, ' +
+                "t.id , t.type , t.timestamp , t.senderPublicKey , t.senderId , t.recipientId , t.senderUsername , t.recipientUsername , t.amount , t.fee , t.signature , t.signSignature , " +
+                "s.publicKey , " +
+                'd.username , ' +
+                'c.address , ' +
+                'u.username ,' +
+                'm.min , m.lifetime , m.keysgroup , ' +
+                't.requesterPublicKey , t.signatures ' +
+                "FROM blocks b " +
+                "left outer join transactions as t on t.blockId=b.id " +
+                "left outer join delegates as d on d.transactionId=t.id " +
+                "left outer join signatures as s on s.transactionId=t.id " +
+                "left outer join contacts as c on c.transactionId=t.id " +
+                "left outer join usernames as u on u.transactionId=t.id " +
+                "left outer join multisignatures as m on m.transactionId=t.id " +
+                (filter.id || filter.lastId ? "where " : "") + " " +
+                (filter.id ? " b.id = $id " : "") + (filter.id && filter.lastId ? " and " : "") + (filter.lastId ? " b.height > $height and b.height < $limit " : "") +
+                limitPart +
+                "ORDER BY b.height, t.id", {
+                type: Sequelize.QueryTypes.SELECT,
+                bind: params,
+            }).then((blocks) => {
+                blocks.forEach(function (block) {
+                    block.blockSignature = block.blockSignature.toString('utf8');
+                    block.generatorPublicKey = block.generatorPublicKey.toString('utf8');
+                    block.payloadHash = block.payloadHash.toString('utf8');
+                });
+                let json2csv = new Json2csv({header: false});
+                let csv = json2csv.parse(blocks);
+                console.log(csv);
+               return cb(null, csv);
+            });
+        }).catch((err) => {
+            return cb(err);
+        })
     }, cb);
 };
 

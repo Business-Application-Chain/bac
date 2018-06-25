@@ -12,6 +12,7 @@ var crypto = require('crypto');
 var bignum = require('../utils/bignum.js');
 var express = require('express');
 var router = express.Router();
+var Sequelize = require('sequelize');
 
 // private objects
 var modules_loaded, library, self, privated = {}, shared = {};
@@ -85,17 +86,14 @@ Kernel.prototype.getFromPeerNews = function(peer, options, cb) {
         json: true,
         body: {
             api: options.api,
-            method: options.methods,
+            method: options.func,
             params: options.data
         },
         headers: _.extend({}, privated.headers, options.headers),
         timeout: library.config.peers.optional.timeout,
         pool: { maxSockets: 1000 },
     };
-    console.log(req);
     return request(req, function (err, response, body) {
-        console.log('body! body! body! body!');
-        console.log(body);
         if (err || response.statusCode !== 200 || body.code !== 200) {
             library.log.Debug("Request", "Error", err);
 
@@ -163,7 +161,6 @@ Kernel.prototype.getFromPeerNews = function(peer, options, cb) {
                 version: response.headers['version']
             });
         }
-
         return cb && cb(null, {body: body, peer: peer});
     });
 
@@ -296,6 +293,49 @@ shared.height = function(req, cb) {
         'height': library.modules.blocks.getLastBlock().height
     };
     cb(null, 200, JSON.stringify(blockHeight));
+};
+
+shared.blocks = function(params, cb) {
+    let lastBlockId = JSON.parse(params).lastBlockId || 0;
+    if(lastBlockId === 0) {
+        return cb('lastBlockId is not 0', 21000);
+    }
+    let blocksLimit = 1440;
+    library.modules.blocks.loadBlocksData({
+        limit: blocksLimit, lastId: lastBlockId
+    }, {
+        plain: false
+    }, function (err, data) {
+        console.log('blocks blocks blocks');
+        if (err) {
+            return cb('error', 21000);
+        }
+        return cb('success', 200, JSON.stringify({blocks: data}));
+    });
+};
+
+shared.blocks_common = function(params, cb) {
+    let reqParams = JSON.parse(params);
+    let max = reqParams.max || 0;
+    let min = reqParams.min || 0;
+    let ids = reqParams.ids || '';
+    if(max === 0 || min === 0 || ids === '') {
+        return cb('params is error');
+    }
+    ids = ids.split(',').filter(function (id) {
+        return /^\d+$/.test(id);
+    });
+    let escapedIds = ids.map(function (id) {
+        return "'" + id + "'";
+    });
+    library.dbClient.query(`SELECT height, id, previousBlock, timestamp from blocks where id in ( ${escapedIds.join(',')} ) and height >= ${min} and height <= ${max} ORDER BY height DESC LIMIT 1`, {
+        type: Sequelize.QueryTypes.SELECT,
+    }).then((rows) => {
+        var commonBlock = rows.length ? rows[0] : null;
+        return cb(null, commonBlock);
+    }).catch((err) => {
+        cb(err);
+    });
 };
 
 shared.transactions = function(req, cb) {
