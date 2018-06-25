@@ -48,7 +48,7 @@ privated.loadBlocks = function(lastBlock, cb) {
         }
 
         if (bignum(library.modules.blocks.getLastBlock().height).lt(height)) { // Diff in chainbases
-            privated.blocksToSync = data.body.height;
+            privated.blocksToSync = height;
 
             if (lastBlock.id != privated.genesisBlock.block.id) { // Have to find common block
                 // console.log('findUpdate');

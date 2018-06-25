@@ -433,7 +433,7 @@ Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
                         api:'kernel',
                         method:'POST',
                         func:'blocks',
-                        params: {
+                        data: {
                             lastBlockId: lastCommonBlockId
                         }
                     }, function (err, data) {
@@ -912,8 +912,8 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
                 limitPart = "where b.height < $limit ";
             }
             library.dbClient.query('SELECT '+
-                'b.id , b.version , b.timestamp , b.height , b.previousBlock , b.numberOfTransactions , b.totalAmount , b.totalFee , b.reward , b.payloadLength , b.payloadHash , b.generatorPublicKey ,lower(b.blockSignature) as blockSignature, ' +
-                "t.id , t.type , t.timestamp , t.senderPublicKey , t.senderId , t.recipientId , t.senderUsername , t.recipientUsername , t.amount , t.fee , t.signature , t.signSignature , " +
+                'b.id as b_id, b.version , b.timestamp as b_timestamp , b.height , b.previousBlock , b.numberOfTransactions , b.totalAmount , b.totalFee , b.reward , b.payloadLength , b.payloadHash , b.generatorPublicKey ,lower(b.blockSignature) as blockSignature, ' +
+                "t.id as t_id, t.type , t.timestamp as t_timestamp , t.senderPublicKey , t.senderId , t.recipientId , t.senderUsername , t.recipientUsername , t.amount , t.fee , t.signature , t.signSignature , " +
                 "s.publicKey , " +
                 'd.username , ' +
                 'c.address , ' +

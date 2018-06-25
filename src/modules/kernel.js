@@ -87,7 +87,7 @@ Kernel.prototype.getFromPeerNews = function(peer, options, cb) {
         body: {
             api: options.api,
             method: options.func,
-            params: options.data
+            params: JSON.stringify(options.data)
         },
         headers: _.extend({}, privated.headers, options.headers),
         timeout: library.config.peers.optional.timeout,
