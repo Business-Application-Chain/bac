@@ -71,7 +71,17 @@ function Multisignature() {
     };
 
     this.load = function (raw) {
+        if (!raw.m_keysgroup) {
+            return null;
+        } else {
+            var multisignature = {
+                min: raw.m_min,
+                lifetime: raw.m_lifetime,
+                keysgroup: raw.m_keysgroup.split(',')
+            };
 
+            return {multisignature: multisignature};
+        }
     };
 
     this.save = function (txObj, cb) {

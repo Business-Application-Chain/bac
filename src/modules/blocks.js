@@ -15,7 +15,7 @@ var csvtojson = require('csvtojson');
 var	ip = require('ip');
 
 var header = ['b_id', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward', 'b_payloadLength', 'b_payloadHash','b_generatorPublicKey','b_blockSignature','t_id',
-    't_type','t_timestamp','t_senderPublicKey','t_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature','s_publicKey','d_username','v_votes','c_address','u_alias',
+    't_type','t_timestamp','t_senderPublicKey', 't_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature','s_publicKey','d_username','v_votes','c_address','u_alias',
     'm_min','m_lifetime','m_keysgroup','dapp_name','dapp_description','dapp_tags','dapp_type','dapp_siaAscii','dapp_siaIcon','dapp_git','dapp_category','dapp_icon','in_dappId','ot_dappId','ot_outTransactionId','t_requesterPublicKey','t_signatures'];
 
 require('array.prototype.findindex'); // Old node fix
@@ -46,7 +46,6 @@ privated.blocksDataFields = {
     't_type': Number,
     't_timestamp': Number,
     't_senderPublicKey': String,
-    't_requesterPublicKey': String,
     't_senderId': String,
     't_recipientId': String,
     't_senderUsername': String,
@@ -54,11 +53,11 @@ privated.blocksDataFields = {
     't_amount': String,
     't_fee': String,
     't_signature': String,
-    't_signSignautre': String,
-    't_signatures': String,
+    't_signSignature': String,
     's_publicKey': String,
     'd_username': String,
     'v_votes': String,
+    'c_address': String,
     'u_alias': String,
     'm_min': Number,
     'm_lifetime': Number,
@@ -67,11 +66,16 @@ privated.blocksDataFields = {
     'dapp_description': String,
     'dapp_tags': String,
     'dapp_type': Number,
-    'dapp_category': Number,
+    'dapp_siaAscii': String,
+    'dapp_siaIcon': String,
     'dapp_git': String,
+    'dapp_category': Number,
     'dapp_icon': String,
-    'dapp_saiAscii': String,
-    'dapp_saiIcon': String,
+    'in_dappId': String,
+    'ot_dappId': String,
+    'ot_outTransactionId': String,
+    't_requesterPublicKey': String,
+    't_signatures': String
 };
 
 // constructor
@@ -468,8 +472,6 @@ Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
                                 lastValidBlock = block;
                                 cb();
                             } else {
-                                debugger;
-                                console.log(err.stack);
                                 var peerStr = data.peer ? ip.fromLong(data.peer.ip) + ":" + data.peer.port : 'unknown';
                                 library.log.Info('Block ' + (block ? block.id : 'null') + ' is not valid, ban 60 min', peerStr);
                                 library.modules.peer.state(peer.ip, peer.port, 0, 3600);

@@ -455,6 +455,10 @@ Accounts.prototype.setAccountAndGet = function (fields, cb) {
     });
 };
 
+Accounts.prototype.getAccounts = function (filter, fields, cb) {
+    library.base.account.getAll(filter, fields, cb);
+};
+
 Accounts.prototype.mergeAccountAndGet = function (fields, cb) {
     var master_address = fields.master_address || null;
     if (master_address === null) {
