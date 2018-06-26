@@ -55,7 +55,16 @@ function Signature() {
     };
 
     this.load = function (raw) {
+        if (!raw.s_publicKey) {
+            return null
+        } else {
+            var signature = {
+                transactionId: raw.t_id,
+                publicKey: raw.s_publicKey
+            }
 
+            return {signature: signature};
+        }
     };
 
     this.save = function (txObj, cb) {

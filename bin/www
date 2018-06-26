@@ -39,8 +39,9 @@ var params = {
         "signatures": "../src/modules/signatures.js",
         "system": "../src/modules/system.js",
         "transactions": "../src/modules/transactions.js",
+        "contacts": "../src/modules/contacts.js",
     }
-}
+};
 
 process.on('uncaughtException', function (err) {
     // handle the error safely

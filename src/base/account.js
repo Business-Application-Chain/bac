@@ -147,6 +147,16 @@ function Account(scope, cb) {
             expression: "(select GROUP_CONCAT(dependentId) from " + this.table + "2delegates where accountId = a.master_address)"
         },
         {
+            name: "contacts",
+            type: "Text",
+            filter: {
+                type: "array",
+                uniqueItems: true
+            },
+            conv: Array,
+            expression: "(select GROUP_CONCAT(dependentId) from " + this.table + "2contacts where accountId = a.master_address)"
+        },
+        {
             name: 'delegates_unconfirmed',
             type: 'Text',
             filter: {
@@ -497,6 +507,63 @@ Account.prototype.createTables = function (cb) {
 
     var sql = jsonSql.build({
         type: 'create',
+        table: this.table + '2contacts',
+        tableFields: [
+            {
+                name: 'accountId',
+                type: 'String',
+                length: 21,
+                not_null: true
+            },
+            {
+                name: 'dependentId',
+                type: 'String',
+                length: 64,
+                not_null: true
+            }
+        ],
+        foreignKeys: [
+            {
+                field: 'accountId',
+                table: this.table,
+                table_field: 'master_address',
+                on_delete: 'cascade'
+            }
+        ]
+    });
+    sqles.push(sql.query);
+    sqles.push(`ALTER TABLE ${this.table + '2contacts'} CHARACTER SET utf8 COLLATE utf8_general_ci;`);
+
+    var sql = jsonSql.build({
+        type: 'create',
+        table: this.table + "2contacts_unconfirmed",
+        tableFields: [
+            {
+                name: "accountId",
+                type: "String",
+                length: 21,
+                not_null: true
+            }, {
+                name: "dependentId",
+                type: "String",
+                length: 21,
+                not_null: true
+            }
+        ],
+        foreignKeys: [
+            {
+                field: "accountId",
+                table: this.table,
+                table_field: "master_address",
+                on_delete: "cascade"
+            }
+        ]
+    });
+    sqles.push(sql.query);
+    sqles.push(`ALTER TABLE ${this.table + '2contacts_unconfirmed'} CHARACTER SET utf8 COLLATE utf8_general_ci;`);
+
+    var sql = jsonSql.build({
+        type: 'create',
         table: this.table + '_round',
         tableFields: [
             {
@@ -695,6 +762,60 @@ Account.prototype.insertOrUpdate = function (master_address, fields, cb) {
             cb(err, undefined);
         });
     }, cb);
+};
+
+Account.prototype.getAll = function (filter, fields, cb) {
+    if (typeof(fields) == 'function') {
+        cb = fields;
+        fields = this.fields.map(function (field) {
+            return field.alias || field.field;
+        });
+    }
+
+    var realFields = this.fields.filter(function (field) {
+        return fields.indexOf(field.alias || field.field) != -1;
+    });
+
+    var realConv = {};
+    Object.keys(this.conv).forEach(function (key) {
+        if (fields.indexOf(key) != -1) {
+            realConv[key] = this.conv[key];
+        }
+    }.bind(this));
+
+    var limit, offset, sort;
+
+    if (filter.limit > 0) {
+        limit = filter.limit;
+    }
+    delete filter.limit;
+    if (filter.offset > 0) {
+        offset = filter.offset;
+    }
+    delete filter.offset;
+    if (filter.sort) {
+        sort = filter.sort;
+    }
+    delete filter.sort;
+
+    var sql = jsonSql.build({
+        type: 'select',
+        table: this.table,
+        limit: limit,
+        offset: offset,
+        sort: sort,
+        alias: 'a',
+        condition: filter,
+        fields: realFields
+    });
+
+    this.scope.dbClient.query(sql.query, sql.values, realConv, function (err, data) {
+        if (err) {
+            return cb(err);
+        }
+
+        cb(null, data || []);
+    }.bind(this));
 };
 
 Account.prototype.merge = function (master_address, fields, cb) {
