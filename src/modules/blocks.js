@@ -371,18 +371,18 @@ Blocks.prototype.getCommonBlock = function(peer, height, cb) {
                     if (err || data.code !== 200) {
                         return next(err || data.message);
                     }
-                    let commomBlock = Json.parse(data.resData).commomBlock || null;
-                    if (!commomBlock) {
+                    var cBlock = JSON.parse(data.resData).commonBlock || null;
+                    if (!cBlock) {
                         return next();
                     }
-                    library.dbClient.query(`SELECT COUNT(*) as cnt from blocks where id="${data.commomBlock.id}" and height=${data.commomBlock.height}`,{
+                    library.dbClient.query(`SELECT COUNT(*) as cnt from blocks where id="${cBlock.id}" and height=${cBlock.height}`,{
                         type:Sequelize.QueryTypes.SELECT
                     }).then((rows) => {
                         if(!rows.length) {
                             return next("Can't compare blocks");
                         }
                         if (rows[0].cnt) {
-                            commonBlock = data.body.common;
+                            commonBlock = cBlock;
                         }
                         next();
                     }).catch((err) => {
