@@ -2,7 +2,6 @@ var express = require('express');
 var router = express.Router();
 var config = require('../config.json');
 
-var resHeaders = {};
 var ip = require('ip');
 
 function selectModule(apiType, scope) {
@@ -29,8 +28,7 @@ function checkHeaders(req, scope, cb) {
         return cb();
     }
     var peerIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-
-    if (peerIp === "127.0.0.1" /*为了查看接口结果方便临时加的*/) {
+    if (peerIp === "127.0.0.1" ) {
         return cb();
     }
     if (!peerIp) {
@@ -90,43 +88,57 @@ module.exports = function (scope) {
 
     /* POST requests. */
     router.post('/rpc', function (req, res, next) {
-        resHeaders = {
+        let resHeaders = {
             os: scope.modules.system.getOS(),
             version: scope.modules.system.getVersion(),
             port: scope.modules.system.getPort(),
             'share-port': scope.modules.system.getSharePort()
         };
         var body = req.body;
+        var jsonrpc = body.jsonrpc || '';
+        let id = body.id || 0;
+        if(id === 0 || jsonrpc === '') {
+            return res.json({
+                'error': 'missing id or jsonrpc',
+                'code': 21000,
+                'id': id,
+                'jsonrpc': jsonrpc
+            });
+        }
         res.set(resHeaders);
         checkHeaders(req, scope, function (err) {
             if(err) {
                 return res.json({
-                    'responseData': null,
-                    'message': err,
-                    'code': 21000
+                    'error': err,
+                    'code': 21000,
+                    'id': id,
+                    'jsonrpc': jsonrpc
                 });
             }
             if (body.hasOwnProperty('api') && body.hasOwnProperty('method')) {
                 let apiModules = selectModule(body['api'], scope);
                 if(!apiModules) {
                     return res.json({
-                        'responseData': null,
-                        'message': 'api is not find',
-                        'code': 21000
+                        'result': null,
+                        'code': 21000,
+                        'id': id,
+                        'jsonrpc': jsonrpc
                     });
                 }
-                apiModules.callApi(body['method'], body['params'], function (message, code, data) {
+                apiModules.callApi(body['method'], jsonrpc, body['params'], function (message, code, data) {
                     return res.json({
-                        'responseData': data,
-                        'message': message,
-                        'code': code
+                        'result': data,
+                        'code': code,
+                        'id': id,
+                        'jsonrpc': jsonrpc
                     });
                 });
             } else {
                 return res.json({
-                    'responseData': null,
-                    'message': 'missing necessary params',
-                    'code': 21000
+                    'error': 'missing necessary params',
+                    'code': 21000,
+                    'id': id,
+                    'jsonrpc': jsonrpc
                 });
             }
         });

@@ -15,7 +15,7 @@ var router = express.Router();
 var Sequelize = require('sequelize');
 
 // private objects
-var modules_loaded, library, self, privated = {}, shared = {};
+var modules_loaded, library, self, privated = {}, shared = {}, shared_1_0 = {}, shared_2_0 = {};
 
 privated.headers = {};
 privated.loaded = false;
@@ -31,8 +31,12 @@ function Kernel(cb, scope) {
 }
 
 // public methods
-Kernel.prototype.sandboxApi = function (call, args, cb) {
-    sandboxHelper.callMethod(shared, call, args, cb);
+Kernel.prototype.sandboxApi = function (call, jsonrpc, args, cb) {
+    if (jsonrpc === '1.0') {
+        sandboxHelper.callMethod(shared_1_0, call, args, cb);
+    } else {
+        sandboxHelper.callMethod(shared_2_0, call, args, cb);
+    }
 };
 
 Kernel.prototype.broadcast = function (config, options, cb) {
@@ -52,10 +56,14 @@ Kernel.prototype.broadcast = function (config, options, cb) {
     });
 };
 
-Kernel.prototype.callApi = function (call, args, cb) {
+Kernel.prototype.callApi = function (call, rpcjson, args, cb) {
     var callArgs = [args, cb];
     // execute
-    shared[call].apply(null, callArgs);
+    if (rpcjson === '1.0') {
+        shared_1_0[call].apply(null, callArgs);
+    } else {
+        shared_2_0[call].apply(null, callArgs);
+    }
 };
 
 Kernel.prototype.getFromRandomPeer = function (config, options, cb) {
@@ -79,7 +87,7 @@ Kernel.prototype.getFromRandomPeer = function (config, options, cb) {
     });
 };
 
-Kernel.prototype.getFromPeerNews = function(peer, options, cb) {
+Kernel.prototype.getFromPeerNews = function (peer, options, cb) {
     var req = {
         url: 'http://' + ip.fromLong(peer.ip) + ':' + peer.port + '/rpc',
         method: options.method,
@@ -91,7 +99,7 @@ Kernel.prototype.getFromPeerNews = function(peer, options, cb) {
         },
         headers: _.extend({}, privated.headers, options.headers),
         timeout: library.config.peers.optional.timeout,
-        pool: { maxSockets: 1000 },
+        pool: {maxSockets: 1000},
     };
     return request(req, function (err, response, body) {
         if (err || response.statusCode !== 200 || body.code !== 200) {
@@ -179,7 +187,7 @@ Kernel.prototype.getFromPeer = function (peer, options, cb) {
         json: true,
         headers: _.extend({}, privated.headers, options.headers),
         timeout: library.config.peers.optional.timeout,
-        pool: { maxSockets: 1000 },
+        pool: {maxSockets: 1000},
     };
     if (Object.prototype.toString.call(options.data) === '[object Object]' || util.isArray(options.data)) {
         req.json = options.data;
@@ -282,22 +290,33 @@ Kernel.prototype.onUnconfirmedTransaction = function (transaction, broadcast) {
     }
 };
 
-shared.list = function(req, cb) {
+shared_1_0.test = function (params, cb) {
+    let p = [];
+    params = params.slice(1, params.length - 1);
+    p = params.split(',');
+    return cb(null, 200, '1.0 success params1 -> ' + p[0] + ';params2 -> ' + p[1]);
+};
+
+shared_2_0.test = function (req, cb) {
+    return cb(null, 200, '2.0 success')
+};
+
+shared.list = function (req, cb) {
     library.modules.peer.list({limit: 100}, function (err, peers) {
         cb(null, 200, JSON.stringify({peers: !err ? peers : []}));
     });
 };
 
-shared.height = function(req, cb) {
+shared.height = function (req, cb) {
     let blockHeight = {
         'height': library.modules.blocks.getLastBlock().height
     };
     cb(null, 200, JSON.stringify(blockHeight));
 };
 
-shared.blocks = function(params, cb) {
+shared.blocks = function (params, cb) {
     let lastBlockId = JSON.parse(params).lastBlockId || 0;
-    if(lastBlockId === 0) {
+    if (lastBlockId === 0) {
         return cb('lastBlockId is not 0', 21000);
     }
     let blocksLimit = 1440;
@@ -314,12 +333,12 @@ shared.blocks = function(params, cb) {
     });
 };
 
-shared.blocks_common = function(params, cb) {
+shared.blocks_common = function (params, cb) {
     let reqParams = JSON.parse(params);
     let max = reqParams.max || 0;
     let min = reqParams.min || 0;
     let ids = reqParams.ids || '';
-    if(max === 0 || min === 0 || ids === '') {
+    if (max === 0 || min === 0 || ids === '') {
         return cb('params is error');
     }
     ids = ids.split(',').filter(function (id) {
@@ -338,7 +357,7 @@ shared.blocks_common = function(params, cb) {
     });
 };
 
-shared.transactions = function(req, cb) {
+shared.transactions = function (req, cb) {
     var report = library.schema.validate(req.headers, {
         type: "object",
         properties: {
