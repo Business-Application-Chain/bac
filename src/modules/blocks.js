@@ -360,17 +360,20 @@ Blocks.prototype.getCommonBlock = function(peer, height, cb) {
                 }
                 let max = lastBlockHeight;
                 lastBlockHeight = data.firstHeight;
-                library.modules.kernel.getFromPeerNews(peer, {
-                    api:'kernel',
-                    method:'POST',
-                    func:'blocks_common',
-                    data: JSON.stringify({
-                        ids: data.ids,
-                        max: max,
-                        min: lastBlockHeight
-                    }),
-                    id: Math.random(),
-                    jsonrpc: '1.0'
+                library.modules.kernel.getFromPeer(peer, {
+                    api: "/blocks/common?ids=" + data.ids + '&max=' + max + '&min=' + lastBlockHeight,
+                    method: "GET"
+                // library.modules.kernel.getFromPeerNews(peer, {
+                //     api:'kernel',
+                //     method:'POST',
+                //     func:'blocks_common',
+                //     data: JSON.stringify({
+                //         ids: data.ids,
+                //         max: max,
+                //         min: lastBlockHeight
+                //     }),
+                //     id: Math.random(),
+                //     jsonrpc: '1.0'
                 }, function (err, data) {
                     if (err || data.code !== 200) {
                         return next(err || data.message);
@@ -442,18 +445,21 @@ Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
             async.waterfall([
                 function (cb) {
                     count++;
-                    library.modules.kernel.getFromPeerNews(peer, {
-                        api:'kernel',
-                        method:'POST',
-                        func:'blocks',
-                        data: lastCommonBlockId,
-                        id: Math.random(),
-                        jsonrpc: '1.0'
+                    library.modules.kernel.getFromPeer(peer, {
+                        method: "GET",
+                        api: '/blocks?lastBlockId=' + lastCommonBlockId
+                    // library.modules.kernel.getFromPeerNews(peer, {
+                    //     api:'kernel',
+                    //     method:'POST',
+                    //     func:'blocks',
+                    //     data: lastCommonBlockId,
+                    //     id: Math.random(),
+                    //     jsonrpc: '1.0'
                     }, function (err, data) {
-                        if (err || data.code !== 200) {
+                        if (err) {
                             return next(err || data.message);
                         }
-                        let blocks = JSON.parse(data.resData).blocks;
+                        let blocks = data.body.blocks;
                         let blocksTemp = [];
                         if (typeof blocks === 'string') {
                             csvtojson({

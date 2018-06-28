@@ -159,12 +159,9 @@ function Contact() {
     this.save = function (trs, cb) {
         library.dbClient.query(`INSERT INTO contacts(address, transactionId) VALUES("${trs.asset.contact.address}", "${trs.id}")`, {
             type: Sequelize.QueryTypes.INSERT
-        }).then((data) => {
-            console.log("success !!!!!!!!!");
-            console.log(data);
+        }).then(() => {
             cb();
         }).catch((err) => {
-            console.log('error !!!!!!!!!!!!!!');
             console.log(err)
             cb();
         });

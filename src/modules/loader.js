@@ -30,21 +30,23 @@ privated.loadApp = function () {
 
 privated.loadBlocks = function(lastBlock, cb) {
     library.modules.kernel.getFromRandomPeer({
-        api:'kernel',
-        method:'POST',
-        func:'height',
-        data:'[]',
-        jsonrpc: '1.0',
-        id: Math.random()
+        api: '/height',
+        method: 'GET'
+        // api:'kernel',
+        // method:'POST',
+        // func:'height',
+        // data:'[]',
+        // jsonrpc: '1.0',
+        // id: Math.random()
     }, function (err, data) {
         var peerStr = data && data.peer ? ip.fromLong(data.peer.ip) + ":" + data.peer.port : 'unknown';
-        if (err || data.code !== 200) {
-            library.log.Info("Failed to get height from peer: " + peerStr);
+        if (err) {
+            library.log.Error("Failed to get height from peer: " + peerStr);
             return cb();
         }
         library.log.Info("Check blockchain on " + peerStr);
 
-        let height = parseInt(JSON.parse(data.resData).height);
+        let height = data.body.height;
         if (height <= 0) {
             library.log.Info("Failed to parse blockchain height: " + peerStr + "\n" + library.scheme.getLastError());
             return cb();

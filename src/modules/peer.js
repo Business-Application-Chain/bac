@@ -25,18 +25,21 @@ function Peer(cb, scope) {
 // private methods
 privated.updatePeerList = function (cb) {
     library.modules.kernel.getFromRandomPeer({
-        api:'kernel',
-        method:'POST',
-        func:'list',
-        data:'[]',
-        jsonrpc: '1.0',
-        id: Math.random()
+        api: '/list',
+        method: 'GET'
+    // library.modules.kernel.getFromRandomPeer({
+    //     api:'kernel',
+    //     method:'POST',
+    //     func:'list',
+    //     data:'[]',
+    //     jsonrpc: '1.0',
+    //     id: Math.random()
     }, function (err, data) {
         if (err) {
             return cb();
         }
 
-        let peers = JSON.parse(data.resData).peers || [];
+        let peers = data.body.peers || [];
         if(!peers) {
             return cb();
         }
@@ -46,7 +49,7 @@ privated.updatePeerList = function (cb) {
                 type: 'object',
                 properties: {
                     ip: {
-                        type: 'integer'
+                        type: 'string'
                     },
                     port: {
                         type: 'integer',
@@ -134,7 +137,8 @@ Peer.prototype.callApi = function (call, args, cb) {
 Peer.prototype.list = function (options, cb) {
     options.limit = options.limit || 100;
 
-    var sql = "SELECT p.ip, p.port, p.state, p.os, p.sharePort, p.version FROM peers p " + (options.dappId ? " INNER JOIN peers_dapp pd on p.id = pd.peerId and pd.dappId = $dappId" : "") + " WHERE p.state > 0 AND p.sharePort = 1 ORDER BY RAND() LIMIT $limit";
+    var sql = "SELECT p.ip, p.port, p.state, p.os, p.sharePort, p.version FROM peers p " + (options.dappId ? " INNER JOIN peers_dapp pd on p.id = pd.peerId and pd.dappId = $dappId" : "")
+        + " WHERE p.state > 0 AND p.sharePort = 1 ORDER BY RAND() LIMIT $limit";
 
     library.dbClient.query(sql, {
         type: Sequelize.QueryTypes.SELECT,
@@ -264,7 +268,8 @@ Peer.prototype.update = function (peer, cb) {
             if (peer.state !== undefined) {
                 options.state = peer.state;
             }
-            library.dbClient.query("UPDATE peers SET os = $os, sharePort = $sharePort, version = $version" + (peer.state !== undefined ? ", state = CASE WHEN state = 0 THEN state ELSE $state END " : "") + " WHERE ip = $ip AND port = $port", {
+            library.dbClient.query("UPDATE peers SET os = $os, sharePort = $sharePort, version = $version" + (peer.state !== undefined ? ", state = CASE WHEN state = 0 THEN state ELSE $state END " : "")
+                + " WHERE ip = $ip AND port = $port", {
                 type: Sequelize.QueryTypes.UPDATE,
                 bind: options
             }).then(function (data) {

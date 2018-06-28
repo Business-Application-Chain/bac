@@ -77,7 +77,7 @@ Kernel.prototype.getFromRandomPeer = function (config, options, cb) {
         library.modules.peer.list(config, function (err, peers) {
             if (!err && peers.length) {
                 var peer = peers[0];
-                self.getFromPeerNews(peer, options, cb);
+                self.getFromPeer(peer, options, cb);
             } else {
                 return cb(err || "No peers in database");
             }
