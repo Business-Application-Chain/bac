@@ -27,7 +27,10 @@ privated.updatePeerList = function (cb) {
     library.modules.kernel.getFromRandomPeer({
         api:'kernel',
         method:'POST',
-        func:'list'
+        func:'list',
+        data:'[]',
+        jsonrpc: '1.0',
+        id: Math.random()
     }, function (err, data) {
         if (err) {
             return cb();

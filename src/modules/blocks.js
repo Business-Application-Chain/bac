@@ -357,16 +357,16 @@ Blocks.prototype.getCommonBlock = function(peer, height, cb) {
                 let max = lastBlockHeight;
                 lastBlockHeight = data.firstHeight;
                 library.modules.kernel.getFromPeerNews(peer, {
-                    // api: `/blocks/common?ids=${data.ids},&max=${max}&min=${lastBlockHeight}`,
-                    // method: 'GET',
                     api:'kernel',
                     method:'POST',
                     func:'blocks_common',
-                    data: {
+                    data: JSON.stringify({
                         ids: data.ids,
                         max: max,
                         min: lastBlockHeight
-                    }
+                    }),
+                    id: Math.random(),
+                    jsonrpc: '1.0'
                 }, function (err, data) {
                     if (err || data.code !== 200) {
                         return next(err || data.message);
@@ -442,9 +442,9 @@ Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
                         api:'kernel',
                         method:'POST',
                         func:'blocks',
-                        data: {
-                            lastBlockId: lastCommonBlockId
-                        }
+                        data: lastCommonBlockId,
+                        id: Math.random(),
+                        jsonrpc: '1.0'
                     }, function (err, data) {
                         if (err || data.code !== 200) {
                             return next(err || data.message);

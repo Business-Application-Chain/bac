@@ -32,7 +32,10 @@ privated.loadBlocks = function(lastBlock, cb) {
     library.modules.kernel.getFromRandomPeer({
         api:'kernel',
         method:'POST',
-        func:'height'
+        func:'height',
+        data:'[]',
+        jsonrpc: '1.0',
+        id: Math.random()
     }, function (err, data) {
         var peerStr = data && data.peer ? ip.fromLong(data.peer.ip) + ":" + data.peer.port : 'unknown';
         if (err || data.code !== 200) {
