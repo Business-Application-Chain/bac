@@ -302,7 +302,12 @@ shared_1_0.test = function (params, cb) {
 
 shared_1_0.list = function (req, cb) {
     library.modules.peer.list({limit: 100}, function (err, peers) {
-        cb(null, 200, JSON.stringify({peers: !err ? peers : []}));
+        if(err) {
+            return cb(err, 21000);
+        } else {
+           return cb(null, 200, peers);
+        }
+
     });
 };
 
