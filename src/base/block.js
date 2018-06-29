@@ -207,7 +207,7 @@ Block.prototype.dbRead = function (raw) {
             generatorPublicKey: raw.b_generatorPublicKey,
             generatorId: privated.getAddressByPublicKey(raw.b_generatorPublicKey),
             blockSignature: raw.b_blockSignature,
-            confirmations: raw.b_confirmations
+            // confirmations: raw.b_confirmations
         }
         block.totalForged = (block.totalFee + block.reward);
         return block;
