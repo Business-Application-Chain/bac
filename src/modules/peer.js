@@ -35,8 +35,7 @@ privated.updatePeerList = function (cb) {
         if (err) {
             return cb();
         }
-
-        let peers = JSON.parse(data.resData).peers || [];
+        let peers = data.result || [];
         if(!peers) {
             return cb();
         }

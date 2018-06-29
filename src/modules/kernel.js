@@ -125,6 +125,11 @@ Kernel.prototype.getFromPeerNews = function (peer, options, cb) {
                 }
             }
 
+            if(body.code !== 200) {
+                console.log(body.error);
+                return cb(body.error, {code: body.code});
+            }
+
             cb && cb(err || ("Request status code " + response.statusCode));
             return;
         }
@@ -171,7 +176,7 @@ Kernel.prototype.getFromPeerNews = function (peer, options, cb) {
                 version: response.headers['version']
             });
         }
-        return cb && cb(null, {code: body.code, message: body.message, resData: body.responseData, peer: peer,})
+        return cb && cb(null, {code: body.code, result: body.result, peer: peer})
     });
 
 };
