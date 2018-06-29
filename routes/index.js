@@ -125,7 +125,15 @@ module.exports = function (scope) {
                         'jsonrpc': jsonrpc
                     });
                 }
-                apiModules.callApi(body['method'], jsonrpc, body['params'], function (message, code, data) {
+                apiModules.callApi(body['method'], jsonrpc, body['params'], function (error, code, data) {
+                    if(error) {
+                        return res.json({
+                            'error': error,
+                            'code': code,
+                            'id': id,
+                            'jsonrpc': jsonrpc
+                        });
+                    }
                     return res.json({
                         'result': data,
                         'code': code,

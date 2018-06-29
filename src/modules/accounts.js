@@ -385,12 +385,8 @@ privated.generateMnemonic = function () {
     return mnemonic.toString('hex');
 };
 
-privated.openAccount = function (mnemonic, cb) {
-    var seed = bip39.mnemonicToSeed(mnemonic);
-    var node = bitcoinjs.HDNode.fromSeedHex(seed);
-    var keyPair = bitcoinjs.ECPair.fromWIF(node.keyPair.toWIF());
-    var privateKey = keyPair.d.toBuffer(32);
-    var hash = crypto.createHash('sha256').update(privateKey.toString('hex'), 'utf8').digest();
+privated.openAccount = function (secret, cb) {
+    var hash = crypto.createHash('sha256').update(secret, 'utf8').digest();
     var keypair = ed.MakeKeypair(hash);
 
     self.setAccountAndGet({master_pub: keypair.publicKey.toString('hex')}, cb);
@@ -477,6 +473,44 @@ Accounts.prototype.mergeAccountAndGet = function (fields, cb) {
 // Events
 Accounts.prototype.onInit = function (scope) {
     modules_loaded = scope && scope != undefined ? true : false;
+};
+
+shared.open = function(req, cb) {
+    var body = req.body;
+    library.schema.validate(body, {
+        type: "object",
+        properties: {
+            secret: {
+                type: "string",
+                minLength: 1,
+                maxLength: 100
+            }
+        },
+        required: ["secret"]
+    }, function (err) {
+        if(err) {
+            return cb(err[0].message);
+        }
+        privated.openAccount(body.secret, function (err, account) {
+            var accountData = null;
+            if(!err) {
+                accountData = {
+                    master_address: account.master_address,
+                    balance_unconfirmed: account.balance_unconfirmed,
+                    balance: account.balance,
+                    master_pub: account.master_pub,
+                    signature_unconfirmed: account.signature_unconfirmed,
+                    secondsign: account.secondsign,
+                    second_pub: account.second_pub,
+                    multisignatures: account.multisignatures,
+                    multisignatures_unconfirmed: account.multisignatures_unconfirmed
+                };
+                return cb(null, {account: accountData});
+            } else {
+                return cb(err);
+            }
+        });
+    });
 };
 
 // export

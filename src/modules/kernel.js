@@ -307,14 +307,15 @@ shared_1_0.list = function (req, cb) {
 };
 
 shared_1_0.height = function (req, cb) {
-    let blockHeight = {
-        'height': library.modules.blocks.getLastBlock().height
-    };
-    cb(null, 200, JSON.stringify(blockHeight));
+    let blockHeight = library.modules.blocks.getLastBlock().height;
+    cb(null, 200, blockHeight);
 };
 
 shared_1_0.blocks = function (params, cb) {
-    let lastBlockId = JSON.parse(params).lastBlockId || 0;
+    let p = [];
+    params = params.slice(1, params.length - 1);
+    p = params.split(',');
+    let lastBlockId = p[0] || 0;
     if (lastBlockId === 0) {
         return cb('lastBlockId is not 0', 21000);
     }
@@ -326,9 +327,10 @@ shared_1_0.blocks = function (params, cb) {
     }, function (err, data) {
         console.log('blocks blocks blocks');
         if (err) {
-            return cb('error', 21000);
+            return cb(err, 21000);
         }
-        return cb('success', 200, JSON.stringify({blocks: data}));
+        // return cb(null, 200, JSON.stringify({blocks: data}));
+        return cb(null, 200, data);
     });
 };
 
@@ -350,9 +352,11 @@ shared_1_0.blocks_common = function (params, cb) {
         type: Sequelize.QueryTypes.SELECT,
     }).then((rows) => {
         var commonBlock = rows.length ? rows[0] : null;
-        return cb('success', 200, JSON.stringify({commonBlock: commonBlock}));
+        // return cb(null, 200, JSON.stringify({commonBlock: commonBlock}));
+        return cb(null, 200, commonBlock);
     }).catch((err) => {
-        cb(err);
+        console.log(err);
+        cb(err, 21000);
     });
 };
 
@@ -379,9 +383,7 @@ shared_1_0.transactions = function (req, cb) {
         if (peerIp && report) {
             library.modules.peer.state(ip.toLong(peerIp), req.headers.port, 0, 3600);
         }
-
         return cb("Invalid transaction body", 21000);
-
     }
 
     library.balancesWorkQueue.add(function (cb) {
