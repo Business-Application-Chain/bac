@@ -375,7 +375,7 @@ Blocks.prototype.getCommonBlock = function(peer, height, cb) {
                     if (err || data.code !== 200) {
                         return next(err || data.message);
                     }
-                    var cBlock = JSON.parse(data.resData).commonBlock || null;
+                    var cBlock = data.result || null;
                     if (!cBlock) {
                         return next();
                     }
@@ -446,14 +446,14 @@ Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
                         api:'kernel',
                         method:'POST',
                         func:'blocks',
-                        data: lastCommonBlockId,
+                        data: [lastCommonBlockId],
                         id: Math.random(),
                         jsonrpc: '1.0'
                     }, function (err, data) {
                         if (err || data.code !== 200) {
                             return next(err || data.message);
                         }
-                        let blocks = JSON.parse(data.resData).blocks;
+                        let blocks = data.result;
                         let blocksTemp = [];
                         if (typeof blocks === 'string') {
                             csvtojson({
