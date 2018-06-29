@@ -44,7 +44,7 @@ privated.loadBlocks = function(lastBlock, cb) {
         }
         library.log.Info("Check blockchain on " + peerStr);
 
-        let height = parseInt(JSON.parse(data.resData).height);
+        let height = data.result;
         if (height <= 0) {
             library.log.Info("Failed to parse blockchain height: " + peerStr + "\n" + library.scheme.getLastError());
             return cb();

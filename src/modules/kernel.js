@@ -104,7 +104,7 @@ Kernel.prototype.getFromPeerNews = function (peer, options, cb) {
         pool: {maxSockets: 1000},
     };
     return request(req, function (err, response, body) {
-        if (err || response.statusCode !== 200 || body.code !== 200) {
+        if (err || response.statusCode !== 200) {
             library.log.Debug("Request", "Error", err);
 
             if (peer) {
@@ -123,11 +123,6 @@ Kernel.prototype.getFromPeerNews = function (peer, options, cb) {
                         });
                     }
                 }
-            }
-
-            if(body.code !== 200) {
-                console.log(body.error);
-                return cb(body.error, {code: body.code});
             }
 
             cb && cb(err || ("Request status code " + response.statusCode));
@@ -176,7 +171,11 @@ Kernel.prototype.getFromPeerNews = function (peer, options, cb) {
                 version: response.headers['version']
             });
         }
-        return cb && cb(null, {code: body.code, result: body.result, peer: peer})
+        if(body.code !== 200) {
+            return cb(body.err, {error: body.error, code: body.code, peer: peer});
+        }
+
+        return cb && cb(null, {result: body.result, code: body.code, peer: peer});
     });
 
 };
@@ -202,7 +201,7 @@ Kernel.prototype.getFromPeer = function (peer, options, cb) {
         req.body = options.data;
     }
     return request(req, function (err, response, body) {
-        if (err || response.statusCode != 200) {
+        if (err || response.statusCode !== 200) {
             library.log.Debug("Request", "Error", err);
 
             if (peer) {
