@@ -903,12 +903,12 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
                 limitPart = "where b.height < $limit ";
             }
             library.dbClient.query('SELECT '+
-                'b.id as b_id, b.version , b.timestamp as b_timestamp , b.height , b.previousBlock , b.numberOfTransactions , b.totalAmount , b.totalFee , b.reward , b.payloadLength , b.payloadHash , b.generatorPublicKey ,lower(b.blockSignature) as blockSignature, ' +
+                'b.id as b_id, b.version , b.timestamp as b_timestamp , b.height , b.previousBlock , b.numberOfTransactions , b.totalAmount , b.totalFee , b.reward , b.payloadLength, lower(b.payloadHash) as payloadHash, lower(b.generatorPublicKey) as generatorPublicKey, lower(b.blockSignature) as blockSignature, ' +
                 "t.id as t_id, t.type , t.timestamp as t_timestamp , t.senderPublicKey , t.senderId , t.recipientId , t.senderUsername , t.recipientUsername , t.amount , t.fee , t.signature , t.signSignature , " +
+                'd.username as d_username , ' +
                 "s.publicKey , " +
-                'd.username , ' +
                 'c.address , ' +
-                'u.username ,' +
+                'u.username as c_username ,' +
                 'm.min , m.lifetime , m.keysgroup , ' +
                 't.requesterPublicKey , t.signatures ' +
                 "FROM blocks b " +

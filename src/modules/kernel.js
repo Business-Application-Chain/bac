@@ -321,10 +321,7 @@ shared_1_0.height = function (req, cb) {
 };
 
 shared_1_0.blocks = function (params, cb) {
-    let p = [];
-    params = params.slice(1, params.length - 1);
-    p = params.split(',');
-    let lastBlockId = p[0] || 0;
+    let lastBlockId = params[0] || 0;
     if (lastBlockId === 0) {
         return cb('lastBlockId is not 0', 21000);
     }
