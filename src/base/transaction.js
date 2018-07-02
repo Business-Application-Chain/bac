@@ -795,7 +795,7 @@ Transaction.prototype.dbRead = function (raw) {
         var tx = {
             id: raw.t_id,
             height: parseInt(raw.b_height),
-            blockId: raw.b_id || raw.t_blockId,
+            blockId: raw.b_id,
             type: parseInt(raw.t_type),
             timestamp: parseInt(raw.t_timestamp),
             senderPublicKey: raw.t_senderPublicKey,

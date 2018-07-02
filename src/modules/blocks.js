@@ -16,8 +16,9 @@ var	ip = require('ip');
 var Json2csv = require('json2csv').Parser;
 
 var header = ['b_id', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward', 'b_payloadLength', 'b_payloadHash','b_generatorPublicKey','b_blockSignature','t_id',
-    't_type','t_timestamp','t_senderPublicKey', 't_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature','s_publicKey','d_username','v_votes','c_address','u_alias',
-    'm_min','m_lifetime','m_keysgroup','dapp_name','dapp_description','dapp_tags','dapp_type','dapp_siaAscii','dapp_siaIcon','dapp_git','dapp_category','dapp_icon','in_dappId','ot_dappId','ot_outTransactionId','t_requesterPublicKey','t_signatures'];
+    't_type','t_timestamp','t_senderPublicKey', 't_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature', 'd_username', 's_publicKey','c_address','u_alias',
+    'm_min','m_lifetime','m_keysgroup','t_requesterPublicKey','t_signatures'];
+
 
 require('array.prototype.findindex'); // Old node fix
 
@@ -57,27 +58,15 @@ privated.blocksDataFields = {
     't_signSignature': String,
     's_publicKey': String,
     'd_username': String,
-    'v_votes': String,
     'c_address': String,
     'u_alias': String,
     'm_min': Number,
     'm_lifetime': Number,
     'm_keysgroup': String,
-    'dapp_name': String,
-    'dapp_description': String,
-    'dapp_tags': String,
-    'dapp_type': Number,
-    'dapp_siaAscii': String,
-    'dapp_siaIcon': String,
-    'dapp_git': String,
-    'dapp_category': Number,
-    'dapp_icon': String,
-    'in_dappId': String,
-    'ot_dappId': String,
-    'ot_outTransactionId': String,
     't_requesterPublicKey': String,
     't_signatures': String
 };
+
 
 // constructor
 function Blocks(cb, scope) {
@@ -511,7 +500,8 @@ Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
     var params = {limit: newLimit, offset: offset || 0};
 
     library.dbSequence.add(function (cb) {
-        library.dbClient.query('SELECT b.id as b_id, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward, b.payloadLength as b_payloadLength, b.payloadHash as b_payloadHash, b.generatorPublicKey as b_generatorPublicKey,  lower(b.blockSignature) as b_blockSignature, ' +
+        library.dbClient.query('SELECT ' +
+            'b.id as b_id, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward, b.payloadLength as b_payloadLength, b.payloadHash as b_payloadHash, b.generatorPublicKey as b_generatorPublicKey,  lower(b.blockSignature) as b_blockSignature, ' +
             't.id as t_id, t.type as t_type, t.timestamp as t_timestamp, t.senderPublicKey as t_senderPublicKey, t.senderId as t_senderId, t.recipientId as t_recipientId, t.senderUsername as t_senderUsername, t.recipientUsername as t_recipientUsername, t.amount as t_amount, t.fee as t_fee, t.signature as t_signature, t.signSignature as t_signSignature,  ' +
             's.publicKey as s_publicKey, ' +
             'd.username as d_username, ' +
@@ -923,12 +913,12 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
                 limitPart = "where b.height < $limit ";
             }
             library.dbClient.query('SELECT '+
-                'b.id as b_id, b.version , b.timestamp as b_timestamp , b.height , b.previousBlock , b.numberOfTransactions , b.totalAmount , b.totalFee , b.reward , b.payloadLength , b.payloadHash , b.generatorPublicKey ,lower(b.blockSignature) as blockSignature, ' +
+                'b.id as b_id, b.version , b.timestamp as b_timestamp , b.height , b.previousBlock , b.numberOfTransactions , b.totalAmount , b.totalFee , b.reward , b.payloadLength , b.payloadHash , b.generatorPublicKey ,lower(b.blockSignature) as b_blockSignature, ' +
                 "t.id as t_id, t.type , t.timestamp as t_timestamp , t.senderPublicKey , t.senderId , t.recipientId , t.senderUsername , t.recipientUsername , t.amount , t.fee , t.signature , t.signSignature , " +
                 "s.publicKey , " +
                 'd.username , ' +
                 'c.address , ' +
-                'u.username ,' +
+                'u.username as u_alias , ' +
                 'm.min , m.lifetime , m.keysgroup , ' +
                 't.requesterPublicKey , t.signatures ' +
                 "FROM blocks b " +
