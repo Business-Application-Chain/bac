@@ -9,6 +9,7 @@ var config = require('./config.json');
 var index = require('./routes/index');
 var app = express();
 
+
 app.engine('html', require('ejs').renderFile);
 
 // view engine setup

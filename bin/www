@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-
 var app = require('../app');
 var debug = require('debug')('entu:server');
 var http = require('http');
@@ -273,6 +272,22 @@ d.run(function () {
             cb(null, new ncenter);
         },
 
+        socket: ['config', 'notification_center', function (scope, cb) {
+            var webSocket = require('../src/utils/webSocket.js');
+            async.auto({
+                config: function (cb) {
+                    cb(null, scope.config);
+                },
+                notification_center: function (cb) {
+                    cb(null, scope.notification_center);
+                },
+                webSocket: ['config', 'notification_center', function (scope, cb) {
+                    new webSocket(scope, cb);
+                }]
+            }, cb);
+
+        }],
+
         base: ['config', 'genesisblock', 'dbClient', 'schema', 'notification_center', function (scope, cb) {
             var Account = require('../src/base/account.js');
             var Block = require('../src/base/block.js');
@@ -306,7 +321,7 @@ d.run(function () {
             }, cb);
         }],
 
-        modules: ['network', 'notification_center', 'base', 'sequence', 'balancesSequence', 'dbSequence', function (scope, cb) {
+        modules: ['network', 'notification_center','base', 'sequence', 'balancesSequence', 'dbSequence', 'socket',function (scope, cb) {
             var __modules = {};
             Object.keys(params.modules).forEach(function (module_name) {
                 __modules[module_name] = function (cb) {
@@ -319,7 +334,7 @@ d.run(function () {
                         var obj = new Klass(cb, scope);
                         modules.push(obj);
                     });
-                }
+                };
                 modules_name.push(module_name);
             });
             async.parallel(__modules, function (err, modules) {

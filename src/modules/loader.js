@@ -40,6 +40,10 @@ privated.loadBlocks = function(lastBlock, cb) {
         var peerStr = data && data.peer ? ip.fromLong(data.peer.ip) + ":" + data.peer.port : 'unknown';
         if (err || data.code !== 200) {
             library.log.Info("Failed to get height from peer: " + peerStr);
+            library.socket.webSocket.send("123456", function (err, data) {
+                console.log("err -> ", err);
+                console.log("data -> ", data);
+            });
             return cb();
         }
         library.log.Info("Check blockchain on " + peerStr);

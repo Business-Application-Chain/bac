@@ -14,6 +14,7 @@ var blockStatus = require('../utils/blockStatus.js');
 var csvtojson = require('csvtojson');
 var	ip = require('ip');
 var Json2csv = require('json2csv').Parser;
+var sendFactory = require('../utils/sendScoketFactory');
 
 var header = ['b_id', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward', 'b_payloadLength', 'b_payloadHash','b_generatorPublicKey','b_blockSignature','t_id',
     't_type','t_timestamp','t_senderPublicKey', 't_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature', 'd_username', 's_publicKey','c_address','u_alias',
@@ -23,7 +24,7 @@ var header = ['b_id', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock',
 require('array.prototype.findindex'); // Old node fix
 
 // private objects
-var modules_loaded, library, self, privated = {}, shared = {}, genesisblock = null;
+var modules_loaded, library, self, privated = {}, shared = {}, genesisblock = null, shared_1_0 = {}, scoket_1_0 = {};
 
 privated.loaded = false;
 privated.isActive = false;
@@ -228,18 +229,72 @@ privated.list = function (filter, cb) {
 };
 
 privated.getById = function (id, cb) {
-    library.dbClient.query('SELECT b.id, b.version, b.timestamp, b.height, b.previousBlock, b.numberOfTransactions, b.totalAmount, b.totalFee, b.reward, b.payloadLength,  b.payloadHash, b.generatorPublicKey, b.blockSignature, (select max(height) + 1 from blocks) - b.height ' +
-        'from blocks b ' +
-        `where b.id = ${id}`, {
+    async.waterfall([
+        function (cb) {
+            library.dbClient.query(`SELECT blockId FROM transactions WHERE id = ${id}`, {
+                type: Sequelize.QueryTypes.SELECT
+            }).then((rows) => {
+                if(rows[0]) {
+                    cb(null, rows[0].blockId);
+                } else {
+                    cb(null, id);
+                }
+            }).catch((err) => {
+                console.log(err);
+                cb(null, id);
+            });
+        }
+    ], function (err, id) {
+        library.dbClient.query('SELECT ' +
+            'b.id as b_id, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward, b.payloadLength as b_payloadLength, b.payloadHash as b_payloadHash, b.generatorPublicKey as b_generatorPublicKey,  lower(b.blockSignature) as b_blockSignature, ' +
+            't.id as t_id, t.type as t_type, t.timestamp as t_timestamp, t.senderPublicKey as t_senderPublicKey, t.senderId as t_senderId, t.recipientId as t_recipientId, t.senderUsername as t_senderUsername, t.recipientUsername as t_recipientUsername, t.amount as t_amount, t.fee as t_fee, t.signature as t_signature, t.signSignature as t_signSignature,  ' +
+            's.publicKey as s_publicKey, ' +
+            'd.username as d_username, ' +
+            'c.address as c_address, ' +
+            'u.username as u_alias,' +
+            'm.min as m_min, m.lifetime as m_lifetime, m.keysgroup as m_keysgroup, ' +
+            't.requesterPublicKey as t_requesterPublicKey, t.signatures as t_signatures ' +
+            "FROM blocks b " +
+            "left outer join transactions as t on t.blockId=b.id " +
+            "left outer join delegates as d on d.transactionId=t.id " +
+            "left outer join signatures as s on s.transactionId=t.id " +
+            "left outer join contacts as c on c.transactionId=t.id " +
+            "left outer join usernames as u on u.transactionId=t.id " +
+            "left outer join multisignatures as m on m.transactionId=t.id " +
+            `where b.id = ${id} `, {
             type: Sequelize.QueryTypes.SELECT
+        }).then((rows) => {
+            var blocks = privated.readDbRows(rows);
+            blocks.forEach(function (block) {
+                block.blockSignature = block.blockSignature.toString('utf8');
+                block.generatorPublicKey = block.generatorPublicKey.toString('utf8');
+                block.payloadHash = block.payloadHash.toString('utf8');
+            });
+            return cb(null, blocks);
+        }).catch((err) => {
+            return cb(err);
+        });
+    });
+};
+
+privated.getBlocks = function(option, cb) {
+    let page = option.page || 1;
+    let size = option.size || 10;
+    let index = (page - 1) * size;
+    let orderBy = option.orderBy || 'desc';
+    // let
+    library.dbClient.query('SELECT ' +
+        'id, version, timestamp, height , previousBlock , numberOfTransactions , totalAmount , totalFee , reward , payloadLength, lower(payloadHash) as payloadHash, lower(generatorPublicKey) as generatorPublicKey, lower(blockSignature) as blockSignature ' +
+        ` FROM blocks ORDER BY height ${orderBy} LIMIT ${index}, ${size} `, {
+        type: Sequelize.QueryTypes.SELECT
     }).then((rows) => {
+        // var blocks = privated.readDbRows(rows);
         rows.forEach(function (block) {
             block.blockSignature = block.blockSignature.toString('utf8');
             block.generatorPublicKey = block.generatorPublicKey.toString('utf8');
             block.payloadHash = block.payloadHash.toString('utf8');
         });
-        var block = library.base.block.dbRead(rows[0]);
-        cb(null, block);
+        cb(null, rows);
     }).catch((err) => {
         cb(err);
     });
@@ -321,10 +376,14 @@ Blocks.prototype.sandboxApi = function (call, args, cb) {
     sandboxHelper.callMethod(shared, call, args, cb);
 };
 
-Blocks.prototype.callApi = function (call, args, cb) {
+Blocks.prototype.callApi = function (call, rpcjson, args, cb) {
     var callArgs = [args, cb];
     // execute
-    shared[call].apply(null, callArgs);
+    if (rpcjson === '1.0') {
+        shared_1_0[call].apply(null, callArgs);
+    } else {
+        shared_1_0[call].apply(null, callArgs);
+    }
 };
 
 // Events
@@ -859,6 +918,7 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                     // library.bus.message('newBlock', block, broadcast);
                                     library.notification_center.notify('newBlock', block, broadcast);
                                     privated.lastBlock = block;
+                                    library.webSocket.sendUTF(sendFactory.sendNewBlocks(block));
                                     // done();
                                     library.modules.round.tick(block, done);
                                 });
@@ -953,6 +1013,49 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
 
 Blocks.prototype.onEnd = function (cb) {
 
+};
+
+shared_1_0.height = function(req, cb) {
+    return cb(null, 200, privated.lastBlock.height);
+};
+
+shared_1_0.blocks = function(params, cb) {
+    let page = params[0];
+    let size = params[1];
+    let orderBy = params[2];
+    let option = {
+        page: page,
+        size: size,
+        orderBy: orderBy
+    };
+    privated.getBlocks(option, function (err, rows) {
+        if(err) {
+            return cb(err, 21000);
+        } else {
+            return cb(null, 200, {rows: rows, count: privated.lastBlock.height});
+        }
+    });
+};
+
+shared_1_0.block = function(params, cb) {
+    let bId = params[0] || 0;
+    if(!bId) {
+        return cb('missing block id', 21000);
+    }
+    privated.getById(bId, function (err, block) {
+        if(err) {
+            return cb(err.message, 21000);
+        }
+        return cb(null, 200, block);
+    })
+};
+
+scoket_1_0.height = function(cb) {
+    return cb(null, privated.lastBlock.height);
+};
+
+scoket_1_0.onNewBlock = function(cb) {
+    return cb(null, privated.lastBlock);
 };
 
 // export

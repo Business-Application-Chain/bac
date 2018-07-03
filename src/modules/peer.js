@@ -11,7 +11,7 @@ var request = require('request');
 require('array.prototype.find'); // Old node fix
 
 // private objects
-var modules_loaded, library, self, privated = {}, shared = {};
+var modules_loaded, library, self, privated = {}, shared = {}, shared_1_0 = {};
 
 // constructor
 function Peer(cb, scope) {
@@ -102,6 +102,17 @@ privated.count = function (cb) {
     });
 };
 
+privated.list = function(options, cb) {
+    let limit = options.limit || 100;
+    library.dbClient.query(`SELECT * FROM peers WHERE state > 0 and sharePort = 1 ORDER BY rand() LIMIT ${limit}`, {
+        type: Sequelize.QueryTypes.SELECT
+    }).then((rows) => {
+        cb(null, rows);
+    }).catch((err) => {
+        cb(err);
+    })
+};
+
 privated.banManager = function (cb) {
     library.dbClient.query("UPDATE peers SET state = 1, clock = null WHERE (state = 0 and clock - $now < 0)", {
         type: Sequelize.QueryTypes.UPDATE,
@@ -124,35 +135,39 @@ Peer.prototype.sandboxApi = function (call, args, cb) {
     sandboxHelper.callMethod(shared, call, args, cb);
 };
 
-Peer.prototype.callApi = function (call, args, cb) {
+Peer.prototype.callApi = function (call, rpcjson, args, cb) {
     var callArgs = [args, cb];
     // execute
-    shared[call].apply(null, callArgs);
+    if (rpcjson === '1.0') {
+        shared_1_0[call].apply(null, callArgs);
+    } else {
+        shared_1_0[call].apply(null, callArgs);
+    }
 };
 
-Peer.prototype.list = function (options, cb) {
-    options.limit = options.limit || 100;
-
-    var sql = "SELECT p.ip, p.port, p.state, p.os, p.sharePort, p.version FROM peers p " + (options.dappId ? " INNER JOIN peers_dapp pd on p.id = pd.peerId and pd.dappId = $dappId" : "") + " WHERE p.state > 0 AND p.sharePort = 1 ORDER BY RAND() LIMIT $limit";
-
-    library.dbClient.query(sql, {
-        type: Sequelize.QueryTypes.SELECT,
-        bind: options
-    }).then(function (rows) {
-        for (var i = 0; i < rows.length; i++) {
-            var row = rows[i];
-            row.ip = String(row.ip);
-            row.port = Number(row.port);
-            row.state = Number(row.state);
-            row.os = String(row.os);
-            row.sharePort = Number(row.sharePort);
-            row.version = String(row.version);
-        }
-        cb(null, rows);
-    }, function (err) {
-        cb(err, undefined);
-    });
-};
+// Peer.prototype.list = function (options, cb) {
+//     options.limit = options.limit || 100;
+//
+//     var sql = "SELECT p.ip, p.port, p.state, p.os, p.sharePort, p.version FROM peers p " + (options.dappId ? " INNER JOIN peers_dapp pd on p.id = pd.peerId and pd.dappId = $dappId" : "") + " WHERE p.state > 0 AND p.sharePort = 1 ORDER BY RAND() LIMIT $limit";
+//
+//     library.dbClient.query(sql, {
+//         type: Sequelize.QueryTypes.SELECT,
+//         bind: options
+//     }).then(function (rows) {
+//         for (var i = 0; i < rows.length; i++) {
+//             var row = rows[i];
+//             row.ip = String(row.ip);
+//             row.port = Number(row.port);
+//             row.state = Number(row.state);
+//             row.os = String(row.os);
+//             row.sharePort = Number(row.sharePort);
+//             row.version = String(row.version);
+//         }
+//         cb(null, rows);
+//     }, function (err) {
+//         cb(err, undefined);
+//     });
+// };
 
 Peer.prototype.state = function (pip, port, state, timeout, cb) {
     var exist = library.config.peers.list.find(function (peer) {
@@ -356,8 +371,31 @@ shared.peer_getPeer = function (req, cb) {
 
 };
 
-shared.peer_getVersion = function (req, cb) {
+shared_1_0.list = function(req, cb) {
+    privated.list({limit: 100}, function (err, list) {
+        if(err) {
+            return cb(err, 21000);
+        }
+        console.log(list);
+        return cb(null, 200, list);
+    });
+};
 
+shared_1_0.count = function(req, cb) {
+    privated.count(function (err, count) {
+        if(err) {
+          return cb(err, 21000);
+        }
+        return cb(null, 200, count);
+    });
+};
+
+// shared.peer_getVersion = function (req, cb) {
+//
+// };
+
+shared_1_0.version = function(req, cb) {
+    return cb(null, 200, library.config.version);
 };
 
 shared.peer_list = function (req, cb) {

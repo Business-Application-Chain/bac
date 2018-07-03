@@ -47,6 +47,7 @@
     "util": "^0.10.3",
     "util-extend": "^1.0.3",
     "uuid": "^3.2.1",
+    "websocket": "^1.0.26",
     "z-schema": "^3.19.1"
   },
   "devDependencies": {

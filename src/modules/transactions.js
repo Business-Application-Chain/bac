@@ -9,8 +9,8 @@ var ed = require('ed25519');
 var bignum = require('../utils/bignum.js');
 var slots = require('../utils/slots.js');
 var TransactionTypes = require('../utils/transaction-types.js');
-
-var modules_loaded, library, self, privated = {}, shared = {}, genesisblock = null;
+var Sequelize = require('sequelize');
+var modules_loaded, library, self, privated = {}, shared = {}, genesisblock = null, shared_1_0 = {};
 
 privated.hiddenTransactions = [];
 privated.unconfirmedTransactions = [];
@@ -176,24 +176,19 @@ privated.list = function (filter, cb) {
     if (filter.offset >= 0) {
         fields.offset = filter.offset;
     }
-    if (filter.orderBy) {
-        var sort = filter.orderBy.split(':');
-        var sortBy = sort[0].replace(/[w_]/gi, '').replace('_', '.');
-        var sortMethod = 'DESC';
-        if (sort.length == 2) {
-            var sortMethod = lower(sort[1]) == 'desc' ? 'DESC' : 'ASC';
-        }
-    }
-    if (sortBy) {
-        if (sortFields.indexOf(sortBy) < 0) {
-            return cb("Invalid sort field");
-        }
-    }
+    // if (filter.orderBy) {
+    //     filter.orderBy =
+    // }
+    // if (sortBy) {
+    //     if (sortFields.indexOf(sortBy) < 0) {
+    //         return cb("Invalid sort field");
+    //     }
+    // }
     if (filter.limit > 100) {
         return cb("Invalid limit. Maximum is 100");
     }
 
-    this.scope.dbClient.query('SELECT COUNT(t.id) AS count ' +
+    library.dbClient.query('SELECT COUNT(t.id) AS count ' +
         'FROM transactions t ' +
         'INNER JOIN blocks b on t.blockId = b.id ' +
         (fields_or.length || owner ? 'WHERE ' : '') + ' ' +
@@ -203,14 +198,14 @@ privated.list = function (filter, cb) {
     }).then(function (rows) {
         var count = rows.length ? rows[0].count : 0;
 
-        this.scope.dbClient.query('t.id AS t_id, b.height AS b_height, t.blockId AS t_blockId, t.type AS t_type, t.timestamp AS t_timestamp, lower(t.senderPublicKey) AS t_senderPublicKey, t.senderId AS t_senderId, t.recipientId AS t_recipientId, t.senderUsername AS t_senderUsername, t.recipientUsername AS t_recipientUsername, t.amount AS t_amount, t.fee AS t_fee, lower(t.signature) AS t_signature, lower(t.signSignature) AS t_signSignature, (SELECT MAX(height) + 1 FROM blocks) AS t_confirmations ' +
+        library.dbClient.query('SELECT t.id AS t_id, b.height AS b_height, t.blockId AS t_blockId, t.type AS t_type, t.timestamp AS t_timestamp, lower(t.senderPublicKey) AS t_senderPublicKey, t.senderId AS t_senderId, t.recipientId AS t_recipientId, t.senderUsername AS t_senderUsername, t.recipientUsername AS t_recipientUsername, t.amount AS t_amount, t.fee AS t_fee, lower(t.signature) AS t_signature, lower(t.signSignature) AS t_signSignature, (SELECT MAX(height) + 1 FROM blocks) AS t_confirmations ' +
             'FROM transactions t ' +
             'INNER JOIN blocks b on t.blockId = b.id ' +
             (fields_or.length || owner ? 'WHERE ' : '') + ' ' +
             (fields_or.length ? '(' + fields_or.join(' or ') + ') ' : '') + (fields_or.length && owner ? ' AND ' + owner : owner) + ' ' +
-            (filter.orderBy ? 'ORDER BY ' + sortBy + ' ' + sortMethod : '') + ' ' +
-            (filter.limit ? 'LIMIT $limit' : '') + ' ' +
-            (filter.offset ? 'OFFSET $offset' : ''), {
+            (filter.orderBy ? 'ORDER BY ' + filter.orderBy : '') + ' ' +
+            ('LIMIT $limit') + ' ' +
+            (filter.offset ? ', $offset' : ''), {
             type: Sequelize.QueryTypes.SELECT,
             bind: fields
         }).then(function (rows) {
@@ -232,7 +227,7 @@ privated.list = function (filter, cb) {
 };
 
 privated.getById = function (id, cb) {
-    this.scope.dbClient.query('SELECT t.id AS t_id, b.height AS b_height, t.blockId AS t_blockId, t.type AS t_type, t.timestamp AS t_timestamp, lower(t.senderPublicKey) AS t_senderPublicKey, t.senderId AS t_senderId, t.recipientId AS t_recipientId, t.senderUsername AS t_senderUsername, t.recipientUsername AS t_recipientUsername, t.amount AS t_amount, t.fee AS t_fee, lower(t.signature) AS t_signature, lower(t.signSignature) AS t_signSignature, (SELECT MAX(height) + 1 FROM blocks) AS t_confirmations ' +
+    library.dbClient.query('SELECT t.id AS t_id, b.height AS b_height, t.blockId AS t_blockId, t.type AS t_type, t.timestamp AS t_timestamp, lower(t.senderPublicKey) AS t_senderPublicKey, t.senderId AS t_senderId, t.recipientId AS t_recipientId, t.senderUsername AS t_senderUsername, t.recipientUsername AS t_recipientUsername, t.amount AS t_amount, t.fee AS t_fee, lower(t.signature) AS t_signature, lower(t.signSignature) AS t_signSignature, (SELECT MAX(height) + 1 FROM blocks) AS t_confirmations ' +
         'FROM transactions t ' +
         'INNER JOIN blocks b on t.blockId = b.id WHERE t.id = $id', {
         type: Sequelize.QueryTypes.SELECT,
@@ -248,6 +243,19 @@ privated.getById = function (id, cb) {
         cb(null, txObj);
     }, function (err) {
         cb(err, undefined);
+    });
+};
+
+privated.getByBlockId = function(id, cb) {
+    library.dbClient.query(`SELECT * FROM transactions where blockId = ${id}`, {
+        type: Sequelize.QueryTypes.SELECT
+    }).then((rows) => {
+        if(!rows.length) {
+            return cb("Can't find transaction: " + id);
+        }
+        return cb(null, rows);
+    }).catch((err) => {
+        return cb(err);
     });
 };
 
@@ -271,11 +279,16 @@ Transactions.prototype.sandboxApi = function (call, args, cb) {
     sandboxHelper.callMethod(shared, call, args, cb);
 };
 
-Transactions.prototype.callApi = function (call, args, cb) {
+Transactions.prototype.callApi = function (call, rpcjson, args, cb) {
     var callArgs = [args, cb];
     // execute
-    shared[call].apply(null, callArgs);
+    if (rpcjson === '1.0') {
+        shared_1_0[call].apply(null, callArgs);
+    } else {
+        shared_1_0[call].apply(null, callArgs);
+    }
 };
+
 
 Transactions.prototype.getUnconfirmedTransactionById = function (id) {
     var index = privated.unconfirmedTransactionsIdIndex[id];
@@ -473,6 +486,56 @@ Transactions.prototype.receiveTransactions = function (transactions, cb) {
 // Events
 Transactions.prototype.onInit = function (scope) {
     modules_loaded = scope && scope != undefined ? true : false;
+};
+
+shared_1_0.transaction = function(params, cb) {
+    let tId = params[0] || undefined;
+    if(!tId) {
+        return cb('missing params', 21000);
+    }
+    // privated.getByTrsId(tId, function (err, data) {
+    privated.getById(tId, function (err, data) {
+        if(err) {
+            return cb(err, 21000);
+        }
+        return cb(null, 200, data);
+    });
+};
+
+shared_1_0.byBlockId = function(params, cb) {
+    let bId = params[0] || undefined;
+    if(!bId) {
+        return cb('missing params', 21000);
+    }
+    privated.getByBlockId(bId, function (err, data) {
+        if(err) {
+            return cb(err, 21000);
+        }
+        return cb(null, 200, data);
+    });
+};
+
+shared_1_0.transactions = function(params, cb) {
+    let publicKey = params[0] || undefined;
+    let page = params[1] || 1;
+    let size = params[2] || 10;
+    let limit = (page - 1) * size;
+    let offset = size;
+    if(!publicKey) {
+        return cb('missing params', 21000);
+    }
+    let filter = {
+        senderPublicKey: publicKey,
+        limit: limit,
+        offset: offset,
+        orderBy: 'b_height'
+    };
+    privated.list(filter, function (err, data) {
+        if(err) {
+            return cb(err, 21000);
+        }
+        return cb(null, 200, data);
+    });
 };
 
 shared.addTransactions = function (req, cb) {

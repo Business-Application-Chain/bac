@@ -18,6 +18,12 @@ function selectModule(apiType, scope) {
         case 'signatures':
             return scope.modules.signatures;
 
+        case 'blocks':
+            return scope.modules.blocks;
+
+        case 'transactions':
+            return scope.modules.transactions;
+
         default:
             return null;
     }
