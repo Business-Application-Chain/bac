@@ -43,17 +43,16 @@ Transaction.prototype.create = function (data) {
         type: data.type,
         amount: 0,
         senderPublicKey: data.sender.master_pub,
-        requesterPublicKey: data.requester ? data.requester.master_pub : null,
+        requesterPublicKey: data.requester ? data.requester.master_pub.toString('hex') : null,
         timestamp: slots.getTime(),
         asset: {}
     };
 
     txObj = privated.types[txObj.type].create.call(this, data, txObj);
-
-    txObj.signature = this.sign(data.keypair, txObj);
+    txObj.signature = this.sign(txObj, data.keypair);
 
     if (data.sender.secondsign && data.secondKeypair) {
-        txObj.signSignature = this.sign(data.secondKeypair, txObj);
+        txObj.signSignature = this.sign(txObj, data.secondKeypair);
     }
 
     txObj.id = this.getId(txObj);
@@ -201,12 +200,12 @@ Transaction.prototype.getBytes = function (txObj, skipSignature, skipSecondSigna
         bb.writeByte(txObj.type);
         bb.writeInt(txObj.timestamp);
 
-        if (txObj.senderPublicKey) {
-            var senderPublicKeyBuffer = new Buffer(txObj.senderPublicKey, 'hex');
-            for (var i = 0; i < senderPublicKeyBuffer.length; i++) {
-                bb.writeByte(senderPublicKeyBuffer[i]);
-            }
+        // if (txObj.senderPublicKey) {
+        var senderPublicKeyBuffer = new Buffer(txObj.senderPublicKey, 'hex');
+        for (var i = 0; i < senderPublicKeyBuffer.length; i++) {
+            bb.writeByte(senderPublicKeyBuffer[i]);
         }
+        // }
 
         if (txObj.requesterPublicKey) {
             var requesterPublicKeyBuffer = new Buffer(txObj.requesterPublicKey, 'hex');
@@ -243,7 +242,7 @@ Transaction.prototype.getBytes = function (txObj, skipSignature, skipSecondSigna
             }
         }
 
-        if (!skipSecondSignature && txObj.signature) {
+        if (!skipSecondSignature && txObj.signSignature) {
             var signSignatureBuffer = new Buffer(txObj.signSignature, 'hex');
             for (var i = 0; i < signSignatureBuffer.length; i++) {
                 bb.writeByte(signSignatureBuffer[i]);
@@ -341,7 +340,7 @@ Transaction.prototype.process = function (txObj, sender, requester, cb) {
     }.bind(this));
 };
 
-Transaction.prototype.sign = function (txObj, kaypair) {
+Transaction.prototype.sign = function (txObj, keypair) {
     var hash = this.getHash(txObj);
 
     return ed.Sign(hash, keypair).toString('hex');

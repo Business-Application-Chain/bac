@@ -11,6 +11,7 @@ var slots = require('../utils/slots.js');
 var TransactionTypes = require('../utils/transaction-types.js');
 var Sequelize = require('sequelize');
 var modules_loaded, library, self, privated = {}, shared = {}, genesisblock = null, shared_1_0 = {};
+var constants = require('../utils/constants');
 
 privated.hiddenTransactions = [];
 privated.unconfirmedTransactions = [];
@@ -538,6 +539,130 @@ shared_1_0.transactions = function(params, cb) {
     });
 };
 
+shared_1_0.addTransactions = function(params, cb) {
+
+    var hash = crypto.createHash('sha256').update(params.secret, 'utf8').digest();
+    var keypair = ed.MakeKeypair(hash);
+    if (params.publicKey) {
+        if (keypair.publicKey.toString('hex') != params.publicKey) {
+            return cb("Invalid passphrase");
+        }
+    }
+    var query = {};
+    var isAddress = /^[0-9]+[L|l]$/g;
+    if (isAddress.test(params.recipientId)) {
+        query.master_address = params.recipientId;
+    } else {
+        query.username = params.recipientId;
+    }
+    library.balancesSequence.add(function (cb) {
+        library.modules.accounts.getAccount(query, function (err, recipient) {
+            if(err) {
+                return cb(err.toString());
+            }
+            if (!recipient && query.username) {
+                return cb("Recipient not found");
+            }
+            var recipientId = recipient ? recipient.master_address : params.recipientId;
+            var recipientUsername = recipient ? recipient.username : null;
+
+            if (params.multisigAccountPublicKey && params.multisigAccountPublicKey !== keypair.publicKey.toString('hex')) {
+                library.modules.accounts.getAccount({publicKey: params.multisigAccountPublicKey}, function (err, account) {
+                    if (err) {
+                        return cb(err.toString());
+                    }
+                    if (!account || !account.publicKey) {
+                        return cb("Multisignature account not found");
+                    }
+
+                    if (!account || !account.multisignatures) {
+                        return cb("Account does not have multisignatures enabled");
+                    }
+
+                    if (account.multisignatures.indexOf(keypair.publicKey.toString('hex')) < 0) {
+                        return cb("Account does not belong to multisignature group");
+                    }
+                    library.modules.accounts.getAccount({master_pub: keypair.publicKey}, function (err, requester) {
+                        if (err) {
+                            return cb(err.toString());
+                        }
+                        if (!requester || !requester.master_pub) {
+                            return cb("Invalid requester");
+                        }
+                        if (requester.secondSignature && !body.secondSecret) {
+                            return cb("Invalid second passphrase");
+                        }
+                        if (requester.master_pub == account.master_pub) {
+                            return cb("Invalid requester");
+                        }
+                        var secondKeypair = null;
+                        if (requester.secondsign) {
+                            var secondHash = crypto.createHash('sha256').update(params.secondSecret, 'utf8').digest();
+                            secondKeypair = ed.MakeKeypair(secondHash);
+                        }
+                        try {
+                            var transaction = library.base.transaction.create({
+                                type: TransactionTypes.SEND,
+                                amount: params.amount,
+                                sender: account,
+                                recipientId: recipientId,
+                                recipientUsername: recipientUsername,
+                                keypair: keypair,
+                                requester: keypair,
+                                secondKeypair: secondKeypair
+                            });
+                        } catch (e) {
+                            return cb(e.toString());
+                        }
+                        library.modules.transactions.receiveTransactions([transaction], cb);
+                    });
+                });
+            } else {
+                library.modules.accounts.getAccount({master_pub: keypair.publicKey.toString('hex')}, function (err, account) {
+                    if (err) {
+                        return cb(err.toString());
+                    }
+                    if (!account || !account.master_pub) {
+                        return cb("Invalid account");
+                    }
+
+                    if (account.secondsign && !params.secondSecret) {
+                        return cb("Invalid second passphrase");
+                    }
+
+                    var secondKeypair = null;
+
+                    if (account.secondsign) {
+                        var secondHash = crypto.createHash('sha256').update(body.secondSecret, 'utf8').digest();
+                        secondKeypair = ed.MakeKeypair(secondHash);
+                    }
+
+                    try {
+                        var transaction = library.base.transaction.create({
+                            type: TransactionTypes.SEND,
+                            amount: params.amount,
+                            sender: account,
+                            recipientId: recipientId,
+                            recipientUsername: recipientUsername,
+                            keypair: keypair,
+                            secondKeypair: secondKeypair
+                        });
+                    } catch (e) {
+                        return cb(e.toString());
+                    }
+                    library.modules.transactions.receiveTransactions([transaction], cb);
+                });
+            }
+        });
+    }, function (err, transaction) {
+        if (err) {
+            return cb(err.toString(), 21000);
+        }
+        cb(null, 200, {transactionId: transaction[0].id});
+    });
+
+};
+
 shared.addTransactions = function (req, cb) {
     var body = req.body;
     library.schema.validate(body, {
@@ -698,7 +823,7 @@ shared.addTransactions = function (req, cb) {
                         } catch (e) {
                             return cb(e.toString());
                         }
-                        library.modules.transactions.receiveTransactions([transaction], cb);
+                        self.receiveTransactions([transaction], cb);
                     });
                 }
             });

@@ -10,7 +10,7 @@ var util = require('util');
 var sandboxHelper = require('../utils/sandbox.js');
 var Sequelize = require('sequelize');
 
-var modules, library, self, privated = {}, shared = {};
+var modules, library, self, privated = {}, shared = {}, shared_1_0 = {};
 
 function Contact() {
     this.create = function (data, trs) {
@@ -192,6 +192,17 @@ function Contacts(cb, scope) {
     setImmediate(cb, null, self);
 }
 
+
+Contacts.prototype.callApi = function (call, rpcjson, args, cb) {
+    var callArgs = [args, cb];
+    // execute
+    if (rpcjson === '1.0') {
+        shared_1_0[call].apply(null, callArgs);
+    } else {
+        shared_1_0[call].apply(null, callArgs);
+    }
+};
+
 // private methods
 // privated.attachApi = function () {
 //     var router = new Router();
@@ -310,6 +321,50 @@ Contacts.prototype.onBind = function (scope) {
     modules = scope;
 };
 
+privated.getContacts = function(address, cb) {
+    library.modules.accounts.getAccount({master_address: address}, function (err, account) {
+        if (err) {
+            return cb(err.toString());
+        }
+        if (!account) {
+            return cb("Account not found");
+        }
+
+        async.series({
+            contacts: function (cb) {
+                if (!account.contacts) {
+                    return cb(null, []);
+                }
+                library.modules.accounts.getAccounts({address: {$in: account.contacts}}, ["address", "username"], cb);
+            },
+            followers: function (cb) {
+                if (!account.followers) {
+                    return cb(null, []);
+                }
+                library.modules.accounts.getAccounts({address: {$in: account.followers}}, ["address", "username"], cb);
+            }
+        }, function (err, res) {
+            if (err) {
+                return cb(err.toString());
+            }
+
+            var realFollowers = [];
+            // Find and remove
+            for (var i in res.followers) {
+                var contact = res.contacts.find(function (item) {
+                    return item.address == res.followers[i].address;
+                });
+
+                if (!contact) {
+                    realFollowers.push(res.followers[i]);
+                }
+            }
+
+            cb(null, {following: res.contacts, followers: realFollowers});
+        });
+    });
+};
+
 shared.getUnconfirmedContacts = function (req, cb) {
     var query = req.body;
     library.schema.validate(query, {
@@ -343,6 +398,18 @@ shared.getUnconfirmedContacts = function (req, cb) {
             return cb(null, {contacts: contacts});
         });
     });
+};
+
+shared_1_0.contacts = function(params, cb) {
+    let publicKey = params[0];
+    let address = library.modules.accounts.generateAddressByPublicKey(publicKey);
+    privated.getContacts(address, function (err, data) {
+        if(err) {
+            return cb(err, 21000);
+        }
+        console.log(data);
+        return cb(null, 200, data);
+    })
 };
 
 // Shared

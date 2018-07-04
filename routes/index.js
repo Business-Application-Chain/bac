@@ -24,6 +24,9 @@ function selectModule(apiType, scope) {
         case 'transactions':
             return scope.modules.transactions;
 
+        case 'contacts':
+            return scope.modules.contacts;
+
         default:
             return null;
     }

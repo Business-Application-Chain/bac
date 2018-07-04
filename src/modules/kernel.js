@@ -44,7 +44,13 @@ Kernel.prototype.broadcast = function (config, options, cb) {
     library.modules.peer.list(config, function (err, peers) {
         if (!err) {
             async.eachLimit(peers, 3, function (peer, cb) {
-                self.getFromPeer(peer, options);
+                self.getFromPeer(peer, options, function (err, data) {
+                    if(err) {
+                        console.log(err);
+                    } else {
+                        console.log(data);
+                    }
+                });
 
                 setImmediate(cb);
             }, function () {
@@ -293,6 +299,7 @@ Kernel.prototype.onBlockchainReady = function () {
 Kernel.prototype.onUnconfirmedTransaction = function (transaction, broadcast) {
     if (broadcast) {
         self.broadcast({limit: 100}, {api: '/transactions', data: {transaction: transaction}, method: "POST"});
+        // 通知前端，产生新的交易
     }
 };
 
@@ -364,6 +371,10 @@ shared_1_0.blocks_common = function (params, cb) {
         console.log(err);
         cb(err, 21000);
     });
+};
+
+shared_1_0.getTransactions = function(req, cb) {
+    return cb(null, 200, {transactions: library.modules.transactions.getUnconfirmedTransactionList()});
 };
 
 shared_1_0.transactions = function (req, cb) {
