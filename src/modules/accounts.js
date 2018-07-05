@@ -596,6 +596,31 @@ shared_1_0.addUsername = function(params, cb) {
     });
 };
 
+shared_1_0.open = function(params, cb) {
+    let secret = params[0] || undefined;
+    if(!secret) {
+        return cb('params is error', 21000);
+    }
+    privated.openAccount(secret, function (err, account) {
+        var accountData = null;
+        if (!err) {
+            accountData = {
+                address: account.master_address,
+                balance: account.balance,
+                publicKey: account.master_pub,
+                secondsign_unconfirmed: account.secondsign_unconfirmed,
+                secondsign: account.secondsign,
+                second_pub: account.second_pub,
+                multisignatures: account.multisignatures,
+                multisignatures_unconfirmed: account.multisignatures_unconfirmed
+            };
+            return cb(null, 200, {account: accountData});
+        } else {
+            return cb(err, 21000);
+        }
+    });
+};
+
 shared.open = function(req, cb) {
     var body = req.body;
     library.schema.validate(body, {

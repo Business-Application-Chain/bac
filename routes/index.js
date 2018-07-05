@@ -37,7 +37,7 @@ function checkHeaders(req, scope, cb) {
         return cb();
     }
     var peerIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    if (peerIp === "127.0.0.1" ) {
+    if (peerIp === "127.0.0.1" || peerIp === "172.100.1.88") {
         return cb();
     }
     if (!peerIp) {

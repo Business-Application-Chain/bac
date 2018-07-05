@@ -42,11 +42,13 @@ app.use(expressQueryInt({
 // checking blank list
 app.use(function(req, res, next) {
     var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    if (!(req.method === 'POST')) {
-        // var err = new Error('Forbidden');
-        // err.status = 403;
-        // next(err);
-        next();
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Content-Type,Content-Length, Authorization, Accept,X-Requested-With");
+    res.header("Access-Control-Allow-Methods","PUT,POST,GET,DELETE,OPTIONS");
+    res.header("X-Powered-By",' 3.2.1')
+    if(req.method==="OPTIONS") {
+        /*让options请求快速返回*/
+        res.send(200);
     } else {
         next();
     }
