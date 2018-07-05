@@ -516,6 +516,29 @@ shared_1_0.byBlockId = function(params, cb) {
     });
 };
 
+shared_1_0.getUnconfirmedTransactions = function(params, cb) {
+    let senderPublicKey = params[0];
+    let address = params[1];
+    let query = {
+        senderPublicKey: senderPublicKey,
+        address: address
+    };
+    let transactions = self.getUnconfirmedTransactionList(true);
+    let toSend = [];
+    if (query.senderPublicKey || query.address) {
+        for (var i = 0; i < transactions.length; i++) {
+            if (transactions[i].senderPublicKey == query.senderPublicKey || transactions[i].recipientId == query.address) {
+                toSend.push(transactions[i]);
+            }
+        }
+    } else {
+        for (var i = 0; i < transactions.length; i++) {
+            toSend.push(transactions[i]);
+        }
+    }
+    cb(null, 200, {transactions: toSend});
+};
+
 shared_1_0.transactions = function(params, cb) {
     let publicKey = params[0] || undefined;
     let page = params[1] || 1;
@@ -540,20 +563,30 @@ shared_1_0.transactions = function(params, cb) {
 };
 
 shared_1_0.addTransactions = function(params, cb) {
+    let amount = params[0] || 0;
+    let publicKey = params[1] || '';
+    let recipientId = params[2] || '';
+    let secret = params[3] || '';
+    let secondSecret = params[4] || '';
+    let multisigAccountPublicKey = params[5] || undefined;
 
-    var hash = crypto.createHash('sha256').update(params.secret, 'utf8').digest();
+    if(!(amount && publicKey && recipientId && secret)) {
+        return cb("miss must params", 21000);
+    }
+
+    var hash = crypto.createHash('sha256').update(secret, 'utf8').digest();
     var keypair = ed.MakeKeypair(hash);
-    if (params.publicKey) {
-        if (keypair.publicKey.toString('hex') != params.publicKey) {
+    if (publicKey) {
+        if (keypair.publicKey.toString('hex') != publicKey) {
             return cb("Invalid passphrase");
         }
     }
     var query = {};
     var isAddress = /^[0-9]+[L|l]$/g;
-    if (isAddress.test(params.recipientId)) {
-        query.master_address = params.recipientId;
+    if (isAddress.test(recipientId)) {
+        query.master_address = recipientId;
     } else {
-        query.username = params.recipientId;
+        query.username = recipientId;
     }
     library.balancesSequence.add(function (cb) {
         library.modules.accounts.getAccount(query, function (err, recipient) {
@@ -563,11 +596,11 @@ shared_1_0.addTransactions = function(params, cb) {
             if (!recipient && query.username) {
                 return cb("Recipient not found");
             }
-            var recipientId = recipient ? recipient.master_address : params.recipientId;
+            var recipientId = recipient ? recipient.master_address : recipientId;
             var recipientUsername = recipient ? recipient.username : null;
 
-            if (params.multisigAccountPublicKey && params.multisigAccountPublicKey !== keypair.publicKey.toString('hex')) {
-                library.modules.accounts.getAccount({publicKey: params.multisigAccountPublicKey}, function (err, account) {
+            if (multisigAccountPublicKey && multisigAccountPublicKey !== keypair.publicKey.toString('hex')) {
+                library.modules.accounts.getAccount({publicKey: multisigAccountPublicKey}, function (err, account) {
                     if (err) {
                         return cb(err.toString());
                     }
@@ -597,13 +630,13 @@ shared_1_0.addTransactions = function(params, cb) {
                         }
                         var secondKeypair = null;
                         if (requester.secondsign) {
-                            var secondHash = crypto.createHash('sha256').update(params.secondSecret, 'utf8').digest();
+                            var secondHash = crypto.createHash('sha256').update(secondSecret, 'utf8').digest();
                             secondKeypair = ed.MakeKeypair(secondHash);
                         }
                         try {
                             var transaction = library.base.transaction.create({
                                 type: TransactionTypes.SEND,
-                                amount: params.amount,
+                                amount: amount,
                                 sender: account,
                                 recipientId: recipientId,
                                 recipientUsername: recipientUsername,
@@ -626,21 +659,21 @@ shared_1_0.addTransactions = function(params, cb) {
                         return cb("Invalid account");
                     }
 
-                    if (account.secondsign && !params.secondSecret) {
+                    if (account.secondsign && !secondSecret) {
                         return cb("Invalid second passphrase");
                     }
 
                     var secondKeypair = null;
 
                     if (account.secondsign) {
-                        var secondHash = crypto.createHash('sha256').update(body.secondSecret, 'utf8').digest();
+                        var secondHash = crypto.createHash('sha256').update(secondSecret, 'utf8').digest();
                         secondKeypair = ed.MakeKeypair(secondHash);
                     }
 
                     try {
                         var transaction = library.base.transaction.create({
                             type: TransactionTypes.SEND,
-                            amount: params.amount,
+                            amount: amount,
                             sender: account,
                             recipientId: recipientId,
                             recipientUsername: recipientUsername,
@@ -660,7 +693,6 @@ shared_1_0.addTransactions = function(params, cb) {
         }
         cb(null, 200, {transactionId: transaction[0].id});
     });
-
 };
 
 shared.addTransactions = function (req, cb) {
@@ -693,7 +725,7 @@ shared.addTransactions = function (req, cb) {
             },
             multisigAccountPublicKey: {
                 type: "string",
-                format: "publicKey"
+                // format: "publicKey"
             }
         },
         required: ["secret", "amount", "recipientId"]

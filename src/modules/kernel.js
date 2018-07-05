@@ -44,13 +44,24 @@ Kernel.prototype.broadcast = function (config, options, cb) {
     library.modules.peer.list(config, function (err, peers) {
         if (!err) {
             async.eachLimit(peers, 3, function (peer, cb) {
-                self.getFromPeer(peer, options, function (err, data) {
-                    if(err) {
-                        console.log(err);
-                    } else {
-                        console.log(data);
-                    }
-                });
+                self.getFromPeer(peer, options);
+
+                setImmediate(cb);
+            }, function () {
+                cb && cb(null, {body: null, peer: peers});
+            })
+        } else {
+            cb && setImmediate(cb, err);
+        }
+    });
+};
+
+Kernel.prototype.broadcastNew = function(config, options, cb) {
+    config.limit = config.limit || 1;
+    library.modules.peer.list(config, function (err, peers) {
+        if (!err) {
+            async.eachLimit(peers, 3, function (peer, cb) {
+                self.getFromPeerNews(peer, options);
 
                 setImmediate(cb);
             }, function () {
@@ -299,6 +310,14 @@ Kernel.prototype.onBlockchainReady = function () {
 Kernel.prototype.onUnconfirmedTransaction = function (transaction, broadcast) {
     if (broadcast) {
         self.broadcast({limit: 100}, {api: '/transactions', data: {transaction: transaction}, method: "POST"});
+        self.broadcastNew({limit: 100}, {
+            api:'kernel',
+            method:'POST',
+            func:'addTransactions',
+            data: { transaction: transaction },
+            id: Math.random(),
+            jsonrpc: '1.0'
+        });
         // 通知前端，产生新的交易
     }
 };
@@ -338,11 +357,9 @@ shared_1_0.blocks = function (params, cb) {
     }, {
         plain: false
     }, function (err, data) {
-        console.log('blocks blocks blocks');
         if (err) {
             return cb(err, 21000);
         }
-        // return cb(null, 200, JSON.stringify({blocks: data}));
         return cb(null, 200, data);
     });
 };
@@ -375,6 +392,33 @@ shared_1_0.blocks_common = function (params, cb) {
 
 shared_1_0.getTransactions = function(req, cb) {
     return cb(null, 200, {transactions: library.modules.transactions.getUnconfirmedTransactionList()});
+};
+
+shared_1_0.addTransactions = function(params, cb) {
+    try {
+        var transaction = library.logic.transaction.objectNormalize(params.transaction);
+    } catch (e) {
+        // var peerIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        // var peerStr = peerIp ? peerIp + ":" + (isNaN(req.headers.port) ? 'unknown' : req.headers.port) : 'unknown';
+        // library.logger.log('Received transaction ' + (transaction ? transaction.id : 'null') + ' is not valid, ban 60 min', peerStr);
+        //
+        // if (peerIp && report) {
+        //     modules.peer.state(ip.toLong(peerIp), req.headers.port, 0, 3600);
+        // }
+
+        // return res.status(200).json({success: false, message: "Invalid transaction body"});
+        return cb(21000, "Invalid transaction body");
+    }
+    library.balancesSequence.add(function (cb) {
+        library.modules.transactions.receiveTransactions([transaction], cb);
+    }, function (err) {
+        if (err) {
+            return cb(err, 21000);
+        } else {
+            return cb(null, 200, "success");
+        }
+    });
+
 };
 
 shared_1_0.transactions = function (req, cb) {

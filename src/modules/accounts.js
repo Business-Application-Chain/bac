@@ -16,7 +16,7 @@ var bip39 = require('bip39');
 var util = require('util');
 
 // private objects
-var modules_loaded, library, self, privated = {}, shared = {};
+var modules_loaded, library, self, privated = {}, shared = {}, shared_1_0 = {};
 
 function Vote() {
 
@@ -397,10 +397,14 @@ Accounts.prototype.sandboxApi = function (call, args, cb) {
     sandboxHelper.callMethod(shared, call, args, cb);
 };
 
-Accounts.prototype.callApi = function (call, args, cb) {
+Accounts.prototype.callApi = function (call, rpcjson, args, cb) {
     var callArgs = [args, cb];
     // execute
-    shared[call].apply(null, callArgs);
+    if (rpcjson === '1.0') {
+        shared_1_0[call].apply(null, callArgs);
+    } else {
+        shared_1_0[call].apply(null, callArgs);
+    }
 };
 
 Accounts.prototype.generateAddressByPublicKey = function (publicKey) {
@@ -473,6 +477,123 @@ Accounts.prototype.mergeAccountAndGet = function (fields, cb) {
 // Events
 Accounts.prototype.onInit = function (scope) {
     modules_loaded = scope && scope != undefined ? true : false;
+};
+
+shared_1_0.getBalance = function(params, cb) {
+    let address = params[0];
+    let isAddress = /^[0-9]+[L|l]$/g;
+    if (!isAddress.test(address)) {
+        return cb("Invalid address");
+    }
+    self.getAccount({master_address: address}, function (err, account) {
+        if (err) {
+            return cb(err.toString());
+        }
+        var balance = account ? account.balance : 0;
+        var unconfirmedBalance = account ? account.balance_unconfirmed : 0;
+
+        // cb(null, 200, [balance, unconfirmedBalance]);
+        cb(null, 200, [balance]);
+    });
+};
+
+shared_1_0.getPublicKey = function(params, cb) {
+    let address = params[0];
+    self.getAccount({master_address: address}, function (err, account) {
+        if (err) {
+            return cb(err.toString(), 21000);
+        }
+        if (!account || !account.master_pub) {
+            return cb("Account does not have a public key", 21000);
+        }
+        cb(null, 200, account.master_pub);
+    });
+};
+
+shared_1_0.getAccount = function(params, cb) {
+    let address = params[0];
+    self.getAccount({master_address: address}, function (err, account) {
+        if (err) {
+            return cb(err.toString(), 21000);
+        }
+        if (!account) {
+            return cb("Account not found", 21000);
+        }
+
+        cb(null, 200, {
+            account: {
+                address: account.master_address,
+                username: account.username,
+                unconfirmedBalance: account.balance_unconfirmed,
+                balance: account.balance,
+                publicKey: account.master_pub,
+                secondsign_unconfirmed: account.secondsign_unconfirmed,
+                secondsign: account.secondsign,
+                second_pub: account.second_pub,
+                multisignatures: account.multisignatures,
+                multisignatures_unconfirmed: account.multisignatures_unconfirmed
+            }
+        });
+    });
+};
+
+shared_1_0.addUsername = function(params, cb) {
+    let query = {
+        secret: params[0] || '',
+        username: params[1] || '',
+        publicKey: params[2] || '',
+        secondSecret: params[3] || ''
+    };
+    if(!(query.secret && query.username && query.publicKey)) {
+        return cb('miss must params', 21000);
+    }
+    var hash = crypto.createHash('sha256').update(query.secret, 'utf8').digest();
+    var keypair = ed.MakeKeypair(hash);
+    if (query.publicKey) {
+        if (keypair.publicKey.toString('hex') != query.publicKey) {
+            return cb("Invalid passphrase");
+        }
+    }
+    library.balancesSequence.add(function (cb) {
+        self.getAccount({master_pub: keypair.publicKey.toString('hex')}, function (err, account) {
+            if (err) {
+                return cb(err.toString());
+            }
+            if (!account || !account.master_pub) {
+                return cb("Invalid account");
+            }
+
+            if (account.secondsign && !query.secondSecret) {
+                return cb("Invalid second passphrase");
+            }
+
+            var secondKeypair = null;
+
+            if (account.secondsign) {
+                var secondHash = crypto.createHash('sha256').update(query.secondSecret, 'utf8').digest();
+                secondKeypair = ed.MakeKeypair(secondHash);
+            }
+
+            try {
+                var transaction = library.base.transaction.create({
+                    type: TransactionTypes.USERNAME,
+                    username: query.username,
+                    sender: account,
+                    keypair: keypair,
+                    secondKeypair: secondKeypair
+                });
+            } catch (e) {
+                return cb(e.toString());
+            }
+            library.modules.transactions.receiveTransactions([transaction], cb);
+        });
+    }, function (err, transaction) {
+        if (err) {
+            return cb(err.toString(), 21000);
+        }
+
+        cb(null, 200, {transaction: transaction[0]});
+    });
 };
 
 shared.open = function(req, cb) {
