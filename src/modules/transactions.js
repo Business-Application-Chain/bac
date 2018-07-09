@@ -227,6 +227,25 @@ privated.list = function (filter, cb) {
     });
 };
 
+privated.getAllTransactions = function(filter, cb) {
+    let sql = 'SELECT t.id AS t_id, b.height AS b_height, t.blockId AS t_blockId, t.type AS t_type, t.timestamp AS t_timestamp, lower(t.senderPublicKey) AS t_senderPublicKey, t.senderId AS t_senderId, t.recipientId AS t_recipientId, t.senderUsername AS t_senderUsername, t.recipientUsername AS t_recipientUsername, t.amount AS t_amount, t.fee AS t_fee, lower(t.signature) AS t_signature, lower(t.signSignature) AS t_signSignature, (SELECT MAX(height) + 1 FROM blocks) AS t_confirmations ';
+    sql += ' FROM transactions t ';
+    sql += ' INNER JOIN blocks b on t.blockId = b.id ';
+    if(filter.height) {
+        sql += ' WHERE height < ' + filter.height;
+    }
+    sql += ' ORDER BY ' + filter.orderBy + ' desc';
+    sql += ' LIMIT ' + filter.limit;
+    library.dbClient.query(sql ,{
+            type: Sequelize.QueryTypes.SELECT,
+    }).then(function (rows) {
+        console.log(rows);
+        cb(null, rows);
+    }).catch((err) => {
+        cb(err);
+    });
+};
+
 privated.getById = function (id, cb) {
     library.dbClient.query('SELECT t.id AS t_id, b.height AS b_height, t.blockId AS t_blockId, t.type AS t_type, t.timestamp AS t_timestamp, lower(t.senderPublicKey) AS t_senderPublicKey, t.senderId AS t_senderId, t.recipientId AS t_recipientId, t.senderUsername AS t_senderUsername, t.recipientUsername AS t_recipientUsername, t.amount AS t_amount, t.fee AS t_fee, lower(t.signature) AS t_signature, lower(t.signSignature) AS t_signSignature, (SELECT MAX(height) + 1 FROM blocks) AS t_confirmations ' +
         'FROM transactions t ' +
@@ -539,6 +558,29 @@ shared_1_0.getUnconfirmedTransactions = function(params, cb) {
     cb(null, 200, {transactions: toSend});
 };
 
+shared_1_0.getAllTransactions = function(params, cb) {
+    let height = params[0] || 0;
+    let size = params[1] || 10;
+    let filter = {orderBy: 'b_height'};
+    filter.height = height;
+    filter.limit = size;
+    privated.getAllTransactions(filter, function (err, data) {
+        if(err) {
+            return cb(err, 21000);
+        }
+        let transactions = self.getUnconfirmedTransactionList(true);
+        let send = [];
+        for (let i = 0; i < transactions.length; i++) {
+            transactions[i].isUnconfirmed = true;
+            send.push(transactions[i]);
+        }
+        data.forEach(function (item) {
+            send.push(item);
+        });
+        return cb(null, 200, send);
+    });
+};
+
 shared_1_0.transactions = function(params, cb) {
     let publicKey = params[0] || undefined;
     let page = params[1] || 1;
@@ -558,7 +600,19 @@ shared_1_0.transactions = function(params, cb) {
         if(err) {
             return cb(err, 21000);
         }
-        return cb(null, 200, data);
+        // data.push
+        let transactions = self.getUnconfirmedTransactionList(true);
+        let send = [];
+        for (let i = 0; i < transactions.length; i++) {
+            if (transactions[i].senderPublicKey === publicKey) {
+                transactions[i].isUnconfirmed = true;
+                send.push(transactions[i]);
+            }
+        }
+        data.forEach(function (item) {
+            send.push(item);
+        });
+        return cb(null, 200, send);
     });
 };
 

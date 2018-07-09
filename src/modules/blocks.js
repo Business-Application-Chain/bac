@@ -278,17 +278,18 @@ privated.getById = function (id, cb) {
 };
 
 privated.getBlocks = function(option, cb) {
-    let page = option.page || 1;
+    let height = option.height || 0;
     let size = option.size || 10;
-    let index = (page - 1) * size;
-    let orderBy = option.orderBy || 'desc';
-    // let
-    library.dbClient.query('SELECT ' +
-        'id, version, timestamp, height , previousBlock , numberOfTransactions , totalAmount , totalFee , reward , payloadLength, lower(payloadHash) as payloadHash, lower(generatorPublicKey) as generatorPublicKey, lower(blockSignature) as blockSignature ' +
-        ` FROM blocks ORDER BY height ${orderBy} LIMIT ${index}, ${size} `, {
+    let sql = 'SELECT ' +
+        'id, version, timestamp, height , previousBlock , numberOfTransactions , totalAmount , totalFee , reward , payloadLength, lower(payloadHash) as payloadHash, lower(generatorPublicKey) as generatorPublicKey, lower(blockSignature) as blockSignature FROM blocks';
+    if(height) {
+        sql += ' WHERE height < ' + height;
+    }
+    sql += ' ORDER BY height desc LIMIT ' + size;
+
+    library.dbClient.query(sql, {
         type: Sequelize.QueryTypes.SELECT
     }).then((rows) => {
-        // var blocks = privated.readDbRows(rows);
         rows.forEach(function (block) {
             block.blockSignature = block.blockSignature.toString('utf8');
             block.generatorPublicKey = block.generatorPublicKey.toString('utf8');
@@ -1020,19 +1021,17 @@ shared_1_0.height = function(req, cb) {
 };
 
 shared_1_0.blocks = function(params, cb) {
-    let page = params[0];
+    let height = params[0];
     let size = params[1];
-    let orderBy = params[2];
     let option = {
-        page: page,
+        height: height,
         size: size,
-        orderBy: orderBy
     };
     privated.getBlocks(option, function (err, rows) {
         if(err) {
             return cb(err, 21000);
         } else {
-            return cb(null, 200, {rows: rows, count: privated.lastBlock.height});
+            return cb(null, 200, rows);
         }
     });
 };

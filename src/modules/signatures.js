@@ -6,9 +6,13 @@ var fs = require('fs');
 var sandboxHelper = require('../utils/sandbox.js');
 var constants = require('../utils/constants.js');
 var Sequelize = require('sequelize');
+var crypto = require('crypto');
+var ed = require('ed25519');
+var TransactionTypes = require('../utils/transaction-types.js');
+var ByteBuffer = require('bytebuffer');
 
 // private objects
-var modules_loaded, library, self, privated = {}, shared = {};
+var modules_loaded, library, self, privated = {}, shared = {}, shared_1_0 = {};
 
 function Signature() {
 
@@ -165,7 +169,7 @@ function Signatures(cb, scope) {
     library = scope;
     self = this;
     self.__private = privated;
-
+    library.base.transaction.attachAssetType(TransactionTypes.SIGNATURE, new Signature());
     setImmediate(cb, null, self);
 }
 
@@ -174,15 +178,70 @@ Signatures.prototype.sandboxApi = function (call, args, cb) {
     sandboxHelper.callMethod(shared, call, args, cb);
 };
 
-Signatures.prototype.callApi = function (call, args, cb) {
+Signatures.prototype.callApi = function (call, rpcjson, args, cb) {
     var callArgs = [args, cb];
     // execute
-    shared[call].apply(null, callArgs);
+    if (rpcjson === '1.0') {
+        shared_1_0[call].apply(null, callArgs);
+    } else {
+        shared_1_0[call].apply(null, callArgs);
+    }
 };
 
 // Events
 Signatures.prototype.onInit = function (scope) {
     modules_loaded = scope && scope != undefined ? true : false;
+};
+
+shared_1_0.addSignature = function(params, cb) {
+    let query = {
+        secret: params[0] || '',
+        secondSecret: params[1] || '',
+        publicKey: params[2] || '',
+        multisigAccountPublicKey: params[3] || ''
+    };
+    if(!(query.secret && query.secondSecret && query.publicKey)) {
+        return cb('miss must params');
+    }
+    let hash = crypto.createHash('sha256').update(query.secret, 'utf8').digest();
+    let keypair = ed.MakeKeypair(hash);
+
+    if (query.publicKey) {
+        if (keypair.publicKey.toString('hex') != query.publicKey) {
+            return cb("Invalid passphrase");
+        }
+    }
+    library.balancesSequence.add(function (cb) {
+        library.modules.accounts.getAccount({master_pub: keypair.publicKey.toString('hex')}, function (err, account) {
+            if (err) {
+                return cb(err.toString());
+            }
+            if (!account || !account.master_pub) {
+                return cb("Invalid account");
+            }
+            if (account.secondsign || account.secondsign_unconfirmed) {
+                return cb("Invalid second passphrase");
+            }
+            var secondHash = crypto.createHash('sha256').update(query.secondSecret, 'utf8').digest();
+            var secondKeypair = ed.MakeKeypair(secondHash);
+            try {
+                var transaction = library.base.transaction.create({
+                    type: TransactionTypes.SIGNATURE,
+                    sender: account,
+                    keypair: keypair,
+                    secondKeypair: secondKeypair
+                });
+            } catch (e) {
+                return cb(e.toString());
+            }
+            library.modules.transactions.receiveTransactions([transaction], cb);
+        });
+    }, function (err, transaction) {
+        if (err) {
+            return cb(err.toString());
+        }
+        cb(null, {transaction: transaction[0]});
+    });
 };
 
 // export
