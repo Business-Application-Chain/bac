@@ -65,7 +65,7 @@ function Signature() {
 
     this.ready = function (txObj, sender) {
         if (sender.multisignatures) {
-            if (!txObj.signatures) {
+            if (!txObj.signature) {
                 return false;
             }
             return txObj.signatures >= sender.multisign_min - 1;
@@ -100,7 +100,7 @@ function Signature() {
 
     this.apply = function (txObj, blockObj, sender, cb) {
         library.modules.accounts.setAccountAndGet({
-            address: sender.master_address,
+            master_address: sender.master_address,
             secondsign: 1,
             u_secondSignature: 0,
             second_pub: txObj.asset.signature.publicKey
@@ -118,10 +118,10 @@ function Signature() {
 
     this.applyUnconfirmed = function (txObj, sender, cb) {
         library.modules.accounts.setAccountAndGet({
-            address: sender.master_address,
-            secondSignature: 1,
-            u_secondSignature: 0,
-            secondPublicKey: txObj.asset.signature.publicKey
+            master_address: sender.master_address,
+            secondsign: 1,
+            secondsign_unconfirmed: 0,
+            second_pub: txObj.asset.signature.publicKey
         }, cb);
     };
 
