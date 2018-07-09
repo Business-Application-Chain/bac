@@ -361,7 +361,7 @@ Blocks.prototype.getCommonBlock = function(peer, height, cb) {
                 let max = lastBlockHeight;
                 lastBlockHeight = data.firstHeight;
                 library.modules.kernel.getFromPeer(peer, {
-                    api: "/blocks/common?ids=" + data.ids + '&max=' + max + '&min=' + lastBlockHeight,
+                    api: "/blocks/common?ids=" + data.ids + ',&max=' + max + '&min=' + lastBlockHeight,
                     method: "GET"
                 // library.modules.kernel.getFromPeerNews(peer, {
                 //     api:'kernel',
@@ -375,10 +375,10 @@ Blocks.prototype.getCommonBlock = function(peer, height, cb) {
                 //     id: Math.random(),
                 //     jsonrpc: '1.0'
                 }, function (err, data) {
-                    if (err || data.code !== 200) {
+                    if (err) {
                         return next(err || data.message);
                     }
-                    var cBlock = JSON.parse(data.resData).commonBlock || null;
+                    var cBlock = data.body.common || null;
                     if (!cBlock) {
                         return next();
                     }
@@ -493,8 +493,11 @@ Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
                             } else {
                                 var peerStr = data.peer ? ip.fromLong(data.peer.ip) + ":" + data.peer.port : 'unknown';
                                 library.log.Info('Block ' + (block ? block.id : 'null') + ' is not valid, ban 60 min', peerStr);
-                                library.modules.peer.state(peer.ip, peer.port, 0, 3600);
-                                cb(err);
+                                library.modules.peer.state(peer.ip, peer.port, 0, 3600, function (err) {
+                                    if(err) {
+                                       cb(err);
+                                    }
+                                });
                             }
                         });
                     }, cb);

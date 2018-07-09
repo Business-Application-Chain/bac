@@ -166,16 +166,16 @@ Peer.prototype.state = function (pip, port, state, timeout, cb) {
     if (exist != undefined) return cb && cb("Peer in config peer list");
     if (state == 0) {
         var clock = (timeout || 1) * 1000;
-        clock = Date.now() + clock;
+        clock = parseInt((Date.now() + clock) / 1000);
     } else {
         clock = null;
     }
-    library.dbClient.query(`UPDATE peers SET state = ${state}, clock = ${clock} WHERE ip = ${pip} AND ${port} = $port`, {
+    library.dbClient.query(`UPDATE peers SET state = ${state}, clock = ${clock} WHERE ip = ${pip} AND port = ${port}`, {
         type: Sequelize.QueryTypes.UPDATE,
     }).then(function (data) {
-        cb(null, "update successed");
+        return cb(null, "update successed");
     }).catch((err) => {
-        cb(err);
+        return cb(err);
     });
 };
 
