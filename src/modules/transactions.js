@@ -617,12 +617,12 @@ shared_1_0.transactions = function(params, cb) {
 };
 
 shared_1_0.addTransactions = function(params, cb) {
-    let amount = params[0] || 0;
-    let publicKey = params[1] || '';
-    let recipientId = params[2] || '';
-    let secret = params[3] || '';
-    let secondSecret = params[4] || '';
-    let multisigAccountPublicKey = params[5] || undefined;
+    var amount = params[0] || 0;
+    var publicKey = params[1] || '';
+    var recipientId = params[2] || '';
+    var secret = params[3] || '';
+    var secondSecret = params[4] || '';
+    var multisigAccountPublicKey = params[5] || undefined;
 
     if(!(amount && publicKey && recipientId && secret)) {
         return cb("miss must params", 21000);
@@ -650,7 +650,7 @@ shared_1_0.addTransactions = function(params, cb) {
             if (!recipient && query.username) {
                 return cb("Recipient not found");
             }
-            var recipientId = recipient ? recipient.master_address : recipientId;
+            recipientId = recipient ? recipient.master_address : query.master_address;
             var recipientUsername = recipient ? recipient.username : null;
 
             if (multisigAccountPublicKey && multisigAccountPublicKey !== keypair.publicKey.toString('hex')) {
@@ -676,7 +676,7 @@ shared_1_0.addTransactions = function(params, cb) {
                         if (!requester || !requester.master_pub) {
                             return cb("Invalid requester");
                         }
-                        if (requester.secondSignature && !body.secondSecret) {
+                        if (requester.secondsign && !body.secondSecret) {
                             return cb("Invalid second passphrase");
                         }
                         if (requester.master_pub == account.master_pub) {

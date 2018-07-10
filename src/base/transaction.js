@@ -512,7 +512,7 @@ Transaction.prototype.verifySecondSignature = function (txObj, publicKey, signSi
         throw new Error("Unknown transaction type " + txObj.type);
     }
 
-    if (!signature) return false;
+    if (!signSignature) return false;
 
     try {
         var bytes = this.getBytes(txObj, false, true);

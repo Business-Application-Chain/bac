@@ -28,7 +28,7 @@ privated.loadApp = function () {
     library.notification_center.notify('blockchainReady');
 };
 
-privated.loadBlocks = function(lastBlock, cb) {
+/*privated.loadBlocks = function(lastBlock, cb) {
     library.modules.kernel.getFromRandomPeer({
         api:'kernel',
         method:'POST',
@@ -67,7 +67,41 @@ privated.loadBlocks = function(lastBlock, cb) {
             cb();
         }
     });
+};*/
+
+privated.loadBlocks = function(lastBlock, cb) {
+    library.modules.kernel.getFromRandomPeer({
+        api: '/height',
+        method: 'GET'
+    }, function (err, data) {
+        var peerStr = data && data.peer ? ip.fromLong(data.peer.ip) + ":" + data.peer.port : 'unknown';
+        if (err) {
+            library.log.Error("Failed to get height from peer: " + peerStr);
+            return cb();
+        }
+        library.log.Info("Check blockchain on " + peerStr);
+
+        let height = data.body.height;
+        if (height <= 0) {
+            library.log.Info("Failed to parse blockchain height: " + peerStr + "\n" + library.scheme.getLastError());
+            return cb();
+        }
+
+        if (bignum(library.modules.blocks.getLastBlock().height).lt(height)) { // Diff in chainbases
+            privated.blocksToSync = height;
+
+            if (lastBlock.id != privated.genesisBlock.block.id) { // Have to find common block
+                // console.log('findUpdate');
+                privated.findUpdate(lastBlock, data.peer, cb);
+            } else { // Have to load full db
+                privated.loadFullDb(data.peer, cb);
+            }
+        } else {
+            cb();
+        }
+    });
 };
+
 
 privated.loadBlockChain = function () {
     var offset = 0, limit = library.config.loading.loadPerIteration;

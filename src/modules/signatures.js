@@ -64,7 +64,7 @@ function Signature() {
     };
 
     this.ready = function (txObj, sender) {
-        if (sender.multisignatures.length) {
+        if (sender.multisignatures) {
             if (!txObj.signatures) {
                 return false;
             }
@@ -100,28 +100,28 @@ function Signature() {
 
     this.apply = function (txObj, blockObj, sender, cb) {
         library.modules.accounts.setAccountAndGet({
-            address: sender.master_address,
+            master_address: sender.master_address,
             secondsign: 1,
-            u_secondSignature: 0,
+            secondsign_unconfirmed: 0,
             second_pub: txObj.asset.signature.publicKey
         }, cb);
     };
 
     this.undo = function (txObj, blockObj, sender, cb) {
         library.modules.accounts.setAccountAndGet({
-            address: sender.master_address,
-            secondSignature: 0,
-            u_secondSignature: 1,
-            secondPublicKey: null
+            master_address: sender.master_address,
+            secondsign: 0,
+            secondsign_unconfirmed: 1,
+            second_pub: null
         }, cb);
     };
 
     this.applyUnconfirmed = function (txObj, sender, cb) {
         library.modules.accounts.setAccountAndGet({
-            address: sender.master_address,
-            secondSignature: 1,
-            u_secondSignature: 0,
-            secondPublicKey: txObj.asset.signature.publicKey
+            master_address: sender.master_address,
+            secondsign: 1,
+            secondsign_unconfirmed: 0,
+            second_pub: txObj.asset.signature.publicKey
         }, cb);
     };
 

@@ -80,7 +80,7 @@ function Contact() {
     };
 
     this.apply = function (trs, block, sender, cb) {
-        this.scope.account.merge(sender.address,
+        this.scope.account.merge(sender.master_address,
             {
                 contacts: [trs.asset.contact.address],
                 blockId: block.id,
@@ -91,7 +91,7 @@ function Contact() {
     };
 
     this.undo = function (trs, block, sender, cb) {
-        var contactsInvert = Diff.reverse([trs.asset.contact.master_address]);
+        var contactsInvert = Diff.reverse([trs.asset.contact.address]);
 
         this.scope.account.merge(sender.address, {
             contacts: contactsInvert,
@@ -108,7 +108,7 @@ function Contact() {
                 return setImmediate(cb, "Account is already a contact");
             }
 
-            this.scope.account.merge(sender.address, {
+            this.scope.account.merge(sender.master_address, {
                 u_contacts: [trs.asset.contact.address]
             }, function (err) {
                 cb(err);
@@ -119,7 +119,7 @@ function Contact() {
     this.undoUnconfirmed = function (trs, sender, cb) {
         var contactsInvert = Diff.reverse([trs.asset.contact.address]);
 
-        this.scope.account.merge(sender.address, {u_contacts: contactsInvert}, function (err) {
+        this.scope.account.merge(sender.master_address, {u_contacts: contactsInvert}, function (err) {
             cb(err);
         });
     };
@@ -157,14 +157,15 @@ function Contact() {
     };
 
     this.save = function (trs, cb) {
+        console.log("run this.save height -> ", trs.height);
         library.dbClient.query(`INSERT INTO contacts(address, transactionId) VALUES("${trs.asset.contact.address}", "${trs.id}")`, {
             type: Sequelize.QueryTypes.INSERT
         }).then(() => {
-            cb();
+            return cb();
         }).catch((err) => {
             console.log('error !!!!!!!!!!!!!!');
-            console.log(err)
-            cb();
+            console.log(err);
+            cb(err);
         });
     };
 
@@ -269,7 +270,7 @@ Contacts.prototype.checkUnconfirmedContacts = function (publicKey, contacts, cb)
     var selfAddress = library.modules.accounts.generateAddressByPublicKey(publicKey);
 
     if (util.isArray(contacts)) {
-        library.modules.accounts.getAccount({address: selfAddress}, function (err, account) {
+        library.modules.accounts.getAccount({master_address: selfAddress}, function (err, account) {
             if (err) {
                 return cb(err);
             }
@@ -285,21 +286,21 @@ Contacts.prototype.checkUnconfirmedContacts = function (publicKey, contacts, cb)
                     return cb("Invalid math operator");
                 }
 
-                // if (contactAddress == selfAddress) {
-                // 	return cb("Unable to add self as contact"));
-                // }
+                if (contactAddress === selfAddress) {
+                	return cb("Unable to add self as contact");
+                }
 
                 library.modules.accounts.setAccountAndGet({
-                    address: contactAddress
+                    master_address: contactAddress
                 }, function (err) {
                     if (err) {
                         return cb(err);
                     }
 
-                    if (math == "+" && (account.u_contacts !== null && account.u_contacts.indexOf(contactAddress) != -1)) {
+                    if (math == "+" && (account.contacts !== null && account.contacts.indexOf(contactAddress) != -1)) {
                         return cb("Failed to add contact, account already has this contact");
                     }
-                    if (math == "-" && (account.u_contacts === null || account.u_contacts.indexOf(contactAddress) === -1)) {
+                    if (math == "-" && (account.contacts === null || account.contacts.indexOf(contactAddress) === -1)) {
                         return cb("Failed to remove contact, account does not have this contact");
                     }
 
@@ -322,46 +323,12 @@ Contacts.prototype.onBind = function (scope) {
 };
 
 privated.getContacts = function(address, cb) {
-    library.modules.accounts.getAccount({master_address: address}, function (err, account) {
-        if (err) {
-            return cb(err.toString());
-        }
-        if (!account) {
-            return cb("Account not found");
-        }
-
-        async.series({
-            contacts: function (cb) {
-                if (!account.contacts) {
-                    return cb(null, []);
-                }
-                library.modules.accounts.getAccounts({address: {$in: account.contacts}}, ["address", "username"], cb);
-            },
-            followers: function (cb) {
-                if (!account.followers) {
-                    return cb(null, []);
-                }
-                library.modules.accounts.getAccounts({address: {$in: account.followers}}, ["address", "username"], cb);
-            }
-        }, function (err, res) {
-            if (err) {
-                return cb(err.toString());
-            }
-
-            var realFollowers = [];
-            // Find and remove
-            for (var i in res.followers) {
-                var contact = res.contacts.find(function (item) {
-                    return item.address == res.followers[i].address;
-                });
-
-                if (!contact) {
-                    realFollowers.push(res.followers[i]);
-                }
-            }
-
-            cb(null, {following: res.contacts, followers: realFollowers});
-        });
+    library.dbClient.query(`SELECT master_address, username from accounts as a LEFT JOIN accounts2contacts as b ON (a.master_address =  b.dependentId) WHERE b.accountId="${address}"`,{
+        type: Sequelize.QueryTypes.SELECT
+    }).then((rows) => {
+        cb(null, rows);
+    }).catch((err) => {
+        cb(err);
     });
 };
 
@@ -407,71 +374,80 @@ shared_1_0.contacts = function(params, cb) {
         if(err) {
             return cb(err, 21000);
         }
-        console.log(data);
         return cb(null, 200, data);
     })
 };
 
-// Shared
-shared.getContacts = function (req, cb) {
-    var query = req.body;
-    library.schema.validate(query, {
-        type: "object",
-        properties: {
-            publicKey: {
-                type: "string",
-                format: "publicKey"
-            }
-        },
-        required: ["publicKey"]
-    }, function (err) {
-        if (err) {
-            return cb(err[0].message);
+shared_1_0.addContact = function(params, cb) {
+    let data = {
+        secret: params[0] || '',
+        publicKey: params[1] || '',
+        following: params[2] || '',
+        secondSecret: params[3],
+        multisigAccountPublicKey: params[4]
+    };
+    if(!(data.secret && data.publicKey)) {
+        return cb("miss secret or publicKey", 21000);
+    }
+    var hash = crypto.createHash('sha256').update(data.secret, 'utf8').digest();
+    var keypair = ed.MakeKeypair(hash);
+
+    if (data.publicKey) {
+        if (keypair.publicKey.toString('hex') != data.publicKey) {
+            return cb("Invalid passphrase", 21000);
         }
-
-        query.address = library.modules.accounts.generateAddressByPublicKey(query.publicKey);
-
-        library.modules.accounts.getAccount({address: query.address}, function (err, account) {
+    }
+    var followingAddress = data.following.substring(1, data.following.length);
+    var isAddress = /^[0-9]+[L|l]$/g;
+    var query = {};
+    if (isAddress.test(followingAddress)) {
+        query.master_address = followingAddress;
+    } else {
+        query.username = followingAddress;
+    }
+    library.balancesSequence.add(function (cb) {
+        library.modules.accounts.getAccount(query, function (err, following) {
             if (err) {
-                return cb(err.toString());
+                return cb(err.toString(), 21000);
             }
-            if (!account) {
-                return cb("Account not found");
+            if (!following) {
+                return cb("Username not found", 21000);
             }
-
-            async.series({
-                contacts: function (cb) {
-                    if (!account.contacts.length) {
-                        return cb(null, []);
-                    }
-                    library.modules.accounts.getAccounts({address: {$in: account.contacts}}, ["address", "username"], cb);
-                },
-                followers: function (cb) {
-                    if (!account.followers.length) {
-                        return cb(null, []);
-                    }
-                    library.modules.accounts.getAccounts({address: {$in: account.followers}}, ["address", "username"], cb);
-                }
-            }, function (err, res) {
+            followingAddress = data.following[0] + following.master_address;
+            library.modules.accounts.getAccount({master_pub: keypair.publicKey.toString('hex')}, function (err, account) {
                 if (err) {
-                    return cb(err.toString());
+                    return cb(err.toString(), 21000);
                 }
-
-                var realFollowers = [];
-                // Find and remove
-                for (var i in res.followers) {
-                    var contact = res.contacts.find(function (item) {
-                        return item.address == res.followers[i].address;
+                if (!account) {
+                    return cb("Invalid account", 21000);
+                }
+                if (account.secondsign && !data.secondSecret) {
+                    return cb("Invalid second passphrase");
+                }
+                if (account.secondsign && data.secondSecret) {
+                    var secondHash = crypto.createHash('sha256').update(data.secondSecret, 'utf8').digest();
+                    var secondKeypair = ed.MakeKeypair(secondHash);
+                }
+                try {
+                    var transaction = library.base.transaction.create({
+                        type: TransactionTypes.FOLLOW,
+                        sender: account,
+                        keypair: keypair,
+                        secondKeypair: secondKeypair,
+                        contactAddress: followingAddress
                     });
-
-                    if (!contact) {
-                        realFollowers.push(res.followers[i]);
-                    }
+                } catch (e) {
+                    return cb(e.toString());
                 }
-
-                cb(null, {following: res.contacts, followers: realFollowers});
+                library.modules.transactions.receiveTransactions([transaction], cb);
             });
         });
+    }, function (err, transaction) {
+        if (err) {
+            return cb(err.toString(), 21000);
+        }
+
+        cb(null, {transaction: transaction[0]});
     });
 };
 
@@ -641,6 +617,69 @@ shared.addContact = function (req, cb) {
             }
 
             cb(null, {transaction: transaction[0]});
+        });
+    });
+};
+
+// Shared
+shared.getContacts = function (req, cb) {
+    var query = req.body;
+    library.schema.validate(query, {
+        type: "object",
+        properties: {
+            publicKey: {
+                type: "string",
+                format: "publicKey"
+            }
+        },
+        required: ["publicKey"]
+    }, function (err) {
+        if (err) {
+            return cb(err[0].message);
+        }
+
+        query.address = library.modules.accounts.generateAddressByPublicKey(query.publicKey);
+
+        library.modules.accounts.getAccount({address: query.address}, function (err, account) {
+            if (err) {
+                return cb(err.toString());
+            }
+            if (!account) {
+                return cb("Account not found");
+            }
+
+            async.series({
+                contacts: function (cb) {
+                    if (!account.contacts.length) {
+                        return cb(null, []);
+                    }
+                    library.modules.accounts.getAccounts({address: {$in: account.contacts}}, ["address", "username"], cb);
+                },
+                followers: function (cb) {
+                    if (!account.followers.length) {
+                        return cb(null, []);
+                    }
+                    library.modules.accounts.getAccounts({address: {$in: account.followers}}, ["address", "username"], cb);
+                }
+            }, function (err, res) {
+                if (err) {
+                    return cb(err.toString());
+                }
+
+                var realFollowers = [];
+                // Find and remove
+                for (var i in res.followers) {
+                    var contact = res.contacts.find(function (item) {
+                        return item.address == res.followers[i].address;
+                    });
+
+                    if (!contact) {
+                        realFollowers.push(res.followers[i]);
+                    }
+                }
+
+                cb(null, {following: res.contacts, followers: realFollowers});
+            });
         });
     });
 };

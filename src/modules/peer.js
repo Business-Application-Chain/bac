@@ -23,19 +23,23 @@ function Peer(cb, scope) {
 }
 
 // private methods
-privated.updatePeerList = function (cb) {
+/*privated.updatePeerList = function (cb) {
     library.modules.kernel.getFromRandomPeer({
-        api:'kernel',
-        method:'POST',
-        func:'list',
-        data:'[]',
-        jsonrpc: '1.0',
-        id: Math.random()
+        api: '/list',
+        method: 'GET'
+        // library.modules.kernel.getFromRandomPeer({
+        //     api:'kernel',
+        //     method:'POST',
+        //     func:'list',
+        //     data:'[]',
+        //     jsonrpc: '1.0',
+        //     id: Math.random()
     }, function (err, data) {
         if (err) {
             return cb();
         }
-        let peers = data.result || [];
+
+        let peers = data.body.peers || [];
         if(!peers) {
             return cb();
         }
@@ -44,6 +48,7 @@ privated.updatePeerList = function (cb) {
             library.schema.validate(peer, {
                 type: 'object',
                 properties: {
+
                     ip: {
                         type: 'integer'
                     },
@@ -89,7 +94,80 @@ privated.updatePeerList = function (cb) {
             });
         }, cb);
     });
+};*/
+
+privated.updatePeerList = function (cb) {
+    library.modules.kernel.getFromRandomPeer({
+        api: '/list',
+        method: 'GET'
+        // library.modules.kernel.getFromRandomPeer({
+        //     api:'kernel',
+        //     method:'POST',
+        //     func:'list',
+        //     data:'[]',
+        //     jsonrpc: '1.0',
+        //     id: Math.random()
+    }, function (err, data) {
+        if (err) {
+            return cb();
+        }
+
+        let peers = data.body.peers || [];
+        if(!peers) {
+            return cb();
+        }
+
+        async.eachLimit(peers, 2, function (peer, cb) {
+            library.schema.validate(peer, {
+                type: 'object',
+                properties: {
+                    ip: {
+                        type: 'string'
+                    },
+                    port: {
+                        type: 'integer',
+                        minimum: 1,
+                        maximum: 65535
+                    },
+                    state: {
+                        type: 'integer',
+                        minimum: 0,
+                        maximum: 3
+                    },
+                    os: {
+                        type: 'string'
+                    },
+                    sharePort: {
+                        type: 'integer',
+                        minimum: 0,
+                        maximum: 1
+                    },
+                    version: {
+                        type: 'string'
+                    }
+                },
+                required: ['ip', 'port', 'state']
+            }, function (err) {
+                if (err) {
+                    return setImmediate(cb, "Invalid peer: " + err.toString());
+                }
+
+                peer.ip = parseInt(peer.ip);
+
+                if (isNaN(peer.ip)) {
+                    return setImmediate(cb);
+                }
+
+                if (ip.toLong("127.0.0.1") === peer.ip || peer.port === 0 || peer.port > 65535) {
+                    return setImmediate(cb);
+                }
+
+                self.update(peer, cb);
+            });
+        }, cb);
+    });
 };
+
 
 privated.count = function (cb) {
     library.dbClient.query('SELECT COUNT(*) AS count FROM peers', {
