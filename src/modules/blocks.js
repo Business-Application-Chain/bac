@@ -263,7 +263,7 @@ privated.getById = function (id, cb) {
             "left outer join contacts as c on c.transactionId=t.id " +
             "left outer join usernames as u on u.transactionId=t.id " +
             "left outer join multisignatures as m on m.transactionId=t.id " +
-            `where b.id = ${id} `, {
+            `where b.id = ${id} or b_height = ${id} `, {
             type: Sequelize.QueryTypes.SELECT
         }).then((rows) => {
             var blocks = privated.readDbRows(rows);
