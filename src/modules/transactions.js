@@ -234,6 +234,10 @@ privated.getAllTransactions = function(filter, cb) {
     if(filter.height) {
         sql += ' WHERE height < ' + filter.height;
     }
+    if(filter.publicKey) {
+        sql += filter.height ? " AND " : " WHERE ";
+        sql += `senderPublicKey = "${filter.master_pub}"`;
+    }
     sql += ' ORDER BY ' + filter.orderBy + ' desc';
     sql += ' LIMIT ' + filter.limit;
     library.dbClient.query(sql ,{
@@ -582,32 +586,22 @@ shared_1_0.getAllTransactions = function(params, cb) {
 };
 
 shared_1_0.transactions = function(params, cb) {
-    let publicKey = params[0] || undefined;
-    let page = params[1] || 1;
+    let publicKey = params[0] || '';
+    let height = params[1] || 0;
     let size = params[2] || 10;
-    let limit = (page - 1) * size;
-    let offset = size;
-    if(!publicKey) {
-        return cb('missing params', 21000);
-    }
-    let filter = {
-        senderPublicKey: publicKey,
-        limit: limit,
-        offset: offset,
-        orderBy: 'b_height'
-    };
-    privated.list(filter, function (err, data) {
+    let filter = {orderBy: 'b_height'};
+    filter.height = height;
+    filter.master_pub = publicKey;
+    filter.limit = size;
+    privated.getAllTransactions(filter, function (err, data) {
         if(err) {
             return cb(err, 21000);
         }
-        // data.push
         let transactions = self.getUnconfirmedTransactionList(true);
         let send = [];
         for (let i = 0; i < transactions.length; i++) {
-            if (transactions[i].senderPublicKey === publicKey) {
-                transactions[i].isUnconfirmed = true;
-                send.push(transactions[i]);
-            }
+            transactions[i].isUnconfirmed = true;
+            send.push(transactions[i]);
         }
         data.forEach(function (item) {
             send.push(item);
@@ -746,180 +740,6 @@ shared_1_0.addTransactions = function(params, cb) {
             return cb(err.toString(), 21000);
         }
         cb(null, 200, {transactionId: transaction[0].id});
-    });
-};
-
-shared.addTransactions = function (req, cb) {
-    var body = req.body;
-    library.schema.validate(body, {
-        type: "object",
-        properties: {
-            secret: {
-                type: "string",
-                minLength: 1,
-                maxLength: 100
-            },
-            amount: {
-                type: "integer",
-                minimum: 1,
-                maximum: constants.totalAmount
-            },
-            recipientId: {
-                type: "string",
-                minLength: 1
-            },
-            publicKey: {
-                type: "string",
-                format: "publicKey"
-            },
-            secondSecret: {
-                type: "string",
-                minLength: 1,
-                maxLength: 100
-            },
-            multisigAccountPublicKey: {
-                type: "string",
-                // format: "publicKey"
-            }
-        },
-        required: ["secret", "amount", "recipientId"]
-    }, function (err) {
-        if (err) {
-            return cb(err[0].message);
-        }
-
-        var hash = crypto.createHash('sha256').update(body.secret, 'utf8').digest();
-        var keypair = ed.MakeKeypair(hash);
-
-        if (body.publicKey) {
-            if (keypair.publicKey.toString('hex') != body.publicKey) {
-                return cb("Invalid passphrase");
-            }
-        }
-
-        var query = {};
-
-        var isAddress = /^[0-9]+[L|l]$/g;
-        if (isAddress.test(body.recipientId)) {
-            query.address = body.recipientId;
-        } else {
-            query.username = body.recipientId;
-        }
-
-        library.balancesWorkQueue.add(function (cb) {
-            library.modules.accounts.getAccount(query, function (err, recipient) {
-                if (err) {
-                    return cb(err.toString());
-                }
-                if (!recipient && query.username) {
-                    return cb("Recipient not found");
-                }
-                var recipientId = recipient ? recipient.address : body.recipientId;
-                var recipientUsername = recipient ? recipient.username : null;
-
-                if (body.multisigAccountPublicKey && body.multisigAccountPublicKey != keypair.publicKey.toString('hex')) {
-                    library.modules.accounts.getAccount({publicKey: body.multisigAccountPublicKey},function (err, account) {
-                        if (err) {
-                            return cb(err.toString());
-                        }
-
-                        if (!account || !account.publicKey) {
-                            return cb("Multisignature account not found");
-                        }
-
-                        if (!account || !account.multisignatures) {
-                            return cb("Account does not have multisignatures enabled");
-                        }
-
-                        if (account.multisignatures.indexOf(keypair.publicKey.toString('hex')) < 0) {
-                            return cb("Account does not belong to multisignature group");
-                        }
-
-                        library.modules.accounts.getAccount({publicKey: keypair.publicKey}, function (err, requester) {
-                            if (err) {
-                                return cb(err.toString());
-                            }
-
-                            if (!requester || !requester.publicKey) {
-                                return cb("Invalid requester");
-                            }
-
-                            if (requester.secondsign && !body.secondSecret) {
-                                return cb("Invalid second passphrase");
-                            }
-
-                            if (requester.publicKey == account.publicKey) {
-                                return cb("Invalid requester");
-                            }
-
-                            var secondKeypair = null;
-
-                            if (requester.secondsign) {
-                                var secondHash = crypto.createHash('sha256').update(body.secondSecret, 'utf8').digest();
-                                secondKeypair = ed.MakeKeypair(secondHash);
-                            }
-
-                            try {
-                                var transaction = library.base.transaction.create({
-                                    type: TransactionTypes.SEND,
-                                    amount: body.amount,
-                                    sender: account,
-                                    recipientId: recipientId,
-                                    recipientUsername: recipientUsername,
-                                    keypair: keypair,
-                                    requester: keypair,
-                                    secondKeypair: secondKeypair
-                                });
-                            } catch (e) {
-                                return cb(e.toString());
-                            }
-                            library.modules.transactions.receiveTransactions([transaction], cb);
-                        });
-                    });
-                } else {
-                    library.modules.accounts.getAccount({publicKey: keypair.publicKey.toString('hex')}, function (err, account) {
-                        if (err) {
-                            return cb(err.toString());
-                        }
-                        if (!account || !account.publicKey) {
-                            return cb("Invalid account");
-                        }
-
-                        if (account.secondsign && !body.secondSecret) {
-                            return cb("Invalid second passphrase");
-                        }
-
-                        var secondKeypair = null;
-
-                        if (account.secondsign) {
-                            var secondHash = crypto.createHash('sha256').update(body.secondSecret, 'utf8').digest();
-                            secondKeypair = ed.MakeKeypair(secondHash);
-                        }
-
-                        try {
-                            var transaction = library.base.transaction.create({
-                                type: TransactionTypes.SEND,
-                                amount: body.amount,
-                                sender: account,
-                                recipientId: recipientId,
-                                recipientUsername: recipientUsername,
-                                keypair: keypair,
-                                secondKeypair: secondKeypair
-                            });
-                        } catch (e) {
-                            return cb(e.toString());
-                        }
-                        self.receiveTransactions([transaction], cb);
-                    });
-                }
-            });
-        }, function (err, transaction) {
-            if (err) {
-                return cb(err.toString());
-            }
-
-            cb(null, {transactionId: transaction[0].id});
-        });
     });
 };
 
