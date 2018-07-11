@@ -228,7 +228,7 @@ privated.list = function (filter, cb) {
 };
 
 privated.getAllTransactions = function(filter, cb) {
-    let sql = 'SELECT t.id AS t_id, b.height AS b_height, t.blockId AS t_blockId, t.type AS t_type, t.timestamp AS t_timestamp, lower(t.senderPublicKey) AS t_senderPublicKey, t.senderId AS t_senderId, t.recipientId AS t_recipientId, t.senderUsername AS t_senderUsername, t.recipientUsername AS t_recipientUsername, t.amount AS t_amount, t.fee AS t_fee, lower(t.signature) AS t_signature, lower(t.signSignature) AS t_signSignature, (SELECT MAX(height) + 1 FROM blocks) AS t_confirmations ';
+    let sql = 'SELECT t.id AS t_id, b.height AS b_height, t.blockId AS t_blockId, t.type AS t_type, t.timestamp AS t_timestamp, lower(t.senderPublicKey) AS t_senderPublicKey, t.senderId AS t_senderId, t.recipientId AS t_recipientId, t.senderUsername AS t_senderUsername, t.recipientUsername AS t_recipientUsername, t.amount AS t_amount, t.fee AS t_fee, lower(t.signature) AS t_signature, lower(t.signSignature) AS t_signSignature';
     sql += ' FROM transactions t ';
     sql += ' INNER JOIN blocks b on t.blockId = b.id ';
     if(filter.height) {
@@ -243,7 +243,9 @@ privated.getAllTransactions = function(filter, cb) {
     library.dbClient.query(sql ,{
             type: Sequelize.QueryTypes.SELECT,
     }).then(function (rows) {
-        console.log(rows);
+        rows.forEach(function (item) {
+            item.confirmations = library.modules.blocks.getLastBlock().height - item.b_height;
+        });
         cb(null, rows);
     }).catch((err) => {
         cb(err);

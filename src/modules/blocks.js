@@ -271,6 +271,7 @@ privated.getById = function (id, cb) {
                 block.blockSignature = block.blockSignature.toString('utf8');
                 block.generatorPublicKey = block.generatorPublicKey.toString('utf8');
                 block.payloadHash = block.payloadHash.toString('utf8');
+                block.confirmations = privated.lastBlock.height - block.b_height;
             });
             return cb(null, blocks);
         }).catch((err) => {
