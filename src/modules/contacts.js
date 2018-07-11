@@ -332,6 +332,16 @@ privated.getContacts = function(address, cb) {
     });
 };
 
+privated.getContactsCount = function(address, cb) {
+    library.dbClient.query(`SELECT count(*) as number from accounts as a LEFT JOIN accounts2contacts as b ON (a.master_address =  b.dependentId) WHERE b.accountId="${address}"`,{
+        type: Sequelize.QueryTypes.SELECT
+    }).then((rows) => {
+        cb(null, rows[0]);
+    }).catch((err) => {
+        cb(err);
+    });
+};
+
 shared.getUnconfirmedContacts = function (req, cb) {
     var query = req.body;
     library.schema.validate(query, {
@@ -375,8 +385,19 @@ shared_1_0.contacts = function(params, cb) {
             return cb(err, 21000);
         }
         return cb(null, 200, data);
-    })
+    });
 };
+
+shared_1_0.count = function(params, cb) {
+    let publicKey = params[0];
+    let address = library.modules.accounts.generateAddressByPublicKey(publicKey);
+    privated.getContactsCount(address, function (err, data) {
+        if(err) {
+            return cb(err, 21000);
+        }
+        return cb(null, 200, data.number);
+    });
+}
 
 shared_1_0.addContact = function(params, cb) {
     let data = {

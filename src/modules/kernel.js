@@ -442,6 +442,11 @@ shared_1_0.addTransactions = function(params, cb) {
 
 };
 
+shared_1_0.version = function(params, cb) {
+    let version = library.system.getVersion();
+    cb(null, 200, version);
+};
+
 shared_1_0.transactions = function (req, cb) {
     var report = library.schema.validate(req.headers, {
         type: "object",

@@ -58,7 +58,7 @@ function Transaction() {
     };
 
     this.verify = function (txObj, sender, cb) {
-        if(txObj.recipientId.toLowerCase().match('/^[0-9]+[L|l]$/g')) {
+        if (txObj.recipientId.toLowerCase().match('/^[0-9]+[L|l]$/g')) {
             return cb("Invalid recipient master_address");
         }
 
@@ -227,26 +227,45 @@ privated.list = function (filter, cb) {
     });
 };
 
-privated.getAllTransactions = function(filter, cb) {
+privated.getAllTransactions = function (filter, cb) {
     let sql = 'SELECT t.id AS t_id, b.height AS b_height, t.blockId AS t_blockId, t.type AS t_type, t.timestamp AS t_timestamp, lower(t.senderPublicKey) AS t_senderPublicKey, t.senderId AS t_senderId, t.recipientId AS t_recipientId, t.senderUsername AS t_senderUsername, t.recipientUsername AS t_recipientUsername, t.amount AS t_amount, t.fee AS t_fee, lower(t.signature) AS t_signature, lower(t.signSignature) AS t_signSignature';
     sql += ' FROM transactions t ';
     sql += ' INNER JOIN blocks b on t.blockId = b.id ';
-    if(filter.height) {
+    if (filter.height) {
         sql += ' WHERE height < ' + filter.height;
     }
-    if(filter.publicKey) {
+    if (filter.publicKey) {
         sql += filter.height ? " AND " : " WHERE ";
         sql += `senderPublicKey = "${filter.master_pub}"`;
     }
     sql += ' ORDER BY ' + filter.orderBy + ' desc';
     sql += ' LIMIT ' + filter.limit;
-    library.dbClient.query(sql ,{
-            type: Sequelize.QueryTypes.SELECT,
+    library.dbClient.query(sql, {
+        type: Sequelize.QueryTypes.SELECT,
     }).then(function (rows) {
         rows.forEach(function (item) {
             item.confirmations = library.modules.blocks.getLastBlock().height - item.b_height;
         });
         cb(null, rows);
+    }).catch((err) => {
+        cb(err);
+    });
+};
+
+privated.getUserTransactions = function (filter, cb) {
+    let index = filter.page * filter.size;
+    let sql = `SELECT * FROM transactions where senderPublicKey="${filter.master_pub}" order by 'timpstamp' desc limit ${index}, ${filter.size} `;
+    let sqlCount = `SELECT count(*) as number FROM transactions where senderPublicKey="${filter.master_pub}"`;
+    library.dbClient.query(sqlCount, {
+        type: Sequelize.QueryTypes.SELECT
+    }).then((data) => {
+        library.dbClient.query(sql, {
+            type: Sequelize.QueryTypes.SELECT
+        }).then((rows) => {
+            cb(null, rows, data[0].number);
+        }).catch((err) => {
+            cb(err);
+        });
     }).catch((err) => {
         cb(err);
     });
@@ -272,11 +291,11 @@ privated.getById = function (id, cb) {
     });
 };
 
-privated.getByBlockId = function(id, cb) {
+privated.getByBlockId = function (id, cb) {
     library.dbClient.query(`SELECT * FROM transactions where blockId = ${id}`, {
         type: Sequelize.QueryTypes.SELECT
     }).then((rows) => {
-        if(!rows.length) {
+        if (!rows.length) {
             return cb("Can't find transaction: " + id);
         }
         return cb(null, rows);
@@ -514,34 +533,34 @@ Transactions.prototype.onInit = function (scope) {
     modules_loaded = scope && scope != undefined ? true : false;
 };
 
-shared_1_0.transaction = function(params, cb) {
+shared_1_0.transaction = function (params, cb) {
     let tId = params[0] || undefined;
-    if(!tId) {
+    if (!tId) {
         return cb('missing params', 21000);
     }
     // privated.getByTrsId(tId, function (err, data) {
     privated.getById(tId, function (err, data) {
-        if(err) {
+        if (err) {
             return cb(err, 21000);
         }
         return cb(null, 200, data);
     });
 };
 
-shared_1_0.byBlockId = function(params, cb) {
+shared_1_0.byBlockId = function (params, cb) {
     let bId = params[0] || undefined;
-    if(!bId) {
+    if (!bId) {
         return cb('missing params', 21000);
     }
     privated.getByBlockId(bId, function (err, data) {
-        if(err) {
+        if (err) {
             return cb(err, 21000);
         }
         return cb(null, 200, data);
     });
 };
 
-shared_1_0.getUnconfirmedTransactions = function(params, cb) {
+shared_1_0.getUnconfirmedTransactions = function (params, cb) {
     let senderPublicKey = params[0];
     let address = params[1];
     let query = {
@@ -564,21 +583,23 @@ shared_1_0.getUnconfirmedTransactions = function(params, cb) {
     cb(null, 200, {transactions: toSend});
 };
 
-shared_1_0.getAllTransactions = function(params, cb) {
+shared_1_0.getAllTransactions = function (params, cb) {
     let height = params[0] || 0;
     let size = params[1] || 10;
     let filter = {orderBy: 'b_height'};
     filter.height = height;
     filter.limit = size;
     privated.getAllTransactions(filter, function (err, data) {
-        if(err) {
+        if (err) {
             return cb(err, 21000);
         }
-        let transactions = self.getUnconfirmedTransactionList(true);
         let send = [];
-        for (let i = 0; i < transactions.length; i++) {
-            transactions[i].isUnconfirmed = true;
-            send.push(transactions[i]);
+        let transactions = self.getUnconfirmedTransactionList(true);
+        if(height === 0) {
+            for (let i = 0; i < transactions.length; i++) {
+                transactions[i].isUnconfirmed = true;
+                send.push(transactions[i]);
+            }
         }
         data.forEach(function (item) {
             send.push(item);
@@ -587,32 +608,34 @@ shared_1_0.getAllTransactions = function(params, cb) {
     });
 };
 
-shared_1_0.transactions = function(params, cb) {
+shared_1_0.transactions = function (params, cb) {
     let publicKey = params[0] || '';
-    let height = params[1] || 0;
+    let page = params[1] || 1;
     let size = params[2] || 10;
-    let filter = {orderBy: 'b_height'};
-    filter.height = height;
+    let filter = {};
+    filter.page = page - 1;
     filter.master_pub = publicKey;
-    filter.limit = size;
-    privated.getAllTransactions(filter, function (err, data) {
-        if(err) {
+    filter.size = size;
+    privated.getUserTransactions(filter, function (err, data, count) {
+        if (err) {
             return cb(err, 21000);
         }
         let transactions = self.getUnconfirmedTransactionList(true);
         let send = [];
-        for (let i = 0; i < transactions.length; i++) {
-            transactions[i].isUnconfirmed = true;
-            send.push(transactions[i]);
+        if(page === 1) {
+            for (let i = 0; i < transactions.length; i++) {
+                transactions[i].isUnconfirmed = true;
+                send.push(transactions[i]);
+            }
         }
         data.forEach(function (item) {
             send.push(item);
         });
-        return cb(null, 200, send);
+        return cb(null, 200, {data: send, count: count});
     });
 };
 
-shared_1_0.addTransactions = function(params, cb) {
+shared_1_0.addTransactions = function (params, cb) {
     var amount = params[0] || 0;
     var publicKey = params[1] || '';
     var recipientId = params[2] || '';
@@ -620,7 +643,7 @@ shared_1_0.addTransactions = function(params, cb) {
     var secondSecret = params[4] || '';
     var multisigAccountPublicKey = params[5] || undefined;
 
-    if(!(amount && publicKey && recipientId && secret)) {
+    if (!(amount && publicKey && recipientId && secret)) {
         return cb("miss must params", 21000);
     }
 
@@ -640,7 +663,7 @@ shared_1_0.addTransactions = function(params, cb) {
     }
     library.balancesSequence.add(function (cb) {
         library.modules.accounts.getAccount(query, function (err, recipient) {
-            if(err) {
+            if (err) {
                 return cb(err.toString());
             }
             if (!recipient && query.username) {
