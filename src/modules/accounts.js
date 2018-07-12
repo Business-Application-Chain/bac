@@ -605,7 +605,7 @@ shared_1_0.open = function(params, cb) {
         var accountData = null;
         if (!err) {
             accountData = {
-                address: account.master_address,
+                address: [account.master_address],
                 balance: account.balance,
                 publicKey: account.master_pub,
                 secondsign_unconfirmed: account.secondsign_unconfirmed,
