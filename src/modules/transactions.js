@@ -561,22 +561,17 @@ shared_1_0.byBlockId = function (params, cb) {
 };
 
 shared_1_0.getUnconfirmedTransactions = function (params, cb) {
-    let senderPublicKey = params[0];
-    let address = params[1];
-    let query = {
-        senderPublicKey: senderPublicKey,
-        address: address
-    };
+    let sender = params[0];
     let transactions = self.getUnconfirmedTransactionList(true);
     let toSend = [];
-    if (query.senderPublicKey || query.address) {
-        for (var i = 0; i < transactions.length; i++) {
-            if (transactions[i].senderPublicKey == query.senderPublicKey || transactions[i].recipientId == query.address) {
+    if (sender) {
+        for (let i = 0; i < transactions.length; i++) {
+            if (transactions[i].senderPublicKey === sender || transactions[i].recipientId === sender) {
                 toSend.push(transactions[i]);
             }
         }
     } else {
-        for (var i = 0; i < transactions.length; i++) {
+        for (let i = 0; i < transactions.length; i++) {
             toSend.push(transactions[i]);
         }
     }
@@ -635,7 +630,7 @@ shared_1_0.transactions = function (params, cb) {
     });
 };
 
-shared_1_0.addTransactions = function (params, cb) {
+shared_1_0.addTransaction = function (params, cb) {
     var amount = params[0] || 0;
     var publicKey = params[1] || '';
     var recipientId = params[2] || '';
