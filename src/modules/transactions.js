@@ -254,8 +254,8 @@ privated.getAllTransactions = function (filter, cb) {
 
 privated.getUserTransactions = function (filter, cb) {
     let index = filter.page * filter.size;
-    let sql = `SELECT * FROM transactions where senderId="${filter.address}" or recipientId = "${filter.addree}" order by 'timpstamp' desc limit ${index}, ${filter.size} `;
-    let sqlCount = `SELECT count(*) as number FROM transactions where senderPublicKey="${filter.master_pub}"`;
+    let sql = `SELECT * FROM transactions where senderId="${filter.address}" or recipientId = "${filter.address}" order by 'timpstamp' desc limit ${index}, ${filter.size} `;
+    let sqlCount = `SELECT count(*) as number FROM transactions where senderId="${filter.address}" or recipientId="${filter.address}"`;
     library.dbClient.query(sqlCount, {
         type: Sequelize.QueryTypes.SELECT
     }).then((data) => {
@@ -609,7 +609,7 @@ shared_1_0.transactions = function (params, cb) {
     let size = params[2] || 10;
     let filter = {};
     filter.page = page - 1;
-    filter.addree = address;
+    filter.address = address;
     filter.size = size;
 
     privated.getUserTransactions(filter, function (err, data, count) {
