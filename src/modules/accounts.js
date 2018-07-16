@@ -512,29 +512,60 @@ shared_1_0.getPublicKey = function(params, cb) {
 
 shared_1_0.getAccount = function(params, cb) {
     let address = params[0];
-    self.getAccount({master_address: address}, function (err, account) {
-        if (err) {
-            return cb(err.toString(), 21000);
-        }
-        if (!account) {
-            return cb("Account not found", 21000);
-        }
-
-        cb(null, 200, {
-            account: {
-                address: account.master_address,
-                username: account.username,
-                unconfirmedBalance: account.balance_unconfirmed,
-                balance: account.balance,
-                publicKey: account.master_pub,
-                secondsign_unconfirmed: account.secondsign_unconfirmed,
-                secondsign: account.secondsign,
-                second_pub: account.second_pub,
-                multisignatures: account.multisignatures,
-                multisignatures_unconfirmed: account.multisignatures_unconfirmed
+    let uAddress = params[1] || undefined;
+    async.waterfall([
+        function (cb) {
+            if(uAddress) {
+                library.dbClient.query(`SELECT * FROM accounts2contacts where accountId = "${uAddress}" and dependentId = "${address}"`, {
+                    type: Sequelize.QueryTypes.SELECT
+                }).then((data) => {
+                    if(data.length > 0) {
+                        cb(null, true);
+                    } else {
+                        cb(null, false);
+                    }
+                }).catch((err) => {
+                    console.log(err);
+                    cb(null, false);
+                })
+            } else {
+                cb(null, false);
             }
-        });
+        }, function (result) {
+            self.getAccount({master_address: address}, function (err, account) {
+                if (err) {
+                    return cb(err.toString(), 21000);
+                }
+                if (!account) {
+                    return cb("Account not found", 21000);
+                }
+                cb(null, {
+                    account: {
+                        address: account.master_address,
+                        username: account.username,
+                        unconfirmedBalance: account.balance_unconfirmed,
+                        balance: account.balance,
+                        publicKey: account.master_pub,
+                        secondsign_unconfirmed: account.secondsign_unconfirmed,
+                        secondsign: account.secondsign,
+                        second_pub: account.second_pub,
+                        multisignatures: account.multisignatures,
+                        multisignatures_unconfirmed: account.multisignatures_unconfirmed,
+                        isFriend: result
+                    }
+                });
+            });
+        }
+    ], function (err, data) {
+        if(err) {
+            return cb(err, 21000);
+        }
+        return cb(null, 200, data);
     });
+};
+
+shared_1_0.getUsernameFee = function(params, cb) {
+    cb(null, 200, {fee: 100 * constants.fixedPoint});
 };
 
 shared_1_0.addUsername = function(params, cb) {
@@ -612,7 +643,8 @@ shared_1_0.open = function(params, cb) {
                 secondsign: account.secondsign,
                 second_pub: account.second_pub,
                 multisignatures: account.multisignatures,
-                multisignatures_unconfirmed: account.multisignatures_unconfirmed
+                multisignatures_unconfirmed: account.multisignatures_unconfirmed,
+                username: account.username
             };
             return cb(null, 200, {account: accountData});
         } else {

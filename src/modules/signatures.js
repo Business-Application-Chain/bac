@@ -244,5 +244,14 @@ shared_1_0.addSignature = function(params, cb) {
     });
 };
 
+// Shared
+shared_1_0.getFee = function (req, cb) {
+    var fee = null;
+
+    fee = 5 * constants.fixedPoint;
+
+    cb(null, 200, {fee: fee})
+};
+
 // export
 module.exports = Signatures;

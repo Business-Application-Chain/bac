@@ -712,6 +712,7 @@ Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
             type: Sequelize.QueryTypes.SELECT
         }).then((rows) => {
             var blocks = privated.readDbRows(rows);
+
             blocks.forEach(function (block) {
                 block.blockSignature = block.blockSignature.toString('utf8');
                 block.generatorPublicKey = block.generatorPublicKey.toString('utf8');

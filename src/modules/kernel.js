@@ -443,7 +443,7 @@ shared_1_0.addTransactions = function(params, cb) {
 };
 
 shared_1_0.version = function(params, cb) {
-    let version = library.system.getVersion();
+    let version = library.modules.system.getVersion();
     cb(null, 200, version);
 };
 

@@ -33,7 +33,7 @@ function selectModule(apiType, scope) {
 }
 
 function checkHeaders(req, scope, cb) {
-    if(req.body.api !== 'kernel') {
+    if(req.body.api) {
         return cb();
     }
     var peerIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;

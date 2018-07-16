@@ -254,7 +254,7 @@ privated.getAllTransactions = function (filter, cb) {
 
 privated.getUserTransactions = function (filter, cb) {
     let index = filter.page * filter.size;
-    let sql = `SELECT * FROM transactions where senderId="${filter.address}" or recipientId = "${filter.address}" order by 'timpstamp' desc limit ${index}, ${filter.size} `;
+    let sql = `SELECT * FROM transactions where senderId="${filter.address}" or recipientId = "${filter.address}" order by timestamp desc limit ${index}, ${filter.size} `;
     let sqlCount = `SELECT count(*) as number FROM transactions where senderId="${filter.address}" or recipientId="${filter.address}"`;
     library.dbClient.query(sqlCount, {
         type: Sequelize.QueryTypes.SELECT
@@ -620,11 +620,27 @@ shared_1_0.transactions = function (params, cb) {
         let send = [];
         if(page === 1) {
             for (let i = 0; i < transactions.length; i++) {
-                transactions[i].isUnconfirmed = true;
-                send.push(transactions[i]);
+                if(transactions[i].senderId === address || transactions.recipientId) {
+                    if(transactions[i].senderId === address && transactions[i].recipientId === address) {
+                        transactions[i].senderType = 'self';
+                    } else if (transactions[i].recipientId === address) {
+                        transactions[i].senderType = 'in';
+                    } else {
+                        transactions[i].senderType = 'out';
+                    }
+                    transactions[i].isUnconfirmed = true;
+                    send.push(transactions[i]);
+                }
             }
         }
         data.forEach(function (item) {
+            if(item.senderId === address && item.recipientId === address) {
+                item.senderType = 'self';
+            } else if (item.recipientId === address) {
+                item.senderType = 'in';
+            } else {
+                item.senderType = 'out';
+            }
             send.push(item);
         });
         return cb(null, 200, {data: send, count: count});

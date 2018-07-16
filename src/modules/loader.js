@@ -282,7 +282,7 @@ privated.findUpdate = function(lastBlock, peer, cb) {
             async.series([
                 function (cb) {
                     if (commonBlock.id != lastBlock.id) {
-                        // modules.round.directionSwap('backward', lastBlock, cb);
+                        library.modules.round.directionSwap('backward', lastBlock, cb);
                         console.log('modules.round.directionSwap -> backward')
                     } else {
                         cb();
@@ -290,13 +290,14 @@ privated.findUpdate = function(lastBlock, peer, cb) {
                 },
                 function (cb) {
                     // library.bus.message('deleteBlocksBefore', commonBlock);
-                    library.notification_center.notify('blockchainReady', commonBlock);
+                    // library.notification_center.notify('blockchainReady', commonBlock);
 
                     library.modules.blocks.deleteBlocksBefore(commonBlock, cb);
                 },
                 function (cb) {
                     if (commonBlock.id != lastBlock.id) {
-                        console.log('modules.round.directionSwap -> forward')
+                        console.log('modules.round.directionSwap -> forward');
+                        library.modules.round.directionSwap('backward', lastBlock, cb);
                     } else {
                         cb();
                     }
@@ -308,6 +309,7 @@ privated.findUpdate = function(lastBlock, peer, cb) {
                             console.log(err);
                             //撤销操作
                             console.log('loadBlocksFromPeer is error!!!!!!!!!!!!!');
+                            cb();
                         } else {
                             for (var i = 0; i < overTransactionList.length; i++) {
                                 library.modules.transactions.pushHiddenTransaction(overTransactionList[i]);

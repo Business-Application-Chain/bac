@@ -91,12 +91,15 @@ function Contact() {
     };
 
     this.undo = function (trs, block, sender, cb) {
+        if(!trs.asset.contact) {
+           return cb();
+        }
         var contactsInvert = Diff.reverse([trs.asset.contact.address]);
 
-        this.scope.account.merge(sender.address, {
+        this.scope.account.merge(sender.master_address, {
             contacts: contactsInvert,
             blockId: block.id,
-            round: modules.round.calc(block.height)
+            round: library.modules.round.calc(block.height)
         }, function (err) {
             cb(err);
         });
@@ -407,6 +410,8 @@ shared_1_0.addContact = function(params, cb) {
         secondSecret: params[3],
         multisigAccountPublicKey: params[4]
     };
+    let username = '';
+    let address = '';
     if(!(data.secret && data.publicKey)) {
         return cb("miss secret or publicKey", 21000);
     }
@@ -418,7 +423,8 @@ shared_1_0.addContact = function(params, cb) {
             return cb("Invalid passphrase", 21000);
         }
     }
-    var followingAddress = data.following.substring(1, data.following.length);
+    // var followingAddress = data.following.substring(1, data.following.length);
+    var followingAddress = data.following;
     var isAddress = /^[0-9]+[L|l]$/g;
     var query = {};
     if (isAddress.test(followingAddress)) {
@@ -434,7 +440,9 @@ shared_1_0.addContact = function(params, cb) {
             if (!following) {
                 return cb("Username not found", 21000);
             }
-            followingAddress = data.following[0] + following.master_address;
+            followingAddress = "+" + following.master_address;
+            username = following.username;
+            address = following.master_address;
             library.modules.accounts.getAccount({master_pub: keypair.publicKey.toString('hex')}, function (err, account) {
                 if (err) {
                     return cb(err.toString(), 21000);
@@ -455,7 +463,8 @@ shared_1_0.addContact = function(params, cb) {
                         sender: account,
                         keypair: keypair,
                         secondKeypair: secondKeypair,
-                        contactAddress: followingAddress
+                        contactAddress: followingAddress,
+                        username: account.username
                     });
                 } catch (e) {
                     return cb(e.toString());
@@ -468,7 +477,8 @@ shared_1_0.addContact = function(params, cb) {
             return cb(err.toString(), 21000);
         }
 
-        cb(null, {transaction: transaction[0]});
+        // cb(null, 200, {transaction: transaction[0], user: {username: username, address: address}});
+        cb(null, 200, {username: username, master_address: address});
     });
 };
 
@@ -535,9 +545,8 @@ shared.getContacts = function (req, cb) {
     });
 };
 
-shared.getFee = function (req, cb) {
-    var query = req.body;
-    cb(null, {fee: 1 * constants.fixedPoint})
+shared_1_0.getFee = function (params, cb) {
+    cb(null, 200, {fee: 1 * constants.fixedPoint})
 };
 
 
