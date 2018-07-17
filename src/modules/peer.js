@@ -11,7 +11,7 @@ var request = require('request');
 require('array.prototype.find'); // Old node fix
 
 // private objects
-var modules_loaded, library, self, privated = {}, shared = {}, shared_1_0 = {};
+var modules_loaded, library, self, privated = {}, shared = {}, shared_1_0 = {}, peerCount;
 
 // constructor
 function Peer(cb, scope) {
@@ -174,11 +174,13 @@ privated.count = function (cb) {
         type: Sequelize.QueryTypes.SELECT
     }).then(function (rows) {
         var res = rows.length && rows[0];
+        privated.peerCount = res.count;
         cb(null, res.count);
     }, function (err) {
         cb(err, undefined);
     });
 };
+
 
 privated.list = function(options, cb) {
     let limit = options.limit || 100;
@@ -206,6 +208,10 @@ privated.banManager = function (cb) {
 
 privated.getByFilter = function (filter, cb) {
 
+};
+
+Peer.prototype.getCount = function() {
+    return privated.peerCount;
 };
 
 // public methods

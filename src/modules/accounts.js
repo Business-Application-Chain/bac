@@ -539,9 +539,9 @@ shared_1_0.getAccount = function(params, cb) {
                 if (!account) {
                     return cb("Account not found", 21000);
                 }
-                cb(null, {
+                cb(null, 200, {
                     account: {
-                        address: account.master_address,
+                        address: [account.master_address],
                         username: account.username,
                         unconfirmedBalance: account.balance_unconfirmed,
                         balance: account.balance,

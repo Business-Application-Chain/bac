@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 var WebSocketServer = require('websocket').server;
 var http = require('http');
+var config = require('../../config.json');
 
 var server = http.createServer(function(request, response) {
     console.log((new Date()) + ' Received request for ' + request.url);
@@ -8,7 +9,7 @@ var server = http.createServer(function(request, response) {
     response.end();
 });
 
-var library, privated={}, socketConnect, self;
+var library, privated={}, socketConnect, self, conArray = [];
 
 function WebSocket(scope, cb) {
     library = scope;
@@ -20,8 +21,8 @@ function WebSocket(scope, cb) {
 
 // constructor
 privated.initWebSocket = function () {
-    server.listen(8080, function() {
-        console.log((new Date()) + ' Server is listening on port 8080');
+    server.listen(config.socket.port, function() {
+        console.log((new Date()) + ' Server is listening on port ' + config.socket.port);
     });
     let wsServer = new WebSocketServer({
         httpServer: server,
@@ -36,7 +37,7 @@ privated.initWebSocket = function () {
     wsServer.on('request', function(request) {
         if (!originIsAllowed(request.origin)) {
             // Make sure we only accept requests from an allowed origin
-            request.reject();
+            // request.reject();
             console.log((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
             return;
         }
@@ -46,14 +47,41 @@ privated.initWebSocket = function () {
         connection.on('message', function(message) {
             if (message.type === 'utf8') {
                 console.log('Received Message: ' + message.utf8Data);
+                let msg = message.utf8Data;
+                if(!msg.match(/102|201\|.*\|.*\|{.*}/)) {
+                    console.log("正则无法通过");
+                    return;
+                }
+                msg = msg.split('|');
+                if(msg[0] === "102" && msg[1] === "loader" && msg[2] === "start") {
+                    if(JSON.parse(msg[3]).status === 'blocksStatus') {
+                        library.notification_center.notify("sendBlockStatus");
+                    }
+                }
             }
         });
+        conArray.push(connection);
         connection.on('close', function(reasonCode, description) {
+            conArray.remove(connection);
             console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
         });
-        socketConnect = connection;
     });
 };
+
+Array.prototype.indexOf = function(val) {
+    for (var i = 0; i < this.length; i++) {
+        if (this[i] == val) return i;
+    }
+    return -1;
+};
+
+Array.prototype.remove = function(val) {
+    var index = this.indexOf(val);
+    if (index > -1) {
+        this.splice(index, 1);
+    }
+};
+
 
 function originIsAllowed(origin) {
     // put logic here to detect whether the specified origin is allowed.
@@ -61,10 +89,12 @@ function originIsAllowed(origin) {
 }
 
 WebSocket.prototype.send = function (data, cb) {
-    if(!socketConnect) {
+    if(!conArray) {
         cb('socketConnect do not ready');
     } else {
-        socketConnect.sendUTF(data, cb);
+        conArray.forEach(function (itemSocket) {
+            itemSocket.sendUTF(data);
+        });
     }
 };
 

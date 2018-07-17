@@ -89,7 +89,11 @@ privated.loadBlocks = function(lastBlock, cb) {
 
         if (bignum(library.modules.blocks.getLastBlock().height).lt(height)) { // Diff in chainbases
             privated.blocksToSync = height;
-
+            library.socket.webSocket.send('201|kernel|status|' + JSON.stringify({
+                height: library.modules.blocks.getLastBlock().height,
+                peerHeight: height,
+                peerCount: library.modules.peer.getCount()
+            }));
             if (lastBlock.id != privated.genesisBlock.block.id) { // Have to find common block
                 // console.log('findUpdate');
                 privated.findUpdate(lastBlock, data.peer, cb);
@@ -397,6 +401,10 @@ Loader.prototype.callApi = function (args) {
 
 };
 
+Loader.prototype.blockIsReady = function() {
+    return privated.loaded;
+};
+
 // events
 Loader.prototype.onInit = function (scope) {
     modules_loaded = scope && scope != undefined ? true : false;
@@ -407,6 +415,14 @@ Loader.prototype.onInit = function (scope) {
 
 Loader.prototype.onBlockchainReady = function () {
     privated.loaded = true;
+};
+
+Loader.prototype.onSendBlockStatus = function() {
+    let status = {
+        status: privated.loaded ? "blockchainReady" : "blockchainError"
+    };
+    let msg = '201|loader|start|' + JSON.stringify(status);
+    library.socket.webSocket.send(msg);
 };
 
 Loader.prototype.onPeerReady = function() {

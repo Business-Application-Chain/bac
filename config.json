@@ -23,7 +23,7 @@
     },
     "forging": {
         "secret": [
-
+            "wKyoJM1vS4ucHmWvxDSdcpC23mJwqfg3G6MKZoXaFfcnWHTqo7"
         ],
         "access": {
             "whiteList": [
@@ -36,6 +36,6 @@
         "loadPerIteration": 5000
     },
     "socket": {
-        "port": 8080
+        "port": 18008
     }
 }

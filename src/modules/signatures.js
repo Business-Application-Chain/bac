@@ -240,17 +240,13 @@ shared_1_0.addSignature = function(params, cb) {
         if (err) {
             return cb(err.toString());
         }
-        cb(null, {transaction: transaction[0]});
+        cb(null, 200, {transaction: transaction[0]});
     });
 };
 
 // Shared
 shared_1_0.getFee = function (req, cb) {
-    var fee = null;
-
-    fee = 5 * constants.fixedPoint;
-
-    cb(null, 200, {fee: fee})
+   return cb(null, 200, {fee: 5 * constants.fixedPoint})
 };
 
 // export

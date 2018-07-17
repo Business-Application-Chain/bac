@@ -593,7 +593,9 @@ shared_1_0.getAllTransactions = function (params, cb) {
         if(height === 0) {
             for (let i = 0; i < transactions.length; i++) {
                 transactions[i].isUnconfirmed = true;
-                send.push(transactions[i]);
+                if(transactions[i]) {
+                    send.push(transactions[i]);
+                }
             }
         }
         data.forEach(function (item) {

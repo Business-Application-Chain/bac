@@ -128,9 +128,14 @@ privated.saveBlock = function (blockObj, cb) {
         });
         return Promise.all(save_records).then(() => {
             library.log.Debug("saveBlock successed");
+            library.socket.webSocket.send("201|blocks|block|" + JSON.stringify(privated.lastBlock), function (err) {
+                if(err) {
+                    console.log(err.toString());
+                }
+            });
             cb();
         }).catch((err) => {
-            library.log.Error("saveBlock failed", "Error", err.toString());
+            library.log.Error("saveBlock failed", "Error", err);
             cb(err);
         });
     });
@@ -1177,7 +1182,7 @@ shared_1_0.block = function(params, cb) {
         if(err) {
             return cb(err.message, 21000);
         }
-        return cb(null, 200, block);
+        return cb(null, 200, block[0]);
     })
 };
 

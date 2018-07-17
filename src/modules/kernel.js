@@ -339,6 +339,7 @@ Kernel.prototype.onUnconfirmedTransaction = function (transaction, broadcast) {
             id: Math.random(),
             jsonrpc: '1.0'
         });
+        library.socket.webSocket.send('201|transactions|transaction|' + JSON.stringify(transaction));
         // 通知前端，产生新的交易
     }
 };
