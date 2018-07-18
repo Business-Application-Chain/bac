@@ -1,0 +1,60 @@
+const server = {
+    SUCCESS: 200,
+    MISSING_PARAMS: 11000,
+    ACCOUNT_ERROR: 11003
+};
+
+const peer = {
+    GET_COUNT_ERR: 11001,
+    GET_PEER_FAILURE: 11002
+};
+
+const blocks = {
+    GET_BLOCK_FAILURE: 12001,
+    GET_BLOCK_LIST_FAILURE: 12002
+};
+
+const transactions = {
+    GET_TRANSACTIONS_FAILURE: 13001,
+    GET_TRANSACTIONS_BY_BLOCK_FAILURE: 13002,
+    CAN_NOT_FIND_BLOCK: 13003,
+    CAN_NOT_FIND_TRANSACTION: 13004,
+    INVALID_PASSPHRASE: 13005,
+    RECIPIENT_NOT_FOUND: 13006,
+    INVALID_ACCOUNT: 13007,
+    INVALID_SECOND_PASSPHRASE: 13008,
+    ADD_TRANSACTION_FAILURE: 13009
+};
+
+const contacts = {
+    GET_CONTACT_ACCOUNT_FAILURE: 14001,
+    CONTACT_ACCOUNT_NOT_FOUND: 14002,
+    ADD_CONTACT_FAILURE: 14003,
+    GET_CONTACT_LIST_FAILURE: 14004,
+    GET_CONTACT_COUNT_FAILURE: 14005
+};
+
+const account = {
+    ADD_USERNAME_FAILURE: 15001,
+    OPEN_USER_FAILURE: 15002,
+    ACCOUNT_NOT_FOUND: 15003,
+    ADD_SIGNATURES_FAILURE: 15004
+};
+
+const kernel = {
+    GET_PEER_LIST_FAILURE: 16001,
+    GET_BLOCKS_FAILURE: 16002,
+    GET_TRANSACTION_LIST_FAILURE: 16003,
+    INVALID_TRANSACTION_BODY: 16004,
+    ADD_TRANSACTION_FAILURE: 16005
+};
+
+module.exports = {
+    server: server,
+    peer: peer,
+    blocks: blocks,
+    transactions: transactions,
+    contacts: contacts,
+    account: account,
+    kernel: kernel
+};

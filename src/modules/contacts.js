@@ -385,7 +385,7 @@ shared_1_0.contacts = function(params, cb) {
     let address = library.modules.accounts.generateAddressByPublicKey(publicKey);
     privated.getContacts(address, function (err, data) {
         if(err) {
-            return cb(err, 24004);
+            return cb(err, 14004);
         }
         return cb(null, 200, data);
     });
@@ -396,7 +396,7 @@ shared_1_0.count = function(params, cb) {
     let address = library.modules.accounts.generateAddressByPublicKey(publicKey);
     privated.getContactsCount(address, function (err, data) {
         if(err) {
-            return cb(err, 24005);
+            return cb(err, 14005);
         }
         return cb(null, 200, data.number);
     });
@@ -413,14 +413,14 @@ shared_1_0.addContact = function(params, cb) {
     let username = '';
     let address = '';
     if(!(data.secret && data.publicKey)) {
-        return cb("miss secret or publicKey", 21000);
+        return cb("miss secret or publicKey", 11000);
     }
     var hash = crypto.createHash('sha256').update(data.secret, 'utf8').digest();
     var keypair = ed.MakeKeypair(hash);
 
     if (data.publicKey) {
         if (keypair.publicKey.toString('hex') != data.publicKey) {
-            return cb("Invalid passphrase", 23005);
+            return cb("Invalid passphrase", 13005);
         }
     }
     // var followingAddress = data.following.substring(1, data.following.length);
@@ -435,23 +435,23 @@ shared_1_0.addContact = function(params, cb) {
     library.balancesSequence.add(function (cb) {
         library.modules.accounts.getAccount(query, function (err, following) {
             if (err) {
-                return cb(err.toString(), 24001);
+                return cb(err.toString(), 14001);
             }
             if (!following) {
-                return cb("follow account not found", 24002);
+                return cb("follow account not found", 14002);
             }
             followingAddress = "+" + following.master_address;
             username = following.username;
             address = following.master_address;
             library.modules.accounts.getAccount({master_pub: keypair.publicKey.toString('hex')}, function (err, account) {
                 if (err) {
-                    return cb(err.toString(), 21000);
+                    return cb(err.toString(), 11000);
                 }
                 if (!account) {
-                    return cb("Invalid account", 23007);
+                    return cb("Invalid account", 13007);
                 }
                 if (account.secondsign && !data.secondSecret) {
-                    return cb("Invalid second passphrase", 23008);
+                    return cb("Invalid second passphrase", 13008);
                 }
                 if (account.secondsign && data.secondSecret) {
                     var secondHash = crypto.createHash('sha256').update(data.secondSecret, 'utf8').digest();
@@ -467,14 +467,14 @@ shared_1_0.addContact = function(params, cb) {
                         username: account.username
                     });
                 } catch (e) {
-                    return cb(e.toString(), 24003);
+                    return cb(e.toString(), 14003);
                 }
                 library.modules.transactions.receiveTransactions([transaction], cb);
             });
         });
     }, function (err, transaction) {
         if (err) {
-            return cb(err.toString(), 24003);
+            return cb(err.toString(), 14003);
         }
 
         // cb(null, 200, {transaction: transaction[0], user: {username: username, address: address}});

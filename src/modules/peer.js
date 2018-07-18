@@ -7,6 +7,7 @@ var sandboxHelper = require('../utils/sandbox.js');
 var ip = require('ip');
 var Sequelize = require('sequelize');
 var request = require('request');
+var errorCode = require('../utils/error-code');
 
 require('array.prototype.find'); // Old node fix
 
@@ -450,19 +451,19 @@ Peer.prototype.onEnd = function (cb) {
 shared_1_0.list = function(req, cb) {
     privated.list({limit: 100}, function (err, list) {
         if(err) {
-            return cb(err, 21002);
+            return cb(err, errorCode.peer.GET_PEER_FAILURE);
         }
         console.log(list);
-        return cb(null, 200, list);
+        return cb(null, errorCode.server.SUCCESS, list);
     });
 };
 
 shared_1_0.count = function(req, cb) {
     privated.count(function (err, count) {
         if(err) {
-          return cb(err, 21001);
+          return cb(err, errorCode.peer.GET_COUNT_ERR);
         }
-        return cb(null, 200, count);
+        return cb(null, errorCode.server.SUCCESS, count);
     });
 };
 
@@ -471,7 +472,7 @@ shared_1_0.count = function(req, cb) {
 // };
 
 shared_1_0.version = function(req, cb) {
-    return cb(null, 200, library.config.version);
+    return cb(null, errorCode.server.SUCCESS, library.config.version);
 };
 
 shared.peer_list = function (req, cb) {

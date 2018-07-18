@@ -355,7 +355,7 @@ shared_1_0.test = function (params, cb) {
 shared_1_0.list = function (req, cb) {
     library.modules.peer.list({limit: 100}, function (err, peers) {
         if(err) {
-            return cb(err, 26001);
+            return cb(err, 16001);
         } else {
            return cb(null, 200, peers);
         }
@@ -371,7 +371,7 @@ shared_1_0.height = function (req, cb) {
 shared_1_0.blocks = function (params, cb) {
     let lastBlockId = params[0] || 0;
     if (lastBlockId === 0) {
-        return cb('lastBlockId is not 0', 21000);
+        return cb('lastBlockId is not 0', 11000);
     }
     let blocksLimit = 1440;
     library.modules.blocks.loadBlocksData({
@@ -380,7 +380,7 @@ shared_1_0.blocks = function (params, cb) {
         plain: false
     }, function (err, data) {
         if (err) {
-            return cb(err, 26002);
+            return cb(err, 16002);
         }
         return cb(null, 200, data);
     });
@@ -392,7 +392,7 @@ shared_1_0.blocks_common = function (params, cb) {
     let min = reqParams.min || 0;
     let ids = reqParams.ids || '';
     if (max === 0 || min === 0 || ids === '') {
-        return cb('params is error');
+        return cb('params is error', 11000);
     }
     ids = ids.split(',').filter(function (id) {
         return /^\d+$/.test(id);
@@ -408,7 +408,7 @@ shared_1_0.blocks_common = function (params, cb) {
         return cb(null, 200, commonBlock);
     }).catch((err) => {
         console.log(err);
-        cb(err, 21000);
+        cb(err, 11000);
     });
 };
 
@@ -429,13 +429,13 @@ shared_1_0.addTransactions = function(params, cb) {
         // }
 
         // return res.status(200).json({success: false, message: "Invalid transaction body"});
-        return cb(26004, "Invalid transaction body");
+        return cb(16004, "Invalid transaction body");
     }
     library.balancesSequence.add(function (cb) {
         library.modules.transactions.receiveTransactions([transaction], cb);
     }, function (err) {
         if (err) {
-            return cb(err, 26005);
+            return cb(err, 16005);
         } else {
             return cb(null, 200, "success");
         }
@@ -471,14 +471,14 @@ shared_1_0.transactions = function (req, cb) {
         if (peerIp && report) {
             library.modules.peer.state(ip.toLong(peerIp), req.headers.port, 0, 3600);
         }
-        return cb("Invalid transaction body", 21000);
+        return cb("Invalid transaction body", 16004);
     }
 
     library.balancesWorkQueue.add(function (cb) {
         library.modules.transactions.receiveTransactions([transaction], cb);
     }, function (err) {
         if (err) {
-            return cb(null, 26003);
+            return cb(null, 16003);
 
         } else {
             return cb(null, 200, "SUCCESS");

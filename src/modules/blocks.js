@@ -1166,7 +1166,7 @@ shared_1_0.blocks = function(params, cb) {
     };
     privated.getBlocks(option, function (err, rows) {
         if(err) {
-            return cb(err, 21000);
+            return cb(err, 12001);
         } else {
             return cb(null, 200, rows);
         }
@@ -1176,11 +1176,11 @@ shared_1_0.blocks = function(params, cb) {
 shared_1_0.block = function(params, cb) {
     let bId = params[0] || 0;
     if(!bId) {
-        return cb('missing block id', 21000);
+        return cb('missing block id', 11000);
     }
     privated.getById(bId, function (err, block) {
         if(err) {
-            return cb(err.message, 22001);
+            return cb(err.message, 12001);
         }
         return cb(null, 200, block[0]);
     })

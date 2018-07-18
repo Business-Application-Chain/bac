@@ -548,7 +548,7 @@ Transactions.prototype.onInit = function (scope) {
 shared_1_0.transaction = function (params, cb) {
     let tId = params[0] || undefined;
     if (!tId) {
-        return cb('missing params', 21000);
+        return cb('missing params', 11000);
     }
     // privated.getByTrsId(tId, function (err, data) {
     privated.getById(tId, function (err, data) {
@@ -562,7 +562,7 @@ shared_1_0.transaction = function (params, cb) {
 shared_1_0.byBlockId = function (params, cb) {
     let bId = params[0] || undefined;
     if (!bId) {
-        return cb('missing params', 21000);
+        return cb('missing params', 11000);
     }
     privated.getByBlockId(bId, function (err, data) {
         if (err) {
@@ -598,7 +598,7 @@ shared_1_0.getAllTransactions = function (params, cb) {
     filter.limit = size;
     privated.getAllTransactions(filter, function (err, data) {
         if (err) {
-            return cb(err, 21000);
+            return cb(err, 11000);
         }
         let send = [];
         let transactions = self.getUnconfirmedTransactionList(true);
@@ -628,7 +628,7 @@ shared_1_0.transactions = function (params, cb) {
 
     privated.getUserTransactions(filter, function (err, data, count) {
         if (err) {
-            return cb(err, 23001);
+            return cb(err, 13001);
         }
         let transactions = self.getUnconfirmedTransactionList(true);
         let send = [];
@@ -670,14 +670,14 @@ shared_1_0.addTransaction = function (params, cb) {
     var multisigAccountPublicKey = params[5] || undefined;
 
     if (!(amount && publicKey && recipientId && secret)) {
-        return cb("miss must params", 21000);
+        return cb("miss must params", 11000);
     }
 
     var hash = crypto.createHash('sha256').update(secret, 'utf8').digest();
     var keypair = ed.MakeKeypair(hash);
     if (publicKey) {
         if (keypair.publicKey.toString('hex') != publicKey) {
-            return cb("Invalid passphrase", 23005);
+            return cb("Invalid passphrase", 13005);
         }
     }
     var query = {};
@@ -693,7 +693,7 @@ shared_1_0.addTransaction = function (params, cb) {
                 return cb(err.toString());
             }
             if (!recipient && query.username) {
-                return cb("Recipient not found", 23006);
+                return cb("Recipient not found", 13006);
             }
             recipientId = recipient ? recipient.master_address : query.master_address;
             var recipientUsername = recipient ? recipient.username : null;
@@ -755,11 +755,11 @@ shared_1_0.addTransaction = function (params, cb) {
                         return cb(err.toString());
                     }
                     if (!account || !account.master_pub) {
-                        return cb("Invalid account", 23007);
+                        return cb("Invalid account", 13007);
                     }
 
                     if (account.secondsign && !secondSecret) {
-                        return cb("Invalid second passphrase", 23008);
+                        return cb("Invalid second passphrase", 13008);
                     }
 
                     var secondKeypair = null;
@@ -780,7 +780,7 @@ shared_1_0.addTransaction = function (params, cb) {
                             secondKeypair: secondKeypair
                         });
                     } catch (e) {
-                        return cb(e.toString(), 23009);
+                        return cb(e.toString(), 13009);
                     }
                     library.modules.transactions.receiveTransactions([transaction], cb);
                 });
@@ -788,7 +788,7 @@ shared_1_0.addTransaction = function (params, cb) {
         });
     }, function (err, transaction) {
         if (err) {
-            return cb(err.toString(), 23009);
+            return cb(err.toString(), 13009);
         }
         cb(null, 200, {transactionId: transaction[0].id});
     });

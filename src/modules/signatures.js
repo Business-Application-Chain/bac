@@ -208,7 +208,7 @@ shared_1_0.addSignature = function(params, cb) {
 
     if (query.publicKey) {
         if (keypair.publicKey.toString('hex') != query.publicKey) {
-            return cb("Invalid passphrase", 23005);
+            return cb("Invalid passphrase", 13005);
         }
     }
     library.balancesSequence.add(function (cb) {
@@ -217,10 +217,10 @@ shared_1_0.addSignature = function(params, cb) {
                 return cb(err.toString());
             }
             if (!account || !account.master_pub) {
-                return cb("Invalid account", 23007);
+                return cb("Invalid account", 13007);
             }
             if (account.secondsign || account.secondsign_unconfirmed) {
-                return cb("Invalid second passphrase", 23008);
+                return cb("Invalid second passphrase", 13008);
             }
             var secondHash = crypto.createHash('sha256').update(query.secondSecret, 'utf8').digest();
             var secondKeypair = ed.MakeKeypair(secondHash);
@@ -232,13 +232,13 @@ shared_1_0.addSignature = function(params, cb) {
                     secondKeypair: secondKeypair
                 });
             } catch (e) {
-                return cb(e.toString(), 25004);
+                return cb(e.toString(), 15004);
             }
             library.modules.transactions.receiveTransactions([transaction], cb);
         });
     }, function (err, transaction) {
         if (err) {
-            return cb(err.toString(), 25004);
+            return cb(err.toString(), 15004);
         }
         cb(null, 200, {transaction: transaction[0]});
     });

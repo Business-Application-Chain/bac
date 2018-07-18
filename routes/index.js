@@ -109,7 +109,7 @@ module.exports = function (scope) {
         if(id === 0 || jsonrpc === '') {
             return res.json({
                 'error': 'missing id or jsonrpc',
-                'code': 21000,
+                'code': 11000,
                 'id': id,
                 'jsonrpc': jsonrpc
             });
@@ -119,7 +119,7 @@ module.exports = function (scope) {
             if(err) {
                 return res.json({
                     'error': err,
-                    'code': 21000,
+                    'code': 11000,
                     'id': id,
                     'jsonrpc': jsonrpc
                 });
@@ -129,7 +129,7 @@ module.exports = function (scope) {
                 if(!apiModules) {
                     return res.json({
                         'result': null,
-                        'code': 21000,
+                        'code': 11000,
                         'id': id,
                         'jsonrpc': jsonrpc
                     });
@@ -153,7 +153,7 @@ module.exports = function (scope) {
             } else {
                 return res.json({
                     'error': 'missing necessary params',
-                    'code': 21000,
+                    'code': 11000,
                     'id': id,
                     'jsonrpc': jsonrpc
                 });

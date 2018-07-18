@@ -501,10 +501,10 @@ shared_1_0.getPublicKey = function(params, cb) {
     let address = params[0];
     self.getAccount({master_address: address}, function (err, account) {
         if (err) {
-            return cb(err.toString(), 21000);
+            return cb(err.toString(), 11003);
         }
         if (!account || !account.master_pub) {
-            return cb("Account does not have a public key", 21000);
+            return cb("Account does not have a public key", 11000);
         }
         cb(null, 200, account.master_pub);
     });
@@ -534,10 +534,10 @@ shared_1_0.getAccount = function(params, cb) {
         }, function (result) {
             self.getAccount({master_address: address}, function (err, account) {
                 if (err) {
-                    return cb({msg:err.toString(), code:21003});
+                    return cb({msg:err.toString(), code:11003});
                 }
                 if (!account) {
-                    return cb({msg:"Account not found", code: 25003});
+                    return cb({msg:"Account not found", code: 15003});
                 }
                 cb(null, 200, {
                     account: {
@@ -576,26 +576,26 @@ shared_1_0.addUsername = function(params, cb) {
         secondSecret: params[3] || ''
     };
     if(!(query.secret && query.username && query.publicKey)) {
-        return cb('miss must params', 21000);
+        return cb('miss must params', 11000);
     }
     var hash = crypto.createHash('sha256').update(query.secret, 'utf8').digest();
     var keypair = ed.MakeKeypair(hash);
     if (query.publicKey) {
         if (keypair.publicKey.toString('hex') != query.publicKey) {
-            return cb("Invalid passphrase", 23005);
+            return cb("Invalid passphrase", 13005);
         }
     }
     library.balancesSequence.add(function (cb) {
         self.getAccount({master_pub: keypair.publicKey.toString('hex')}, function (err, account) {
             if (err) {
-                return cb(err.toString(), 21003);
+                return cb(err.toString(), 11003);
             }
             if (!account || !account.master_pub) {
-                return cb("Invalid account", 23007);
+                return cb("Invalid account", 13007);
             }
 
             if (account.secondsign && !query.secondSecret) {
-                return cb("Invalid second passphrase", 23008);
+                return cb("Invalid second passphrase", 13008);
             }
 
             var secondKeypair = null;
@@ -614,13 +614,13 @@ shared_1_0.addUsername = function(params, cb) {
                     secondKeypair: secondKeypair
                 });
             } catch (e) {
-                return cb(e.toString(), 25001);
+                return cb(e.toString(), 15001);
             }
             library.modules.transactions.receiveTransactions([transaction], cb);
         });
     }, function (err, transaction) {
         if (err) {
-            return cb(err.toString(), 25001);
+            return cb(err.toString(), 15001);
         }
 
         cb(null, 200, {transaction: transaction[0]});
@@ -630,7 +630,7 @@ shared_1_0.addUsername = function(params, cb) {
 shared_1_0.open = function(params, cb) {
     let secret = params[0] || undefined;
     if(!secret) {
-        return cb('params is error', 21000);
+        return cb('params is error', 11000);
     }
     privated.openAccount(secret, function (err, account) {
         var accountData = null;
@@ -648,7 +648,7 @@ shared_1_0.open = function(params, cb) {
             };
             return cb(null, 200, {account: accountData});
         } else {
-            return cb(err, 25002);
+            return cb(err, 15002);
         }
     });
 };
