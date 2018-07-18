@@ -355,7 +355,7 @@ shared_1_0.test = function (params, cb) {
 shared_1_0.list = function (req, cb) {
     library.modules.peer.list({limit: 100}, function (err, peers) {
         if(err) {
-            return cb(err, 21000);
+            return cb(err, 26001);
         } else {
            return cb(null, 200, peers);
         }
@@ -380,7 +380,7 @@ shared_1_0.blocks = function (params, cb) {
         plain: false
     }, function (err, data) {
         if (err) {
-            return cb(err, 21000);
+            return cb(err, 26002);
         }
         return cb(null, 200, data);
     });
@@ -429,13 +429,13 @@ shared_1_0.addTransactions = function(params, cb) {
         // }
 
         // return res.status(200).json({success: false, message: "Invalid transaction body"});
-        return cb(21000, "Invalid transaction body");
+        return cb(26004, "Invalid transaction body");
     }
     library.balancesSequence.add(function (cb) {
         library.modules.transactions.receiveTransactions([transaction], cb);
     }, function (err) {
         if (err) {
-            return cb(err, 21000);
+            return cb(err, 26005);
         } else {
             return cb(null, 200, "success");
         }
@@ -478,7 +478,7 @@ shared_1_0.transactions = function (req, cb) {
         library.modules.transactions.receiveTransactions([transaction], cb);
     }, function (err) {
         if (err) {
-            return cb(null, 500);
+            return cb(null, 26003);
 
         } else {
             return cb(null, 200, "SUCCESS");

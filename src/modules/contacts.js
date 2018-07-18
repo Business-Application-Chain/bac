@@ -385,7 +385,7 @@ shared_1_0.contacts = function(params, cb) {
     let address = library.modules.accounts.generateAddressByPublicKey(publicKey);
     privated.getContacts(address, function (err, data) {
         if(err) {
-            return cb(err, 21000);
+            return cb(err, 24004);
         }
         return cb(null, 200, data);
     });
@@ -396,7 +396,7 @@ shared_1_0.count = function(params, cb) {
     let address = library.modules.accounts.generateAddressByPublicKey(publicKey);
     privated.getContactsCount(address, function (err, data) {
         if(err) {
-            return cb(err, 21000);
+            return cb(err, 24005);
         }
         return cb(null, 200, data.number);
     });
@@ -420,7 +420,7 @@ shared_1_0.addContact = function(params, cb) {
 
     if (data.publicKey) {
         if (keypair.publicKey.toString('hex') != data.publicKey) {
-            return cb("Invalid passphrase", 21000);
+            return cb("Invalid passphrase", 23005);
         }
     }
     // var followingAddress = data.following.substring(1, data.following.length);
@@ -435,10 +435,10 @@ shared_1_0.addContact = function(params, cb) {
     library.balancesSequence.add(function (cb) {
         library.modules.accounts.getAccount(query, function (err, following) {
             if (err) {
-                return cb(err.toString(), 21000);
+                return cb(err.toString(), 24001);
             }
             if (!following) {
-                return cb("Username not found", 21000);
+                return cb("follow account not found", 24002);
             }
             followingAddress = "+" + following.master_address;
             username = following.username;
@@ -448,10 +448,10 @@ shared_1_0.addContact = function(params, cb) {
                     return cb(err.toString(), 21000);
                 }
                 if (!account) {
-                    return cb("Invalid account", 21000);
+                    return cb("Invalid account", 23007);
                 }
                 if (account.secondsign && !data.secondSecret) {
-                    return cb("Invalid second passphrase");
+                    return cb("Invalid second passphrase", 23008);
                 }
                 if (account.secondsign && data.secondSecret) {
                     var secondHash = crypto.createHash('sha256').update(data.secondSecret, 'utf8').digest();
@@ -467,14 +467,14 @@ shared_1_0.addContact = function(params, cb) {
                         username: account.username
                     });
                 } catch (e) {
-                    return cb(e.toString());
+                    return cb(e.toString(), 24003);
                 }
                 library.modules.transactions.receiveTransactions([transaction], cb);
             });
         });
     }, function (err, transaction) {
         if (err) {
-            return cb(err.toString(), 21000);
+            return cb(err.toString(), 24003);
         }
 
         // cb(null, 200, {transaction: transaction[0], user: {username: username, address: address}});

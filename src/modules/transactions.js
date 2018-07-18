@@ -281,13 +281,19 @@ privated.getById = function (id, cb) {
         }
     }).then(function (rows) {
         if (!rows.length) {
-            return cb("Can't find transaction: " + id);
+            return cb({
+                msg: ("Can't find transaction: " + id),
+                code: 23004
+            });
         }
 
         var txObj = library.base.transaction.load(rows[0]);
         cb(null, txObj);
     }, function (err) {
-        cb(err, undefined);
+        cb({
+            msg: err,
+            code: 23005
+        });
     });
 };
 
@@ -296,11 +302,17 @@ privated.getByBlockId = function (id, cb) {
         type: Sequelize.QueryTypes.SELECT
     }).then((rows) => {
         if (!rows.length) {
-            return cb("Can't find transaction: " + id);
+            return cb({
+                msg : ("Can't find transaction: " + id),
+                code: 23003
+            });
         }
         return cb(null, rows);
     }).catch((err) => {
-        return cb(err);
+        return cb({
+            msg: err,
+            code: 23002
+        });
     });
 };
 
@@ -541,7 +553,7 @@ shared_1_0.transaction = function (params, cb) {
     // privated.getByTrsId(tId, function (err, data) {
     privated.getById(tId, function (err, data) {
         if (err) {
-            return cb(err, 21000);
+            return cb(err.msg, err.code);
         }
         return cb(null, 200, data);
     });
@@ -554,7 +566,7 @@ shared_1_0.byBlockId = function (params, cb) {
     }
     privated.getByBlockId(bId, function (err, data) {
         if (err) {
-            return cb(err, 21000);
+            return cb(err.msg, err.code);
         }
         return cb(null, 200, data);
     });
@@ -616,7 +628,7 @@ shared_1_0.transactions = function (params, cb) {
 
     privated.getUserTransactions(filter, function (err, data, count) {
         if (err) {
-            return cb(err, 21000);
+            return cb(err, 23001);
         }
         let transactions = self.getUnconfirmedTransactionList(true);
         let send = [];
@@ -665,7 +677,7 @@ shared_1_0.addTransaction = function (params, cb) {
     var keypair = ed.MakeKeypair(hash);
     if (publicKey) {
         if (keypair.publicKey.toString('hex') != publicKey) {
-            return cb("Invalid passphrase");
+            return cb("Invalid passphrase", 23005);
         }
     }
     var query = {};
@@ -681,7 +693,7 @@ shared_1_0.addTransaction = function (params, cb) {
                 return cb(err.toString());
             }
             if (!recipient && query.username) {
-                return cb("Recipient not found");
+                return cb("Recipient not found", 23006);
             }
             recipientId = recipient ? recipient.master_address : query.master_address;
             var recipientUsername = recipient ? recipient.username : null;
@@ -743,11 +755,11 @@ shared_1_0.addTransaction = function (params, cb) {
                         return cb(err.toString());
                     }
                     if (!account || !account.master_pub) {
-                        return cb("Invalid account");
+                        return cb("Invalid account", 23007);
                     }
 
                     if (account.secondsign && !secondSecret) {
-                        return cb("Invalid second passphrase");
+                        return cb("Invalid second passphrase", 23008);
                     }
 
                     var secondKeypair = null;
@@ -768,7 +780,7 @@ shared_1_0.addTransaction = function (params, cb) {
                             secondKeypair: secondKeypair
                         });
                     } catch (e) {
-                        return cb(e.toString());
+                        return cb(e.toString(), 23009);
                     }
                     library.modules.transactions.receiveTransactions([transaction], cb);
                 });
@@ -776,7 +788,7 @@ shared_1_0.addTransaction = function (params, cb) {
         });
     }, function (err, transaction) {
         if (err) {
-            return cb(err.toString(), 21000);
+            return cb(err.toString(), 23009);
         }
         cb(null, 200, {transactionId: transaction[0].id});
     });

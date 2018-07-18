@@ -447,18 +447,10 @@ Peer.prototype.onEnd = function (cb) {
 };
 
 // shared
-shared.peer_getPeers = function (req, cb) {
-
-};
-
-shared.peer_getPeer = function (req, cb) {
-
-};
-
 shared_1_0.list = function(req, cb) {
     privated.list({limit: 100}, function (err, list) {
         if(err) {
-            return cb(err, 21000);
+            return cb(err, 21002);
         }
         console.log(list);
         return cb(null, 200, list);
@@ -468,7 +460,7 @@ shared_1_0.list = function(req, cb) {
 shared_1_0.count = function(req, cb) {
     privated.count(function (err, count) {
         if(err) {
-          return cb(err, 21000);
+          return cb(err, 21001);
         }
         return cb(null, 200, count);
     });

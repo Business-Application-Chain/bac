@@ -487,10 +487,10 @@ shared_1_0.getBalance = function(params, cb) {
     }
     self.getAccount({master_address: address}, function (err, account) {
         if (err) {
-            return cb(err.toString());
+            return cb(err.toString(), 21003);
         }
         var balance = account ? account.balance : 0;
-        var unconfirmedBalance = account ? account.balance_unconfirmed : 0;
+        // var unconfirmedBalance = account ? account.balance_unconfirmed : 0;
 
         // cb(null, 200, [balance, unconfirmedBalance]);
         cb(null, 200, [balance]);
@@ -534,10 +534,10 @@ shared_1_0.getAccount = function(params, cb) {
         }, function (result) {
             self.getAccount({master_address: address}, function (err, account) {
                 if (err) {
-                    return cb(err.toString(), 21000);
+                    return cb({msg:err.toString(), code:21003});
                 }
                 if (!account) {
-                    return cb("Account not found", 21000);
+                    return cb({msg:"Account not found", code: 25003});
                 }
                 cb(null, 200, {
                     account: {
@@ -558,7 +558,7 @@ shared_1_0.getAccount = function(params, cb) {
         }
     ], function (err, data) {
         if(err) {
-            return cb(err, 21000);
+            return cb(err.msg, err.code);
         }
         return cb(null, 200, data);
     });
@@ -582,20 +582,20 @@ shared_1_0.addUsername = function(params, cb) {
     var keypair = ed.MakeKeypair(hash);
     if (query.publicKey) {
         if (keypair.publicKey.toString('hex') != query.publicKey) {
-            return cb("Invalid passphrase");
+            return cb("Invalid passphrase", 23005);
         }
     }
     library.balancesSequence.add(function (cb) {
         self.getAccount({master_pub: keypair.publicKey.toString('hex')}, function (err, account) {
             if (err) {
-                return cb(err.toString());
+                return cb(err.toString(), 21003);
             }
             if (!account || !account.master_pub) {
-                return cb("Invalid account");
+                return cb("Invalid account", 23007);
             }
 
             if (account.secondsign && !query.secondSecret) {
-                return cb("Invalid second passphrase");
+                return cb("Invalid second passphrase", 23008);
             }
 
             var secondKeypair = null;
@@ -614,13 +614,13 @@ shared_1_0.addUsername = function(params, cb) {
                     secondKeypair: secondKeypair
                 });
             } catch (e) {
-                return cb(e.toString());
+                return cb(e.toString(), 25001);
             }
             library.modules.transactions.receiveTransactions([transaction], cb);
         });
     }, function (err, transaction) {
         if (err) {
-            return cb(err.toString(), 21000);
+            return cb(err.toString(), 25001);
         }
 
         cb(null, 200, {transaction: transaction[0]});
@@ -648,7 +648,7 @@ shared_1_0.open = function(params, cb) {
             };
             return cb(null, 200, {account: accountData});
         } else {
-            return cb(err, 21000);
+            return cb(err, 25002);
         }
     });
 };

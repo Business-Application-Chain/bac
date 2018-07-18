@@ -1158,8 +1158,8 @@ shared_1_0.height = function(req, cb) {
 };
 
 shared_1_0.blocks = function(params, cb) {
-    let height = params[0];
-    let size = params[1];
+    let height = params[0] || 0;
+    let size = params[1] || 10;
     let option = {
         height: height,
         size: size,
@@ -1180,14 +1180,14 @@ shared_1_0.block = function(params, cb) {
     }
     privated.getById(bId, function (err, block) {
         if(err) {
-            return cb(err.message, 21000);
+            return cb(err.message, 22001);
         }
         return cb(null, 200, block[0]);
     })
 };
 
 scoket_1_0.height = function(cb) {
-    return cb(null, privated.lastBlock.height);
+    return cb(null, 200, privated.lastBlock.height);
 };
 
 scoket_1_0.onNewBlock = function(cb) {
