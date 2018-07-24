@@ -14,7 +14,6 @@ sqlite/
 ssl/
 stacktrace*
 tmp
-build
 *.pid
 public/dist
 package-lock.json
