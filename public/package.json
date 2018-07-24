@@ -1,0 +1,40 @@
+{
+  "name": "bac_pc",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint"
+  },
+  "dependencies": {
+    "vue": "^2.5.16",
+    "vue-router": "^3.0.1",
+    "vuex": "^3.0.1"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "^3.0.0-beta.15",
+    "@vue/cli-plugin-eslint": "^3.0.0-beta.15",
+    "@vue/cli-service": "^3.0.0-beta.15",
+    "@vue/eslint-config-standard": "^3.0.0-rc.3",
+    "axios": "^0.18.0",
+    "bac-lib": "^1.0.2",
+    "bac-mnemonic": "^1.0.6",
+    "bip39": "^2.5.0",
+    "bitcoinjs-lib": "^3.3.2",
+    "bitcore-mnemonic": "^1.5.0",
+    "crypto-js": "^3.1.9-1",
+    "node-sass": "^4.9.1",
+    "sass-loader": "^7.0.1",
+    "vue-click-outside": "^1.0.7",
+    "vue-i18n": "^8.0.0",
+    "vue-infinite-loading": "^2.3.1",
+    "vue-spinner": "^1.0.3",
+    "vue-template-compiler": "^2.5.16"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not ie <= 8"
+  ]
+}

@@ -1,0 +1,42 @@
+html{
+    height: 100%
+}
+
+body{
+    height: 100%;
+    background: #F5F7FC;
+    font-family: "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Hiragino Sans GB", "Heiti SC", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+input{
+    outline: none;
+    padding: 0px;
+}
+
+textarea{
+    resize: none;
+    outline: none;
+}
+
+a{
+    text-decoration: none;
+}
+
+.sec{
+    background: #fff;
+    border-radius: 4px;
+}
+
+.sec-header{
+    height: 50px;
+    line-height: 50px;
+    padding: 0 30px;
+    font-size: 16px;
+    color: #4A4A4A;
+    border-bottom: 1px solid #F2F2F2;
+}
+
+[v-cloak]{
+    display: none
+}
