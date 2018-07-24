@@ -1,5 +1,4 @@
-var crypto = require('./crypto.js'),
-    slots = require('./slots.js');
+var crypto = require('./crypto.js');
 
 function createContact(secret, address, secondSecret) {
     var keys = crypto.getKeys(secret);
@@ -12,7 +11,7 @@ function createContact(secret, address, secondSecret) {
             fee: 1 * Math.pow(10, 8),
             recipientId: address,
             publicKey: keys.publicKey,
-            timestamp: slots.getTime(),
+            timestamp: Date.now(),
             secondSecret: secondSecret,
         }
 

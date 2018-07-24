@@ -7,7 +7,6 @@ var sandboxHelper = require('../utils/sandbox.js');
 var crypto = require('crypto');
 var ed = require('ed25519');
 var ByteBuffer = require('bytebuffer');
-var slots = require('../utils/slots.js');
 var TransactionTypes = require('../utils/transaction-types.js');
 var Diff = require('../utils/diff.js');
 

@@ -19,7 +19,7 @@ function Account(scope, cb) {
         {
             name: 'master_pub',
             type: 'String',
-            length: 64,
+            length: 128,
             filter: {
                 type: 'string'
             },
@@ -29,13 +29,13 @@ function Account(scope, cb) {
         {
             name: 'master_address',
             type: 'String',
-            length: 21,
+            length: 64,
             not_null: true,
             unique: true,
             primary_key: true,
             filter: {
                 type: 'string',
-                maxLength: 21,
+                maxLength: 64,
                 minLength: 1
             },
             conv: String,
@@ -44,10 +44,10 @@ function Account(scope, cb) {
         {
             name: 'username',
             type: 'String',
-            length: 20,
+            length: 32,
             filter: {
                 type: 'string',
-                maxLength: 20,
+                maxLength: 32,
                 minLength: 1
             },
             conv: String,
@@ -56,10 +56,10 @@ function Account(scope, cb) {
         {
             name: 'username_unconfirmed',
             type: 'String',
-            length: 20,
+            length: 32,
             filter: {
                 type: 'string',
-                maxLength: 20,
+                maxLength: 32,
                 minLength: 1
             },
             conv: String,
@@ -86,7 +86,7 @@ function Account(scope, cb) {
         {
             name: 'second_pub',
             type: 'String',
-            length: 64,
+            length: 128,
             filter: {
                 type: 'string'
             },
@@ -396,7 +396,7 @@ Account.prototype.createTables = function (cb) {
             {
                 name: 'accountId',
                 type: 'String',
-                length: 21,
+                length: 64,
                 not_null: true
             },
             {
@@ -425,7 +425,7 @@ Account.prototype.createTables = function (cb) {
             {
                 name: 'accountId',
                 type: 'String',
-                length: 21,
+                length: 64,
                 not_null: true
             },
             {
@@ -454,7 +454,7 @@ Account.prototype.createTables = function (cb) {
             {
                 name: 'accountId',
                 type: 'String',
-                length: 21,
+                length: 64,
                 not_null: true
             },
             {
@@ -483,7 +483,7 @@ Account.prototype.createTables = function (cb) {
             {
                 name: 'accountId',
                 type: 'String',
-                length: 21,
+                length: 64,
                 not_null: true
             },
             {
@@ -512,7 +512,7 @@ Account.prototype.createTables = function (cb) {
             {
                 name: 'accountId',
                 type: 'String',
-                length: 21,
+                length: 64,
                 not_null: true
             },
             {
@@ -541,12 +541,12 @@ Account.prototype.createTables = function (cb) {
             {
                 name: "accountId",
                 type: "String",
-                length: 21,
+                length: 64,
                 not_null: true
             }, {
                 name: "dependentId",
                 type: "String",
-                length: 21,
+                length: 64,
                 not_null: true
             }
         ],
@@ -569,7 +569,7 @@ Account.prototype.createTables = function (cb) {
             {
                 name: 'master_address',
                 type: 'String',
-                length: 21
+                length: 64
             },
             {
                 name: 'amount',

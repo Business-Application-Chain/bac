@@ -7,7 +7,6 @@ var sandboxHelper = require('../utils/sandbox.js');
 var crypto = require('crypto');
 var ed = require('ed25519');
 var bignum = require('../utils/bignum.js');
-var slots = require('../utils/slots.js');
 var TransactionTypes = require('../utils/transaction-types.js');
 var Sequelize = require('sequelize');
 var modules_loaded, library, self, privated = {}, shared = {}, genesisblock = null, shared_1_0 = {};
@@ -510,6 +509,17 @@ Transactions.prototype.removeUnconfirmedTransaction = function (id) {
 
 Transactions.prototype.addDoubleSpending = function (transaction) {
     privated.doubleSpendingTransactions[transaction.id] = transaction;
+};
+
+Transactions.prototype.onSendUnconfirmedTrs = function() {
+    let unconfirmedTrs = privated.unconfirmedTransactions;
+    let send = [];
+    unconfirmedTrs.forEach(function (item) {
+        if(item) {
+            send.push(item);
+        }
+    });
+    library.socket.webSocket.send('201|transactions|unconfirmed|' + JSON.stringify({send}));
 };
 
 Transactions.prototype.applyUnconfirmedList = function (ids, cb) {

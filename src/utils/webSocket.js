@@ -46,7 +46,6 @@ privated.initWebSocket = function () {
         console.log((new Date()) + ' Connection accepted.');
         connection.on('message', function(message) {
             if (message.type === 'utf8') {
-                console.log('Received Message: ' + message.utf8Data);
                 let msg = message.utf8Data;
                 if(!msg.match(/102|201\|.*\|.*\|{.*}/)) {
                     console.log("正则无法通过");
@@ -57,6 +56,17 @@ privated.initWebSocket = function () {
                     if(JSON.parse(msg[3]).status === 'blocksStatus') {
                         library.notification_center.notify("sendBlockStatus");
                     }
+                } else if(msg[0] === '102' && msg[1] === 'blocks' && msg[2] === 'block') {
+                    if(JSON.parse(msg[3]).status === 'lastBlock') {
+                        library.notification_center.notify("sendLastBlock");
+                    }
+                } else if(msg[0] === '102' && msg[1] === 'transactions' && msg[2] === 'unconfirmed') {
+                    if(JSON.parse(msg[3]).status === 'getUnconfirmed') {
+                        library.notification_center.notify("sendUnconfirmedTrs");
+                    }
+                } else if(msg[0] === '201' && msg[1] === 'blocks' && msg[2] === 'newBlock') {
+                    let newBlock = JSON.parse(msg[3]);
+                    library.notification_center.notify('hasNewBlock', newBlock);
                 }
             }
         });

@@ -7,13 +7,11 @@ var Sequelize = require('sequelize');
 var crypto = require('crypto');
 var ed = require('ed25519');
 var bignum = require('../utils/bignum.js');
-var slots = require('../utils/slots.js');
 var TransactionTypes = require('../utils/transaction-types.js');
 var Diff = require('../utils/diff.js');
-var bitcoinJs = require('bitcoinjs-lib');
-var bitcoinMessage = require('bitcoinjs-message');
 var bip39 = require('bip39');
 var util = require('util');
+var bacLib = require('bac-lib');
 
 // private objects
 var modules_loaded, library, self, privated = {}, shared = {}, shared_1_0 = {};
@@ -195,7 +193,7 @@ function Username() {
                 alias: {
                     type: 'string',
                     minLength: 1,
-                    maxLength: 20
+                    maxLength: 32
                 },
                 publicKey: {
                     type: 'string',
@@ -312,7 +310,7 @@ function Username() {
             return setImmediate(cb, "Account is already has a username");
         }
 
-        var address = library.modules.accounts.generateAddressByPublicKey(txObj.senderPublicKey);
+        var address = library.modules.accounts.generateAddressByPubKey(txObj.senderPublicKey);
 
         self.getAccount({
             $or: {
@@ -414,7 +412,7 @@ Accounts.prototype.generateAddressByPublicKey = function (publicKey) {
         temp[i] = publicKeyHash[7 - i];
     }
 
-    var address = bignum.fromBuffer(temp).toString() + "L";
+    let address = bignum.fromBuffer(temp).toString() + "L";
     if (!address) {
         throw new Error("Invalid public key " + publicKey);
     }
@@ -422,9 +420,18 @@ Accounts.prototype.generateAddressByPublicKey = function (publicKey) {
     return address;
 };
 
+Accounts.prototype.generateAddressByPubKey = function (publicKey) {
+    // let seed = bacLib.bacBip39.mnemonicToSeed(secret);
+    // let address = bacLib.bacHDNode.fromSeedBuffer(seed).getAddress();
+    // return address;
+    let publicBuffer = Buffer.from(publicKey, 'hex');
+    let address = bacLib.bacECpair.fromPublicKeyBuffer(publicBuffer).getAddress();
+    return address;
+};
+
 Accounts.prototype.getAccount = function (filter, fields, cb) {
     if (filter.master_pub) {
-        filter.master_address = self.generateAddressByPublicKey(filter.master_pub);
+        filter.master_address = self.generateAddressByPubKey(filter.master_pub);
         delete filter.master_pub;
     }
 
@@ -439,7 +446,7 @@ Accounts.prototype.setAccountAndGet = function (fields, cb) {
     var master_address = fields.master_address || null;
     if (master_address === null) {
         if (fields.master_pub) {
-            master_address = self.generateAddressByPublicKey(fields.master_pub);
+            master_address = self.generateAddressByPubKey(fields.master_pub);
         } else {
             return cb("Missing master_address and master_pub");
         }
@@ -463,7 +470,7 @@ Accounts.prototype.mergeAccountAndGet = function (fields, cb) {
     var master_address = fields.master_address || null;
     if (master_address === null) {
         if (fields.master_pub) {
-            master_address = self.generateAddressByPublicKey(fields.master_pub);
+            master_address = self.generateAddressByPubKey(fields.master_pub);
         } else {
             return cb("Missing master_address and master_pub");
         }

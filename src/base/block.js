@@ -6,9 +6,9 @@ var crypto = require('crypto');
 var bignum = require('../utils/bignum.js');
 var jsonSql = require('../json-sql')({dialect: 'mysql'});
 var ed = require('ed25519');
-var slots = require('../utils/slots.js');
 var ByteBuffer = require('bytebuffer');
 var blockStatus = require('../utils/blockStatus.js');
+var bacLib = require('bac-lib');
 
 var self, privated = {};
 
@@ -287,22 +287,24 @@ Block.prototype.sign = function (blockObj, keypair) {
 };
 
 Block.prototype.verifySignature = function (blockObj) {
-    var remove = 64;
-
-    try {
-        var data1 = this.getBytes(blockObj);
-        var data2 = new Buffer(data1.length - remove);
-
-        for (var i = 0; i < data2.length; i++) {
-            data2[i] = data1[i];
-        }
-        var hash = crypto.createHash('sha256').update(data2).digest();
-        var blockSignatureBuffer = new Buffer(blockObj.blockSignature, 'hex');
-        var generatorPublicKeyBuffer = new Buffer(blockObj.generatorPublicKey, 'hex');
-        var res = ed.Verify(hash, blockSignatureBuffer || ' ', generatorPublicKeyBuffer || ' ');
-    } catch (err) {
-        throw new Error(err.toString());
-    }
+    // var remove = 64;
+    //
+    // try {
+    //     var data1 = this.getBytes(blockObj);
+    //     var data2 = new Buffer(data1.length - remove);
+    //
+    //     for (var i = 0; i < data2.length; i++) {
+    //         data2[i] = data1[i];
+    //     }
+    //     var hash = crypto.createHash('sha256').update(data2).digest();
+    //     var blockSignatureBuffer = new Buffer(blockObj.blockSignature, 'hex');
+    //     var generatorPublicKeyBuffer = new Buffer(blockObj.generatorPublicKey, 'hex');
+    //     var res = ed.Verify(hash, blockSignatureBuffer || ' ', generatorPublicKeyBuffer || ' ');
+    // } catch (err) {
+    //     throw new Error(err.toString());
+    // }
+    let blockSignature = new Buffer(blockObj.blockSignature, 'hex');
+    let res = bacLib.bacSign.verify(blockSignature, blockObj.generatorPublicKey);
 
     return res;
 };

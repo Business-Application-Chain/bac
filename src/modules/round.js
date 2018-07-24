@@ -136,7 +136,7 @@ Round.prototype.backwardTick = function (blockObj, previousBlockObj, cb) {
                                 }
                                 for (var i = 0; i < roundDelegates.length; i++) {
                                     if (privated.unDelegatesByRound[round].indexOf(roundDelegates[i]) == -1) {
-                                        outsiders.push(library.modules.accounts.generateAddressByPublicKey(roundDelegates[i]));
+                                        outsiders.push(library.modules.accounts.generateAddressByPubKey(roundDelegates[i]));
                                     }
                                 }
                                 cb();
@@ -169,7 +169,7 @@ Round.prototype.backwardTick = function (blockObj, previousBlockObj, cb) {
                                 library.dbClient.query("UPDATE accounts SET vote = vote + $amount WHERE master_address = $master_address", {
                                     type: Sequelize.QueryTypes.UPDATE,
                                     bind: {
-                                        master_address: library.modules.accounts.generateAddressByPublicKey(vote.delegate),
+                                        master_address: library.modules.accounts.generateAddressByPubKey(vote.delegate),
                                         amount: vote.amount
                                     }
                                 }).then(function (rows) {
@@ -226,7 +226,7 @@ Round.prototype.backwardTick = function (blockObj, previousBlockObj, cb) {
                                 library.dbClient.query("UPDATE accounts SET vote = vote + $amount WHERE master_address = $master_address", {
                                     type: Sequelize.QueryTypes.UPDATE,
                                     bind: {
-                                        master_address: library.modules.accounts.generateAddressByPublicKey(vote.delegate),
+                                        master_address: library.modules.accounts.generateAddressByPubKey(vote.delegate),
                                         amount: vote.amount
                                     }
                                 }).then(function (rows) {
@@ -299,7 +299,7 @@ Round.prototype.tick = function (blockObj, cb) {
                                 }
                                 for (var i = 0; i < roundDelegates.length; i++) {
                                     if (privated.delegatesByRound[round].indexOf(roundDelegates[i])) { // if ... then out!!!
-                                        outsiders.push(library.modules.accounts.generateAddressByPublicKey(roundDelegates[i]));
+                                        outsiders.push(library.modules.accounts.generateAddressByPubKey(roundDelegates[i]));
                                     }
                                 }
                                 cb();
@@ -332,7 +332,7 @@ Round.prototype.tick = function (blockObj, cb) {
                                 library.dbClient.query("UPDATE accounts SET vote = vote + $amount WHERE master_address = $master_address", {
                                     type: Sequelize.QueryTypes.UPDATE,
                                     bind: {
-                                        master_address: library.modules.accounts.generateAddressByPublicKey(vote.delegate),
+                                        master_address: library.modules.accounts.generateAddressByPubKey(vote.delegate),
                                         amount: vote.amount
                                     }
                                 }).then(function (rows) {
@@ -387,7 +387,7 @@ Round.prototype.tick = function (blockObj, cb) {
                                 library.dbClient.query("UPDATE accounts SET vote = vote + $amount WHERE master_address = $master_address", {
                                     type: Sequelize.QueryTypes.UPDATE,
                                     bind: {
-                                        master_address: library.modules.accounts.generateAddressByPublicKey(vote.delegate),
+                                        master_address: library.modules.accounts.generateAddressByPubKey(vote.delegate),
                                         amount: vote.amount
                                     }
                                 }).then(function (rows) {

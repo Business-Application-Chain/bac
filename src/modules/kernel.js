@@ -324,6 +324,16 @@ Kernel.prototype.onInit = function (scope) {
     }
 };
 
+Kernel.prototype.onNewBlock = function(block, broadcast) {
+    if (broadcast) {
+        self.broadcast({limit: 100}, {api: '/blocks', data: {block: block}, method: "POST"});
+        // library.notification_center.notify('hasNewBlock', block);
+        // library.socket.webSocket.send('')
+        library.socket.webSocket.send('201|blocks|block|' + JSON.stringify(block), null);
+        // library.network.io.sockets.emit('blocks/change', {});
+    }
+};
+
 Kernel.prototype.onBlockchainReady = function () {
     privated.loaded = true;
 };

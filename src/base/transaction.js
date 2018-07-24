@@ -6,7 +6,6 @@ var crypto = require('crypto');
 var bignum = require('../utils/bignum.js');
 var jsonSql = require('../json-sql')({dialect: 'mysql'});
 var ed = require('ed25519');
-var slots = require('../utils/slots.js');
 var ByteBuffer = require('bytebuffer');
 var extend = require('util-extend');
 
@@ -44,7 +43,7 @@ Transaction.prototype.create = function (data) {
         amount: 0,
         senderPublicKey: data.sender.master_pub,
         requesterPublicKey: data.requester ? data.requester.master_pub.toString('hex') : null,
-        timestamp: slots.getTime(),
+        timestamp: Date.now(),
         asset: {}
     };
 
@@ -480,7 +479,7 @@ Transaction.prototype.verify = function (txObj, sender, requester, cb) {
     }
 
     // Check timestamp
-    if (slots.getSlotNumber(txObj.timestamp) > slots.getSlotNumber()) { // means the time is later than now
+    if (txObj.timestamp > Date.now()) { // means the time is later than now
         return setImmediate(cb, "Invalid transaction timestamp");
     }
 

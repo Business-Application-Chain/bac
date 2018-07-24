@@ -270,7 +270,7 @@ Contacts.prototype.checkContacts = function (master_pub, contacts, cb) {
 };
 
 Contacts.prototype.checkUnconfirmedContacts = function (publicKey, contacts, cb) {
-    var selfAddress = library.modules.accounts.generateAddressByPublicKey(publicKey);
+    var selfAddress = library.modules.accounts.generateAddressByPubKey(publicKey);
 
     if (util.isArray(contacts)) {
         library.modules.accounts.getAccount({master_address: selfAddress}, function (err, account) {
@@ -382,7 +382,7 @@ shared.getUnconfirmedContacts = function (req, cb) {
 
 shared_1_0.contacts = function(params, cb) {
     let publicKey = params[0];
-    let address = library.modules.accounts.generateAddressByPublicKey(publicKey);
+    let address = library.modules.accounts.generateAddressByPubKey(publicKey);
     privated.getContacts(address, function (err, data) {
         if(err) {
             return cb(err, 14004);
@@ -393,7 +393,7 @@ shared_1_0.contacts = function(params, cb) {
 
 shared_1_0.count = function(params, cb) {
     let publicKey = params[0];
-    let address = library.modules.accounts.generateAddressByPublicKey(publicKey);
+    let address = library.modules.accounts.generateAddressByPubKey(publicKey);
     privated.getContactsCount(address, function (err, data) {
         if(err) {
             return cb(err, 14005);
@@ -499,7 +499,7 @@ shared.getContacts = function (req, cb) {
             return cb(err[0].message);
         }
 
-        query.address = library.modules.accounts.generateAddressByPublicKey(query.publicKey);
+        query.address = library.modules.accounts.generateAddressByPubKey(query.publicKey);
 
         library.modules.accounts.getAccount({address: query.address}, function (err, account) {
             if (err) {
