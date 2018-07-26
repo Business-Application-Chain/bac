@@ -8,6 +8,7 @@ var jsonSql = require('../json-sql')({dialect: 'mysql'});
 var ed = require('ed25519');
 var ByteBuffer = require('bytebuffer');
 var extend = require('util-extend');
+var bacLib = require('bac-lib');
 
 // constructor
 function Transaction(scope, cb) {
@@ -41,8 +42,9 @@ Transaction.prototype.create = function (data) {
     var txObj = {
         type: data.type,
         amount: 0,
-        senderPublicKey: data.sender.master_pub,
-        requesterPublicKey: data.requester ? data.requester.master_pub.toString('hex') : null,
+        senderId: data.sender.master_address,
+        recipientId: data.recipientId || null,
+        senderPublicKey: data.sender.master_pub.toString('hex'),
         timestamp: Date.now(),
         asset: {}
     };
@@ -51,7 +53,7 @@ Transaction.prototype.create = function (data) {
     txObj.signature = this.sign(txObj, data.keypair);
 
     if (data.sender.secondsign && data.secondKeypair) {
-        txObj.signSignature = this.sign(txObj, data.secondKeypair);
+        txObj.signSignature = this.secondSign(txObj, data.secondKeypair);
     }
 
     txObj.id = this.getId(txObj);
@@ -137,7 +139,7 @@ Transaction.prototype.objectNormalize = function (txObj) {
             },
             signature: {
                 type: 'string',
-                format: 'signature'
+                // format: 'signature'
             },
             signSignature: {
                 type: 'string',
@@ -213,18 +215,19 @@ Transaction.prototype.getBytes = function (txObj, skipSignature, skipSecondSigna
             }
         }
 
-        if (txObj.recipientId) {
-            var recipient = txObj.recipientId.slice(0, -1);
-            recipient = bignum(recipient).toBuffer({size: 8});
-
-            for (var i = 0; i < 8; i++) {
-                bb.writeByte(recipient[i] || 0);
-            }
-        } else {
-            for (var i = 0; i < 8; i++) {
-                bb.writeByte(0);
-            }
-        }
+        bb.writeByte(0);
+        // if (txObj.recipientId) {
+        //     var recipient = txObj.recipientId.slice(0, -1);
+        //     recipient = bignum(recipient).toBuffer({size: 8});
+        //
+        //     for (var i = 0; i < 8; i++) {
+        //         bb.writeByte(recipient[i] || 0);
+        //     }
+        // } else {
+        //     for (var i = 0; i < 8; i++) {
+        //         bb.writeByte(0);
+        //     }
+        // }
 
         bb.writeLong(txObj.amount);
 
@@ -308,8 +311,7 @@ Transaction.prototype.process = function (txObj, sender, requester, cb) {
         if (!this.verifySignature(txObj, txObj.requesterPublicKey, txObj.signature)) {
             return setImmediate(cb, "Failed to verify request public key as signature");
         }
-    }
-    else {
+    } else {
         if (!this.verifySignature(txObj, txObj.senderPublicKey, txObj.signature)) {
             return setImmediate(cb, "Failed to verify sender public key as signature");
         }
@@ -340,8 +342,14 @@ Transaction.prototype.process = function (txObj, sender, requester, cb) {
 };
 
 Transaction.prototype.sign = function (txObj, keypair) {
-    var hash = this.getHash(txObj);
+    // var hash = this.getHash(txObj);
+    // return ed.Sign(hash, keypair).toString('hex');
+    let sign = bacLib.bacSign.sign(JSON.stringify(txObj), keypair.d.toBuffer(32), 1).toString('hex');
+    return sign;
+};
 
+Transaction.prototype.secondSign = function(txObj, keypair) {
+    var hash = this.getHash(txObj);
     return ed.Sign(hash, keypair).toString('hex');
 };
 
@@ -380,11 +388,7 @@ Transaction.prototype.verify = function (txObj, sender, requester, cb) {
     try {
         var valid = false;
 
-        if (txObj.requesterPublicKey) {
-            valid = this.verifySignature(txObj, txObj.requesterPublicKey, txObj.signature);
-        } else {
-            valid = this.verifySignature(txObj, txObj.senderPublicKey, txObj.signature);
-        }
+        valid = this.verifyTrsSignature(txObj, txObj.senderPublicKey, txObj.signature);
     } catch (err) {
         return setImmediate(cb, err.toString());
     }
@@ -394,7 +398,7 @@ Transaction.prototype.verify = function (txObj, sender, requester, cb) {
     }
 
     // Verify second signature
-    if (!txObj.requesterPublicKey && sender.second_pub) {
+    if (!txObj.requesterPublicKey && sender.secondsign) {
         try {
             var valid = this.verifySecondSignature(txObj, sender.second_pub, txObj.signSignature);
         } catch (err) {
@@ -403,7 +407,7 @@ Transaction.prototype.verify = function (txObj, sender, requester, cb) {
         if (!valid) {
             return setImmediate(cb, "Failed to verify second signature: " + txObj.id);
         }
-    } else if (txObj.requesterPublicKey && requester.second_pub) {
+    } else if (txObj.requesterPublicKey && requester.secondsign) {
         try {
             var valid = this.verifySecondSignature(txObj, requester.second_pub, txObj.signSignature);
         } catch (err) {
@@ -415,16 +419,16 @@ Transaction.prototype.verify = function (txObj, sender, requester, cb) {
     }
 
     // Check that signatures unique
-    if (txObj.signatures && txObj.signatures.length) {
-        var signatures = txObj.signatures.reduce(function (p, c) {
-            if (p.indexOf(c) < 0) p.push(c);
-            return p;
-        }, []);
-
-        if (signatures.length != txObj.signatures.length) {
-            return setImmediate(cb, "Encountered duplicate signatures");
-        }
-    }
+    // if (txObj.signatures && txObj.signatures.length) {
+    //     var signatures = txObj.signatures.reduce(function (p, c) {
+    //         if (p.indexOf(c) < 0) p.push(c);
+    //         return p;
+    //     }, []);
+    //
+    //     if (signatures.length != txObj.signatures.length) {
+    //         return setImmediate(cb, "Encountered duplicate signatures");
+    //     }
+    // }
      //多重签名的验证的
     var multisignatures = sender.multisignatures || sender.multisignatures_unconfirmed;
 
@@ -493,17 +497,49 @@ Transaction.prototype.verifySignature = function (txObj, publicKey, signature) {
     if (!privated.types[txObj.type]) {
         throw new Error("Unknown transaction type " + txObj.type);
     }
-
     if (!signature) return false;
-
     try {
-        var bytes = this.getBytes(txObj, true, true);
-        var res = this.verifyBytes(bytes, publicKey, signature);
+        let trsJson = this.getTrsJson(txObj);
+        var res = this.verifySign(trsJson, txObj.senderId, txObj.signature);
     } catch (err) {
         throw new Error(err.toString());
     }
-
     return res;
+};
+
+Transaction.prototype.getTrsJson = function(txObj) {
+    let data = {
+        type: txObj.type,
+        amount: txObj.amount,
+        senderId: txObj.senderId,
+        recipientId: txObj.recipientId,
+        senderPublicKey: txObj.senderPublicKey,
+        timestamp: txObj.timestamp,
+        asset: txObj.asset
+    };
+    return JSON.stringify(data);
+};
+
+Transaction.prototype.verifySign = function(trsJson, address, signature) {
+    let signBuffer = Buffer.from(signature, 'hex');
+    let res = bacLib.bacSign.verify(trsJson, address, signBuffer);
+    return res;
+};
+
+Transaction.prototype.verifyTrsSignature = function(txObj) {
+
+    let data = {
+        type: txObj.type,
+        amount: txObj.amount,
+        senderId: txObj.senderId,
+        recipientId: txObj.recipientId,
+        senderPublicKey: txObj.senderPublicKey,
+        timestamp: txObj.timestamp,
+        asset: txObj.asset
+    };
+    let signature = Buffer.from(txObj.signature, 'hex');
+
+    return bacLib.bacSign.verify(JSON.stringify(data), txObj.senderId, signature);
 };
 
 Transaction.prototype.verifySecondSignature = function (txObj, publicKey, signSignature) {
@@ -514,6 +550,7 @@ Transaction.prototype.verifySecondSignature = function (txObj, publicKey, signSi
     if (!signSignature) return false;
 
     try {
+
         var bytes = this.getBytes(txObj, false, true);
         var res = this.verifyBytes(bytes, publicKey, signSignature);
     } catch (err) {
@@ -521,6 +558,10 @@ Transaction.prototype.verifySecondSignature = function (txObj, publicKey, signSi
     }
 
     return res;
+};
+
+Transaction.prototype.getData = function(txObj) {
+
 };
 
 Transaction.prototype.verifyBytes = function (bytes, master_pub, signature) {
@@ -589,14 +630,14 @@ Transaction.prototype.undoUnconfirmed = function (trs, sender, cb) {
 
     var amount = trs.amount + trs.fee;
 
-    this.scope.account.merge(sender.address, {u_balance: amount}, function (err, sender) {
+    this.scope.account.merge(sender.master_address, {balance_unconfirmed: amount}, function (err, sender) {
         if (err) {
             return cb(err);
         }
 
         privated.types[trs.type].undoUnconfirmed.call(this, trs, sender, function (err) {
             if (err) {
-                this.scope.account.merge(sender.address, {u_balance: -amount}, function (err) {
+                this.scope.account.merge(sender.master_address, {balance_unconfirmed: -amount}, function (err) {
                     cb(err);
                 });
             } else {
@@ -625,7 +666,7 @@ Transaction.prototype.undo = function (txObj, blockObj, sender, cb) {
         privated.types[txObj.type].undo.call(this, txObj, blockObj, sender, function (err) {
             if (err) { // once error ocurrs, rollback the balance amount
                 this.scope.account.merge(sender.master_address, {
-                    balance: -amount,
+                    balance: amount,
                     blockId: blockObj.id,
                     round: calc(blockObj.height)
                 }, function (err2) {
@@ -698,7 +739,7 @@ Transaction.prototype.undoUnconfirmed = function (txObj, sender, cb) {
             return cb(err);
         }
 
-        privated.types[txObj.type].applyUnconfirmed.call(this, txObj, sender, function (err) {
+        privated.types[txObj.type].undoUnconfirmed.call(this, txObj, sender, function (err) {
             if (err) { // once error ocurrs, rollback the balance amount
                 this.scope.account.merge(sender.master_address, {balance_unconfirmed: -amount}, function (err2) {
                     cb(err2);

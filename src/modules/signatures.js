@@ -109,7 +109,7 @@ function Signature() {
 
     this.undo = function (txObj, blockObj, sender, cb) {
         library.modules.accounts.setAccountAndGet({
-            master_address: sender.master_address,
+            master_pub: sender.master_pub,
             secondsign: 0,
             secondsign_unconfirmed: 1,
             second_pub: null
@@ -118,15 +118,16 @@ function Signature() {
 
     this.applyUnconfirmed = function (txObj, sender, cb) {
         library.modules.accounts.setAccountAndGet({
-            master_address: sender.master_address,
-            secondsign: 1,
-            secondsign_unconfirmed: 0,
-            second_pub: txObj.asset.signature.publicKey
+            master_pub: sender.master_pub,
+            secondsign_unconfirmed: 1,
         }, cb);
     };
 
     this.undoUnconfirmed = function (txObj, sender, cb) {
-
+        library.modules.accounts.setAccountAndGet({
+            master_pub: sender.master_pub,
+            secondsign_unconfirmed: 0,
+        }, cb);
     };
 
     this.load = function (raw) {
@@ -134,7 +135,6 @@ function Signature() {
             return null
         } else {
             var signature = {
-                transactionId: raw.t_id,
                 publicKey: raw.s_publicKey
             }
 
@@ -203,16 +203,14 @@ shared_1_0.addSignature = function(params, cb) {
     if(!(query.secret && query.secondSecret && query.publicKey)) {
         return cb('miss must params');
     }
-    let hash = crypto.createHash('sha256').update(query.secret, 'utf8').digest();
-    let keypair = ed.MakeKeypair(hash);
-
+    let keyPair = library.base.account.getKeypair(query.secret);
     if (query.publicKey) {
-        if (keypair.publicKey.toString('hex') != query.publicKey) {
+        if (keyPair.getPublicKeyBuffer().toString('hex') !== query.publicKey) {
             return cb("Invalid passphrase", 13005);
         }
     }
     library.balancesSequence.add(function (cb) {
-        library.modules.accounts.getAccount({master_pub: keypair.publicKey.toString('hex')}, function (err, account) {
+        library.modules.accounts.getAccount({master_pub: query.publicKey}, function (err, account) {
             if (err) {
                 return cb(err.toString());
             }
@@ -228,7 +226,7 @@ shared_1_0.addSignature = function(params, cb) {
                 var transaction = library.base.transaction.create({
                     type: TransactionTypes.SIGNATURE,
                     sender: account,
-                    keypair: keypair,
+                    keypair: keyPair,
                     secondKeypair: secondKeypair
                 });
             } catch (e) {

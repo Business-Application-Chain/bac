@@ -37,8 +37,8 @@ function Contact() {
             return setImmediate(cb, "Invalid transaction asset: " + trs.id);
         }
 
-        var isAddress = /^[\+|\-][0-9]+[L|l]$/g; // 判斷地址合法性
-        if (!isAddress.test(trs.asset.contact.address.toLowerCase())) {
+        var isAddress = /^[\+|\-][B]+[A-Za-z|0-9]{33}$/; // 判斷地址合法性
+        if (!isAddress.test(trs.asset.contact.address)) {
             return setImmediate(cb, "Contact is not an address: " + trs.asset.contact.address);
         }
 
@@ -151,7 +151,6 @@ function Contact() {
             return null;
         } else {
             var contact = {
-                transactionId: raw.t_id,
                 address: raw.c_address
             };
 
@@ -404,7 +403,7 @@ shared_1_0.count = function(params, cb) {
 
 shared_1_0.addContact = function(params, cb) {
     let data = {
-        secret: params[0] || '',
+        mnemonic: params[0] || '',
         publicKey: params[1] || '',
         following: params[2] || '',
         secondSecret: params[3],
@@ -412,20 +411,19 @@ shared_1_0.addContact = function(params, cb) {
     };
     let username = '';
     let address = '';
-    if(!(data.secret && data.publicKey)) {
+    if(!(data.mnemonic && data.publicKey)) {
         return cb("miss secret or publicKey", 11000);
     }
-    var hash = crypto.createHash('sha256').update(data.secret, 'utf8').digest();
-    var keypair = ed.MakeKeypair(hash);
+    let keyPair = library.base.account.getKeypair(data.mnemonic);
 
     if (data.publicKey) {
-        if (keypair.publicKey.toString('hex') != data.publicKey) {
+        if (keyPair.getPublicKeyBuffer().toString('hex') !== data.publicKey) {
             return cb("Invalid passphrase", 13005);
         }
     }
     // var followingAddress = data.following.substring(1, data.following.length);
     var followingAddress = data.following;
-    var isAddress = /^[0-9]+[L|l]$/g;
+    var isAddress = /^[B]+[A-Za-z|0-9]{33}$/;
     var query = {};
     if (isAddress.test(followingAddress)) {
         query.master_address = followingAddress;
@@ -443,7 +441,7 @@ shared_1_0.addContact = function(params, cb) {
             followingAddress = "+" + following.master_address;
             username = following.username;
             address = following.master_address;
-            library.modules.accounts.getAccount({master_pub: keypair.publicKey.toString('hex')}, function (err, account) {
+            library.modules.accounts.getAccount({master_pub: data.publicKey}, function (err, account) {
                 if (err) {
                     return cb(err.toString(), 11000);
                 }
@@ -461,7 +459,7 @@ shared_1_0.addContact = function(params, cb) {
                     var transaction = library.base.transaction.create({
                         type: TransactionTypes.FOLLOW,
                         sender: account,
-                        keypair: keypair,
+                        keypair: keyPair,
                         secondKeypair: secondKeypair,
                         contactAddress: followingAddress,
                         username: account.username

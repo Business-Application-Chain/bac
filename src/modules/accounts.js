@@ -384,10 +384,11 @@ privated.generateMnemonic = function () {
 };
 
 privated.openAccount = function (secret, cb) {
-    var hash = crypto.createHash('sha256').update(secret, 'utf8').digest();
-    var keypair = ed.MakeKeypair(hash);
+    // var hash = crypto.createHash('sha256').update(secret, 'utf8').digest();
+    // var keypair = ed.MakeKeypair(hash);
+    let keypair = library.base.account.getKeypair(secret);
 
-    self.setAccountAndGet({master_pub: keypair.publicKey.toString('hex')}, cb);
+    self.setAccountAndGet({master_pub: keypair.getPublicKeyBuffer().toString('hex')}, cb);
 };
 
 // public methods
@@ -405,25 +406,22 @@ Accounts.prototype.callApi = function (call, rpcjson, args, cb) {
     }
 };
 
-Accounts.prototype.generateAddressByPublicKey = function (publicKey) {
-    var publicKeyHash = crypto.createHash('sha256').update(publicKey, 'hex').digest();
-    var temp = new Buffer(8);
-    for (var i = 0; i < 8; i++) {
-        temp[i] = publicKeyHash[7 - i];
-    }
-
-    let address = bignum.fromBuffer(temp).toString() + "L";
-    if (!address) {
-        throw new Error("Invalid public key " + publicKey);
-    }
-
-    return address;
-};
+// Accounts.prototype.generateAddressByPublicKey = function (publicKey) {
+//     var publicKeyHash = crypto.createHash('sha256').update(publicKey, 'hex').digest();
+//     var temp = new Buffer(8);
+//     for (var i = 0; i < 8; i++) {
+//         temp[i] = publicKeyHash[7 - i];
+//     }
+//
+//     let address = bignum.fromBuffer(temp).toString() + "L";
+//     if (!address) {
+//         throw new Error("Invalid public key " + publicKey);
+//     }
+//
+//     return address;
+// };
 
 Accounts.prototype.generateAddressByPubKey = function (publicKey) {
-    // let seed = bacLib.bacBip39.mnemonicToSeed(secret);
-    // let address = bacLib.bacHDNode.fromSeedBuffer(seed).getAddress();
-    // return address;
     let publicBuffer = Buffer.from(publicKey, 'hex');
     let address = bacLib.bacECpair.fromPublicKeyBuffer(publicBuffer).getAddress();
     return address;
@@ -585,15 +583,14 @@ shared_1_0.addUsername = function(params, cb) {
     if(!(query.secret && query.username && query.publicKey)) {
         return cb('miss must params', 11000);
     }
-    var hash = crypto.createHash('sha256').update(query.secret, 'utf8').digest();
-    var keypair = ed.MakeKeypair(hash);
+    let keyPair = library.base.account.getKeypair(query.secret);
     if (query.publicKey) {
-        if (keypair.publicKey.toString('hex') != query.publicKey) {
+        if (keyPair.getPublicKeyBuffer().toString('hex') !== query.publicKey) {
             return cb("Invalid passphrase", 13005);
         }
     }
     library.balancesSequence.add(function (cb) {
-        self.getAccount({master_pub: keypair.publicKey.toString('hex')}, function (err, account) {
+        self.getAccount({master_pub: query.publicKey}, function (err, account) {
             if (err) {
                 return cb(err.toString(), 11003);
             }
@@ -617,7 +614,7 @@ shared_1_0.addUsername = function(params, cb) {
                     type: TransactionTypes.USERNAME,
                     username: query.username,
                     sender: account,
-                    keypair: keypair,
+                    keypair: keyPair,
                     secondKeypair: secondKeypair
                 });
             } catch (e) {
@@ -657,44 +654,6 @@ shared_1_0.open = function(params, cb) {
         } else {
             return cb(err, 15002);
         }
-    });
-};
-
-shared.open = function(req, cb) {
-    var body = req.body;
-    library.schema.validate(body, {
-        type: "object",
-        properties: {
-            secret: {
-                type: "string",
-                minLength: 1,
-                maxLength: 100
-            }
-        },
-        required: ["secret"]
-    }, function (err) {
-        if(err) {
-            return cb(err[0].message);
-        }
-        privated.openAccount(body.secret, function (err, account) {
-            var accountData = null;
-            if(!err) {
-                accountData = {
-                    master_address: account.master_address,
-                    balance_unconfirmed: account.balance_unconfirmed,
-                    balance: account.balance,
-                    master_pub: account.master_pub,
-                    signature_unconfirmed: account.signature_unconfirmed,
-                    secondsign: account.secondsign,
-                    second_pub: account.second_pub,
-                    multisignatures: account.multisignatures,
-                    multisignatures_unconfirmed: account.multisignatures_unconfirmed
-                };
-                return cb(null, {account: accountData});
-            } else {
-                return cb(err);
-            }
-        });
     });
 };
 

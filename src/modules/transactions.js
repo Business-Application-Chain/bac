@@ -11,6 +11,7 @@ var TransactionTypes = require('../utils/transaction-types.js');
 var Sequelize = require('sequelize');
 var modules_loaded, library, self, privated = {}, shared = {}, genesisblock = null, shared_1_0 = {};
 var constants = require('../utils/constants');
+var bacLib = require('bac-lib');
 
 privated.hiddenTransactions = [];
 privated.unconfirmedTransactions = [];
@@ -57,7 +58,7 @@ function Transaction() {
     };
 
     this.verify = function (txObj, sender, cb) {
-        if (txObj.recipientId.toLowerCase().match('/^[0-9]+[L|l]$/g')) {
+        if (!txObj.recipientId.match(/^[B]+[A-Za-z|0-9]{33}$/)) {
             return cb("Invalid recipient master_address");
         }
 
@@ -675,23 +676,24 @@ shared_1_0.addTransaction = function (params, cb) {
     var amount = params[0] || 0;
     var publicKey = params[1] || '';
     var recipientId = params[2] || '';
-    var secret = params[3] || '';
+    var mnemonic = params[3] || '';
     var secondSecret = params[4] || '';
     var multisigAccountPublicKey = params[5] || undefined;
 
-    if (!(amount && publicKey && recipientId && secret)) {
+    if (!(amount && publicKey && recipientId && mnemonic)) {
         return cb("miss must params", 11000);
     }
 
-    var hash = crypto.createHash('sha256').update(secret, 'utf8').digest();
-    var keypair = ed.MakeKeypair(hash);
+    let keyPair = library.base.account.getKeypair(mnemonic);
+
     if (publicKey) {
-        if (keypair.publicKey.toString('hex') != publicKey) {
+        if (keyPair.getPublicKeyBuffer().toString('hex') !== publicKey) {
             return cb("Invalid passphrase", 13005);
         }
     }
     var query = {};
-    var isAddress = /^[0-9]+[L|l]$/g;
+    //正则有问题，需要修改
+    var isAddress = /^[B]+[A-Za-z|0-9]{33}$/;
     if (isAddress.test(recipientId)) {
         query.master_address = recipientId;
     } else {
@@ -708,7 +710,7 @@ shared_1_0.addTransaction = function (params, cb) {
             recipientId = recipient ? recipient.master_address : query.master_address;
             var recipientUsername = recipient ? recipient.username : null;
 
-            if (multisigAccountPublicKey && multisigAccountPublicKey !== keypair.publicKey.toString('hex')) {
+            if (multisigAccountPublicKey && multisigAccountPublicKey !== keyPair.getPublicKeyBuffer().toString('hex')) {
                 library.modules.accounts.getAccount({publicKey: multisigAccountPublicKey}, function (err, account) {
                     if (err) {
                         return cb(err.toString());
@@ -760,7 +762,7 @@ shared_1_0.addTransaction = function (params, cb) {
                     });
                 });
             } else {
-                library.modules.accounts.getAccount({master_pub: keypair.publicKey.toString('hex')}, function (err, account) {
+                library.modules.accounts.getAccount({master_pub: keyPair.getPublicKeyBuffer().toString('hex')}, function (err, account) {
                     if (err) {
                         return cb(err.toString());
                     }
@@ -785,8 +787,7 @@ shared_1_0.addTransaction = function (params, cb) {
                             amount: amount,
                             sender: account,
                             recipientId: recipientId,
-                            recipientUsername: recipientUsername,
-                            keypair: keypair,
+                            keypair: keyPair,
                             secondKeypair: secondKeypair
                         });
                     } catch (e) {

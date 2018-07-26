@@ -305,7 +305,7 @@ Peer.prototype.addDapp = function (config, cb) {
         }
         var peerId = rows[0].id;
         library.dbClient.query("INSERT IGNORE INTO peers_dapp (peerId, dappId) VALUES ($peerId, $dappId)", {
-            type: Sequelize.QueryTypes.DELETE,
+            type: Sequelize.QueryTypes.INSERT,
             bind: {
                 peerId: peerId,
                 $dappId: config.dappId
@@ -343,7 +343,7 @@ Peer.prototype.update = function (peer, cb) {
     async.series([
         function (cb) {
             library.dbClient.query("INSERT IGNORE INTO peers (ip, port, state, os, sharePort, version) VALUES ($ip, $port, $state, $os, $sharePort, $version)", {
-                type: Sequelize.QueryTypes.DELETE,
+                type: Sequelize.QueryTypes.INSERT,
                 bind: {
                     ip: options.ip,
                     port: options.port,

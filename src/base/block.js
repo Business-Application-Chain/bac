@@ -10,7 +10,7 @@ var ByteBuffer = require('bytebuffer');
 var blockStatus = require('../utils/blockStatus.js');
 var bacLib = require('bac-lib');
 
-var self, privated = {};
+var self, privated = {}, library;
 
 privated.blockStatus = new blockStatus();
 
@@ -28,6 +28,7 @@ privated.getAddressByPublicKey = function (publicKey) {
 // constructor
 function Block(scope, cb) {
     this.scope = scope;
+    library = scope;
     self = this;
     genesisblock = this.scope.genesisblock;
 
@@ -37,63 +38,6 @@ function Block(scope, cb) {
 Block.prototype.calculateFee = function (blockObj) {
     return 10000000;
 }
-
-Block.prototype.create = function (data) {
-    var transactions = data.transactions.sort(function compare(a, b) { // sort transactions
-        if (a.type < b.type) return -1;
-        if (a.type > b.type) return 1;
-        if (a.amount < b.amount) return -1;
-        if (a.amount > b.amount) return 1;
-        return 0;
-    })
-
-    var nextHeight = (data.previousBlock) ? data.previousBlock.height + 1 : 1;
-
-    var reward = privated.blockStatus.calcReward(nextHeight),
-        totalFee = 0, totalAmount = 0, size = 0;
-
-    var blockTransactions = [];
-    var payloadHash = crypto.createHash('sha256');
-
-    for (var i = 0; i < transactions.length; i++) {
-        var txObj = transactions[i];
-        var bytes = this.scope.transaction.getBytes(txObj);
-
-        if (size + bytes.length > constants.maxPayloadLength) { // must less than max size
-            break;
-        }
-
-        size += bytes.length;
-
-        totalFee += txObj.fee;
-        totalAmount += txObj.amount;
-
-        blockTransactions.push(txObj);
-        payloadHash.update(bytes);
-    }
-
-    var blockObj = {
-        version: 0,
-        totalAmount: totalAmount,
-        totalFee: totalFee,
-        reward: reward,
-        payloadHash: payloadHash.digest().toString('hex'),
-        timestamp: data.timestamp,
-        numberOfTransactions: blockTransactions.length,
-        payloadLength: size,
-        previousBlock: data.previousBlock.id,
-        generatorPublicKey: data.keypair.publicKey.toString('hex'),
-        transactions: blockTransactions
-    };
-
-    try {
-        blockObj.blockSignature = this.sign(blockObj, data.keypair);
-    } catch (err) {
-        throw new Error(err.toString());
-    }
-
-    return blockObj;
-};
 
 Block.prototype.objectNormalize = function (block) {
     for (var i in block) {
@@ -113,7 +57,7 @@ Block.prototype.objectNormalize = function (block) {
             },
             blockSignature: {
                 type: "string",
-                format: "signature"
+                // format: "signature"
             },
             generatorPublicKey: {
                 type: "string",
@@ -205,7 +149,6 @@ Block.prototype.dbRead = function (raw) {
             payloadLength: parseInt(raw.b_payloadLength),
             payloadHash: raw.b_payloadHash,
             generatorPublicKey: raw.b_generatorPublicKey,
-            generatorId: privated.getAddressByPublicKey(raw.b_generatorPublicKey),
             blockSignature: raw.b_blockSignature,
             // confirmations: raw.b_confirmations
         }
@@ -287,24 +230,22 @@ Block.prototype.sign = function (blockObj, keypair) {
 };
 
 Block.prototype.verifySignature = function (blockObj) {
-    // var remove = 64;
-    //
-    // try {
-    //     var data1 = this.getBytes(blockObj);
-    //     var data2 = new Buffer(data1.length - remove);
-    //
-    //     for (var i = 0; i < data2.length; i++) {
-    //         data2[i] = data1[i];
-    //     }
-    //     var hash = crypto.createHash('sha256').update(data2).digest();
-    //     var blockSignatureBuffer = new Buffer(blockObj.blockSignature, 'hex');
-    //     var generatorPublicKeyBuffer = new Buffer(blockObj.generatorPublicKey, 'hex');
-    //     var res = ed.Verify(hash, blockSignatureBuffer || ' ', generatorPublicKeyBuffer || ' ');
-    // } catch (err) {
-    //     throw new Error(err.toString());
-    // }
+    let block = {
+        version: blockObj.version,
+        totalAmount: blockObj.totalAmount,
+        totalFee: blockObj.totalFee,
+        reward: blockObj.reward,
+        payloadHash: blockObj.payloadHash,
+        timestamp: blockObj.timestamp,
+        numberOfTransactions: blockObj.numberOfTransactions,
+        payloadLength: blockObj.payloadLength,
+        previousBlock: blockObj.previousBlock,
+        generatorPublicKey: blockObj.generatorPublicKey
+    };
     let blockSignature = new Buffer(blockObj.blockSignature, 'hex');
-    let res = bacLib.bacSign.verify(blockSignature, blockObj.generatorPublicKey);
+    let publicBuffer = Buffer.from(blockObj.generatorPublicKey, 'hex');
+    let address = bacLib.bacECpair.fromPublicKeyBuffer(publicBuffer).getAddress();
+    let res = bacLib.bacSign.verify(JSON.stringify(block), address, blockSignature);
 
     return res;
 };
@@ -326,7 +267,6 @@ Block.prototype.load = function (raw) {
             payloadLength: parseInt(raw.b_payloadLength),
             payloadHash: raw.b_payloadHash,
             generatorPublicKey: raw.b_generatorPublicKey,
-            generatorId: privated.getAddressByPublicKey(raw.b_generatorPublicKey),
             blockSignature: raw.b_blockSignature,
             confirmations: raw.b_confirmations
         }

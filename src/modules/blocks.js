@@ -14,7 +14,6 @@ var blockStatus = require('../utils/blockStatus.js');
 var csvtojson = require('csvtojson');
 var	ip = require('ip');
 var Json2csv = require('json2csv').Parser;
-var sendFactory = require('../utils/sendScoketFactory');
 
 /*var header = ['b_id', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward', 'b_payloadLength', 'b_payloadHash','b_generatorPublicKey','b_blockSignature','t_id',
     't_type','t_timestamp','t_senderPublicKey', 't_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature', 'd_username', 's_publicKey','c_address','u_alias',
@@ -113,7 +112,6 @@ privated.saveBlock = function (blockObj, cb) {
 
     library.dbClient.transaction(function (t1) {
         var save_records = [];
-        blockObj.timestamp = Date.now();
         save_records.push(library.base.block.save(blockObj, t1, function (err) {
             if (err) {
                 library.log.Error("saveBlock", "Error", err.toString());
@@ -319,32 +317,6 @@ privated.getIdSequence = function (height, cb) {
     });
 };
 
-// privated.getIdSequence = function (height, cb) {
-//     library.dbClient.query("SELECT s.height, group_concat(s.id) from ( " +
-//         'SELECT id, max(height) as height ' +
-//         'FROM blocks ' +
-//         'group by (cast(height / $delegates as integer) + (case when height % $delegates > 0 then 1 else 0 end)) having height <= $height ' +
-//         'union ' +
-//         'select id, 1 as height ' +
-//         'from blocks where height = 1 ' +
-//         'order by height desc ' +
-//         'limit $limit ' +
-//         ') s', {
-//         'height': height,
-//         'limit': 1000,
-//         'delegates': constants.delegates
-//     }, ['firstHeight', 'ids'], function (err, rows) {
-//         if (err || !rows.length) {
-//             cb(err ? err.toString() : "Can't get sequence before: " + height);
-//             return;
-//         }
-//
-//         cb(null, rows[0]);
-//     });
-// };
-
-
-
 privated.readDbRows = function (rows) {
     var blocks = {};
     var order = [];
@@ -352,9 +324,9 @@ privated.readDbRows = function (rows) {
         var __block = library.base.block.dbRead(rows[i]);
         if (__block) {
             if (!blocks[__block.id]) {
-                if (__block.id == genesisblock.block.id) {
-                    __block.generationSignature = (new Array(65)).join('0');
-                }
+                // if (__block.id == genesisblock.block.id) {
+                //     __block.generationSignature = (new Array(65)).join('0');
+                // }
                 order.push(__block.id);
                 blocks[__block.id] = __block;
             }
@@ -719,7 +691,7 @@ Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
 
     library.dbSequence.add(function (cb) {
         var sql = 'SELECT ' +
-            'b.id as b_id, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward, b.payloadLength as b_payloadLength, b.payloadHash as b_payloadHash, b.generatorPublicKey as b_generatorPublicKey,  lower(b.blockSignature) as b_blockSignature, ' +
+            'b.id as b_id, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward, b.payloadLength as b_payloadLength, b.payloadHash as b_payloadHash, b.generatorPublicKey as b_generatorPublicKey, b.blockSignature as b_blockSignature, ' +
             't.id as t_id, t.type as t_type, t.timestamp as t_timestamp, t.senderPublicKey as t_senderPublicKey, t.senderId as t_senderId, t.recipientId as t_recipientId, t.senderUsername as t_senderUsername, t.recipientUsername as t_recipientUsername, t.amount as t_amount, t.fee as t_fee, t.signature as t_signature, t.signSignature as t_signSignature,  ' +
             's.publicKey as s_publicKey, ' +
             'd.username as d_username, ' +
@@ -741,11 +713,6 @@ Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
         }).then((rows) => {
             var blocks = privated.readDbRows(rows);
 
-            blocks.forEach(function (block) {
-                block.blockSignature = block.blockSignature.toString('utf8');
-                block.generatorPublicKey = block.generatorPublicKey.toString('utf8');
-                block.payloadHash = block.payloadHash.toString('utf8');
-            });
             async.eachSeries(blocks, function (block, cb) {
                 async.series([
                     function (cb) {
@@ -937,11 +904,11 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                 if (block.version > 0) {
                     return done("Invalid block version: " + block.id);
                 }
-                var blockSlotNumber = slots.getSlotNumber(block.timestamp);
-                var lastBlockSlotNumber = slots.getSlotNumber(privated.lastBlock.timestamp);
-                if (blockSlotNumber > slots.getSlotNumber() || blockSlotNumber <= lastBlockSlotNumber) {
-                    return done("Can't verify block timestamp: " + block.id);
-                }
+                // var blockSlotNumber = slots.getSlotNumber(block.timestamp);
+                // var lastBlockSlotNumber = slots.getSlotNumber(privated.lastBlock.timestamp);
+                // if (blockSlotNumber > slots.getSlotNumber() || blockSlotNumber <= lastBlockSlotNumber) {
+                //     return done("Can't verify block timestamp: " + block.id);
+                // }
                 //用户信息，需要添加回去。暂时注释
                 // library.modules.delegates.validateBlockSlot(block, function (err) {
                 //     if (err) {

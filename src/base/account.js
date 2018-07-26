@@ -7,6 +7,7 @@ var bignum = require('../utils/bignum.js');
 var jsonSql = require('../json-sql')({dialect: 'mysql'});
 
 var privated = {};
+var bacLib = require('bac-lib');
 
 // constructor
 function Account(scope, cb) {
@@ -1020,7 +1021,10 @@ Account.prototype.merge = function (master_address, fields, cb) {
                 var promiseList = [];
                 sqles.forEach(function (sql) {
                     promiseList.push(
-                        self.scope.dbClient.query(sql.query, {bind: sql.values, transaction: t})
+                        self.scope.dbClient.query(sql.query, {
+                            bind: sql.values,
+                            transaction: t
+                        })
                     );
                 });
                 return Promise.all(promiseList);
@@ -1043,13 +1047,20 @@ Account.prototype.merge = function (master_address, fields, cb) {
                 });
                 return Promise.all(promiseList);
             }).then(() => {
-                cb();
+                    cb();
             }).catch((err) => {
                 console.log(err);
                 cb(err);
             });
         }
     ], done);
+};
+
+Account.prototype.getKeypair = function (mnemonic) {
+    let seed = bacLib.bacBip39.mnemonicToSeed(mnemonic);
+    let node = bacLib.bacHDNode.fromSeedHex(seed);
+    let keyPair = bacLib.bacECpair.fromWIF(node.keyPair.toWIF());
+    return keyPair;
 };
 
 Account.prototype.remove = function (master_address, cb) {
