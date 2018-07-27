@@ -51,10 +51,10 @@
 }
 
 
-.list-enter-active, .list-leave-active {
+.explorer-list-enter-active, .explorer-list-leave-active {
     transition: all .3s;
 }
-.list-enter, .list-leave-to
+.explorer-list-enter, .explorer-list-leave-to
 /* .list-leave-active for below version 2.1.8 */ {
     opacity: 0;
     transform: translateY(30px);

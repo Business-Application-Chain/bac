@@ -1,23 +1,26 @@
 <template>
     <div class="index-page">
         <login-header></login-header>
-        <div class="page-title first-title"><b>BAC</b></div>
-        <div class="page-title second-title"><b>An Open Network For <br> Smart Economy</b></div>
-        <div class="login-btns">
-            <router-link class="login-btn" to="/login/import">
-                <i class="iconfont upload-icon">&#xe606;</i>
-                {{$t('openWallet')}}
-            </router-link>
-            <router-link class="login-btn" to="/login/gen">
-                <i class="iconfont">&#xe613;</i>
-                {{$t('createWallet')}}
-            </router-link>
-            
-            <router-link class="login-btn" to="/login/write">
-                <i class="iconfont">&#xe614;</i>
-                {{$t('createFile')}}
-            </router-link>
+        <div class="page-main">
+            <div class="page-title first-title"><b>BAC</b></div>
+            <div class="page-title second-title"><b>An Open Network For <br> Smart Economy</b></div>
+            <div class="login-btns">
+                <router-link class="login-btn" to="/login/import">
+                    <i class="iconfont upload-icon">&#xe606;</i>
+                    {{$t('openWallet')}}
+                </router-link>
+                <router-link class="login-btn" to="/login/gen">
+                    <i class="iconfont">&#xe613;</i>
+                    {{$t('createWallet')}}
+                </router-link>
+                
+                <router-link class="login-btn" to="/login/write">
+                    <i class="iconfont">&#xe614;</i>
+                    {{$t('createFile')}}
+                </router-link>
+            </div>
         </div>
+        
             
     </div>
 </template>
@@ -36,10 +39,18 @@
     .index-page{
         background: #121F3E;
         min-height: 100%;
+        display: flex;
+        flex-direction: column;
 
         .login-btns{
             width: 370px;
             margin: 58px auto;
+        }
+
+        .page-main{
+            flex: 1;
+            background: url('../assets/images/indexbg.jpg') left top no-repeat;
+            background-size:cover
         }
 
         .login-btn{

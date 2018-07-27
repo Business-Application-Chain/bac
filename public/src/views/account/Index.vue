@@ -76,6 +76,7 @@
     import api from '~/js/api/index'
     import {mapState} from 'vuex'
     import Toast from '~/components/ui/toast/index'
+    import sha256 from 'crypto-js/sha256'
 
     export default {
         data () {
@@ -107,7 +108,7 @@
 
         methods: {
             submit () {
-                api.account.addUsername([this.key.mnemonic, this.username, this.account.publicKey, this.password]).then(res => {
+                api.account.addUsername([this.key.mnemonic, this.username, this.account.publicKey, sha256(this.password).toString()]).then(res => {
                     if (res === null) return;
 
                     this.$store.dispatch('setAccount', {username: this.username})
