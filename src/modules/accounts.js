@@ -12,6 +12,7 @@ var Diff = require('../utils/diff.js');
 var bip39 = require('bip39');
 var util = require('util');
 var bacLib = require('bac-lib');
+// var Mnemonic = require('bac-mnemonic');
 
 // private objects
 var modules_loaded, library, self, privated = {}, shared = {}, shared_1_0 = {};
@@ -380,7 +381,7 @@ function Accounts(cb, scope) {
 // private methods
 privated.generateMnemonic = function () {
     var mnemonic = bip39.generateMnemonic();
-    return mnemonic.toString('hex');
+    return mnemonic;
 };
 
 privated.openAccount = function (secret, cb) {
@@ -654,6 +655,26 @@ shared_1_0.open = function(params, cb) {
         } else {
             return cb(err, 15002);
         }
+    });
+};
+
+shared_1_0.getPrivateKey = function(params, cb) {
+    let mnemonic = params[0] || undefined;
+    if(!mnemonic) {
+        return cb('missing params', 11000);
+    }
+    let keyPair = library.base.account.getKeypair(mnemonic);
+    let privateKey = keyPair.d.toBuffer(32);
+    return cb(null, 200, privateKey.toString('hex'));
+};
+
+shared_1_0.getMnemonic = function(params, cb) {
+    let mnemonic = privated.generateMnemonic();
+    let keyPair = library.base.account.getKeypair(mnemonic);
+    let privateKey = keyPair.d.toBuffer('hex');
+    return cb(null, 200, {
+        mnemonic: mnemonic,
+        privateKey: privateKey.toString('hex')
     });
 };
 
