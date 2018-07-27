@@ -41,6 +41,7 @@
     import {mapState} from 'vuex'
     import api from '../js/api/index'
     import Toast from '~/components/ui/toast/index'
+    import sha256 from 'crypto-js/sha256'
     
     export default {
         data () {
@@ -93,7 +94,7 @@
         methods: {
             submit () {
                 this.okLoading = true
-                api.transactions.add([this.amount * Math.pow(10, 8), this.account.publicKey, this.recipientAddress, this.key.mnemonic, this.password]).then(res => {
+                api.transactions.add([this.amount * Math.pow(10, 8), this.account.publicKey, this.recipientAddress, this.key.mnemonic, sha256(this.password).toString()]).then(res => {
                     this.okLoading = false
                     if (res === null) return;
 

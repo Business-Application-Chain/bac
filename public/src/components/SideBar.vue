@@ -17,7 +17,7 @@
             <img class="comp-item_hd" src="../assets/images/contact@3x.png" />
             <div class="comp-item_ft">联系人</div>
         </router-link>
-        <router-link :to="{name: 'browser'}" class="comp-item" :class="{active: name == 'browser'}">
+        <router-link :to="{name: 'explorer'}" class="comp-item" :class="{active: name == 'browser'}">
             <img class="comp-item_hd" src="../assets/images/browser@3x.png" />
             <div class="comp-item_ft">浏览器</div>
         </router-link>

@@ -34,6 +34,7 @@
     import XInput from '~/components/ui/XInput.vue'
     import api from '~/js/api/index'
     import {mapState} from 'vuex'
+    import sha256 from 'crypto-js/sha256'
 
     export default {
         data () {
@@ -104,7 +105,7 @@
                 }
 
                 this.okLoading = true
-                api.contacts.add([this.key.mnemonic, this.account.publicKey, this.compAddress, this.password]).then(res => {
+                api.contacts.add([this.key.mnemonic, this.account.publicKey, this.compAddress, sha256(this.password).toString()]).then(res => {
                     this.okLoading = false
                     if (res === null) return;
                     this.compVisible = false
