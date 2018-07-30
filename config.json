@@ -6,11 +6,11 @@
     "sharePort": true,
     "version": "0.1.3",
     "db": {
-        "host": "127.0.0.1",
+        "host": "10.0.248.211",
         "port": "3306",
         "name": "db_entu",
-        "user": "root",
-        "password": "123456"
+        "user": "test",
+        "password": "test"
     },
     "peers": {
         "list": [

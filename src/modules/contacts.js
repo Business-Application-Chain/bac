@@ -382,6 +382,7 @@ shared.getUnconfirmedContacts = function (req, cb) {
 shared_1_0.contacts = function(params, cb) {
     let publicKey = params[0];
     let address = library.modules.accounts.generateAddressByPubKey(publicKey);
+    // let address = params[0];
     privated.getContacts(address, function (err, data) {
         if(err) {
             return cb(err, 14004);
@@ -399,7 +400,7 @@ shared_1_0.count = function(params, cb) {
         }
         return cb(null, 200, data.number);
     });
-}
+};
 
 shared_1_0.addContact = function(params, cb) {
     let data = {
