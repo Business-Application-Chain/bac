@@ -533,7 +533,7 @@ Blocks.prototype.onReceiveBlock = function (blockObj) {
 
 };
 
-/*Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
+Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
     var loaded = false;
     var count = 0;
     var lastValidBlock = null;
@@ -608,9 +608,9 @@ Blocks.prototype.onReceiveBlock = function (blockObj) {
         function (err) {
             setImmediate(cb, err, lastValidBlock);
         });
-};*/
+};
 
-Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
+/*Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
     var loaded = false;
     var count = 0;
     var lastValidBlock = null;
@@ -684,7 +684,7 @@ Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
         function (err) {
             setImmediate(cb, err, lastValidBlock);
         });
-};
+};*/
 
 
 Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {

@@ -37,7 +37,7 @@ privated.updatePeerList = function (cb) {
             return cb();
         }
 
-        let peers = data.body.result || [];
+        let peers = data.result || [];
         if(!peers) {
             return cb();
         }

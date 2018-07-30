@@ -248,7 +248,7 @@ privated.loadUnconfirmedTransactions = function (cb) {
             console.log(data);
             return cb();
         }
-        var transactions = data.body.result;
+        var transactions = data.result;
 
         for (var i = 0; i < transactions.length; i++) {
             try {
