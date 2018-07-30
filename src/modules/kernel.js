@@ -61,7 +61,13 @@ Kernel.prototype.broadcastNew = function(config, options, cb) {
     library.modules.peer.list(config, function (err, peers) {
         if (!err) {
             async.eachLimit(peers, 3, function (peer, cb) {
-                self.getFromPeerNews(peer, options);
+                self.getFromPeerNews(peer, options, function (err, data) {
+                    if(err) {
+                    } else {
+                        console.log(data);
+                    }
+
+                });
 
                 setImmediate(cb);
             }, function () {
@@ -210,7 +216,7 @@ Kernel.prototype.getFromPeerNews = function (peer, options, cb) {
             });
         }
         if(body.code !== 200) {
-            return cb(body.err, {error: body.error, code: body.code, peer: peer});
+            return cb && cb(body.err, {error: body.error, code: body.code, peer: peer});
         }
 
         return cb && cb(null, {result: body.result, code: body.code, peer: peer});
