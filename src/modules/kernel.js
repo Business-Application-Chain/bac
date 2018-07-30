@@ -210,9 +210,7 @@ Kernel.prototype.getFromPeerNews = function (peer, options, cb) {
             });
         }
         if(body.code !== 200) {
-            console.log('err >>>>>>>>>>>>>>>>>>>>>');
-            console.log(body);
-            return cb && cb(body.err, {error: body.error, code: body.code, peer: peer});
+            return cb(body.err, {error: body.error, code: body.code, peer: peer});
         }
 
         return cb && cb(null, {result: body.result, code: body.code, peer: peer});
