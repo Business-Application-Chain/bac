@@ -121,7 +121,7 @@ Kernel.prototype.getFromRandomPeerNews = function (config, options, cb) {
             }
         });
     }, function (err, result) {
-        cb(err, result);
+        return cb(err, result);
     });
 };
 
@@ -141,7 +141,7 @@ Kernel.prototype.getFromPeerNews = function (peer, options, cb) {
         timeout: library.config.peers.optional.timeout,
         pool: {maxSockets: 1000},
     };
-    return request(req, function (err, response, body) {
+    request(req, function (err, response, body) {
         if (err || response.statusCode !== 200) {
             library.log.Debug("Request", "Error", err);
 
@@ -163,8 +163,8 @@ Kernel.prototype.getFromPeerNews = function (peer, options, cb) {
                 }
             }
 
-            cb && cb(err || ("Request status code " + response.statusCode));
-            return;
+            return cb && cb(err || ("Request status code " + response.statusCode));
+
         }
 
         response.headers.port = parseInt(response.headers.port);
@@ -210,7 +210,7 @@ Kernel.prototype.getFromPeerNews = function (peer, options, cb) {
             });
         }
         if(body.code !== 200) {
-            return cb(body.err, {error: body.error, code: body.code, peer: peer});
+            return cb && cb(body.error, {error: body.error, code: body.code, peer: peer});
         }
 
         return cb && cb(null, {result: body.result, code: body.code, peer: peer});
@@ -340,7 +340,7 @@ Kernel.prototype.onBlockchainReady = function () {
 
 Kernel.prototype.onUnconfirmedTransaction = function (transaction, broadcast) {
     if (broadcast) {
-        self.broadcast({limit: 100}, {api: '/transactions', data: {transaction: transaction}, method: "POST"});
+        // self.broadcast({limit: 100}, {api: '/transactions', data: {transaction: transaction}, method: "POST"});
         self.broadcastNew({limit: 100}, {
             api:'kernel',
             method:'POST',
@@ -425,7 +425,7 @@ shared_1_0.getTransactions = function(req, cb) {
 
 shared_1_0.addTransactions = function(params, cb) {
     try {
-        var transaction = library.logic.transaction.objectNormalize(params.transaction);
+        var transaction = library.base.transaction.objectNormalize(params.transaction);
     } catch (e) {
         // var peerIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
         // var peerStr = peerIp ? peerIp + ":" + (isNaN(req.headers.port) ? 'unknown' : req.headers.port) : 'unknown';
@@ -491,6 +491,10 @@ shared_1_0.transactions = function (req, cb) {
             return cb(null, 200, "SUCCESS");
         }
     });
+};
+
+shared_1_0.signatures = function(req, cb) {
+
 };
 
 shared_1_0.getUnconfirmedTransactions = function(req, cb) {

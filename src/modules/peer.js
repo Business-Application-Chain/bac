@@ -477,9 +477,5 @@ shared_1_0.version = function(req, cb) {
     return cb(null, errorCode.server.SUCCESS, library.config.version);
 };
 
-shared.peer_list = function (req, cb) {
-    console.log(req);
-};
-
 // export
 module.exports = Peer;

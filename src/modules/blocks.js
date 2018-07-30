@@ -15,12 +15,12 @@ var csvtojson = require('csvtojson');
 var	ip = require('ip');
 var Json2csv = require('json2csv').Parser;
 
-/*var header = ['b_id', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward', 'b_payloadLength', 'b_payloadHash','b_generatorPublicKey','b_blockSignature','t_id',
-    't_type','t_timestamp','t_senderPublicKey', 't_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature', 'd_username', 's_publicKey','c_address','u_alias',
-    'm_min','m_lifetime','m_keysgroup','t_requesterPublicKey','t_signatures'];*/
 var header = ['b_id', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward', 'b_payloadLength', 'b_payloadHash','b_generatorPublicKey','b_blockSignature','t_id',
+    't_type','t_timestamp','t_senderPublicKey', 't_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature', 'd_username', 's_publicKey','c_address','u_alias',
+    'm_min','m_lifetime','m_keysgroup','t_requesterPublicKey','t_signatures'];
+/*var header = ['b_id', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward', 'b_payloadLength', 'b_payloadHash','b_generatorPublicKey','b_blockSignature','t_id',
     't_type','t_timestamp','t_senderPublicKey', 't_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature','s_publicKey','d_username','v_votes','c_address','u_alias',
-    'm_min','m_lifetime','m_keysgroup','dapp_name','dapp_description','dapp_tags','dapp_type','dapp_siaAscii','dapp_siaIcon','dapp_git','dapp_category','dapp_icon','in_dappId','ot_dappId','ot_outTransactionId','t_requesterPublicKey','t_signatures'];
+    'm_min','m_lifetime','m_keysgroup','dapp_name','dapp_description','dapp_tags','dapp_type','dapp_siaAscii','dapp_siaIcon','dapp_git','dapp_category','dapp_icon','in_dappId','ot_dappId','ot_outTransactionId','t_requesterPublicKey','t_signatures'];*/
 
 require('array.prototype.findindex'); // Old node fix
 

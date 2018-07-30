@@ -512,7 +512,7 @@ Transaction.prototype.getTrsJson = function(txObj) {
         type: txObj.type,
         amount: txObj.amount,
         senderId: txObj.senderId,
-        recipientId: txObj.recipientId,
+        recipientId: txObj.recipientId || null,
         senderPublicKey: txObj.senderPublicKey,
         timestamp: txObj.timestamp,
         asset: txObj.asset
@@ -532,7 +532,7 @@ Transaction.prototype.verifyTrsSignature = function(txObj) {
         type: txObj.type,
         amount: txObj.amount,
         senderId: txObj.senderId,
-        recipientId: txObj.recipientId,
+        recipientId: txObj.recipientId || null,
         senderPublicKey: txObj.senderPublicKey,
         timestamp: txObj.timestamp,
         asset: txObj.asset
