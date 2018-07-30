@@ -44,12 +44,12 @@ Kernel.prototype.broadcast = function (config, options, cb) {
     library.modules.peer.list(config, function (err, peers) {
         if (!err) {
             async.eachLimit(peers, 3, function (peer, cb) {
-                self.getFromPeer(peer, options);
+                self.getFromPeerNews(peer, options);
 
                 setImmediate(cb);
             }, function () {
                 cb && cb(null, {body: null, peer: peers});
-            })
+            });
         } else {
             cb && setImmediate(cb, err);
         }
@@ -354,13 +354,6 @@ Kernel.prototype.onUnconfirmedTransaction = function (transaction, broadcast) {
     }
 };
 
-shared_1_0.test = function (params, cb) {
-    let p = [];
-    params = params.slice(1, params.length - 1);
-    p = params.split(',');
-    return cb(null, 200, '1.0 success params1 -> ' + p[0] + ';params2 -> ' + p[1]);
-};
-
 
 shared_1_0.list = function (req, cb) {
     library.modules.peer.list({limit: 100}, function (err, peers) {
@@ -394,6 +387,10 @@ shared_1_0.blocks = function (params, cb) {
         }
         return cb(null, 200, data);
     });
+};
+
+shared_1_0.lastBlockId = function (req, cb) {
+    return cb(null, 200, library.modules.blocks.getLastBlock().id);
 };
 
 shared_1_0.blocks_common = function (params, cb) {
@@ -494,6 +491,14 @@ shared_1_0.transactions = function (req, cb) {
             return cb(null, 200, "SUCCESS");
         }
     });
+};
+
+shared_1_0.getUnconfirmedTransactions = function(req, cb) {
+    let unTransactions = library.modules.transactions.getUnconfirmedTransactionList();
+    let data = {
+        unconfirmedTransactions : unTransactions
+    };
+    return cb(null, 200, data);
 };
 
 // export

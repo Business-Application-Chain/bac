@@ -28,8 +28,8 @@ privated.loadApp = function () {
     library.notification_center.notify('blockchainReady');
 };
 
-/*privated.loadBlocks = function(lastBlock, cb) {
-    library.modules.kernel.getFromRandomPeer({
+privated.loadBlocks = function(lastBlock, cb) {
+    library.modules.kernel.getFromRandomPeerNews({
         api:'kernel',
         method:'POST',
         func:'height',
@@ -40,10 +40,6 @@ privated.loadApp = function () {
         var peerStr = data && data.peer ? ip.fromLong(data.peer.ip) + ":" + data.peer.port : 'unknown';
         if (err || data.code !== 200) {
             library.log.Info("Failed to get height from peer: " + peerStr);
-            library.socket.webSocket.send("123456", function (err, data) {
-                console.log("err -> ", err);
-                console.log("data -> ", data);
-            });
             return cb();
         }
         library.log.Info("Check blockchain on " + peerStr);
@@ -56,7 +52,11 @@ privated.loadApp = function () {
 
         if (bignum(library.modules.blocks.getLastBlock().height).lt(height)) { // Diff in chainbases
             privated.blocksToSync = height;
-
+            library.socket.webSocket.send('201|kernel|status|' + JSON.stringify({
+                height: library.modules.blocks.getLastBlock().height,
+                peerHeight: height,
+                peerCount: library.modules.peer.getCount()
+            }));
             if (lastBlock.id != privated.genesisBlock.block.id) { // Have to find common block
                 // console.log('findUpdate');
                 privated.findUpdate(lastBlock, data.peer, cb);
@@ -67,9 +67,9 @@ privated.loadApp = function () {
             cb();
         }
     });
-};*/
+};
 
-privated.loadBlocks = function(lastBlock, cb) {
+/*privated.loadBlocks = function(lastBlock, cb) {
     library.modules.kernel.getFromRandomPeer({
         api: '/height',
         method: 'GET'
@@ -104,7 +104,7 @@ privated.loadBlocks = function(lastBlock, cb) {
             cb();
         }
     });
-};
+};*/
 
 
 privated.loadBlockChain = function () {
@@ -220,27 +220,35 @@ privated.loadBlockChain = function () {
 };
 
 privated.loadUnconfirmedTransactions = function (cb) {
-    library.modules.kernel.getFromRandomPeer({
-        api: '/transactions',
-        method: 'GET'
+    library.modules.kernel.getFromPeerNews({
+        api: '/kernel',
+        method: 'post',
+        func: 'transactions',
+        id: 10,
+        jsonrpc: '1.0'
     }, function (err, data) {
         if(err) {
             return cb();
         }
-        var report = library.schema.validate(data.body, {
-            type: "object",
-            properties: {
-                transactions: {
-                    type: "array",
-                    uniqueItems: true
-                }
-            },
-            required: ['transactions']
-        });
-        if (!report) {
+        // var report = library.schema.validate(data.body, {
+        //     type: "object",
+        //     properties: {
+        //         transactions: {
+        //             type: "array",
+        //             uniqueItems: true
+        //         }
+        //     },
+        //     required: ['transactions']
+        // });
+        // if (!report) {
+        //     return cb();
+        // }
+
+        if(data.code !== 200) {
+            console.log(data);
             return cb();
         }
-        var transactions = data.body.transactions;
+        var transactions = data.body.result;
 
         for (var i = 0; i < transactions.length; i++) {
             try {

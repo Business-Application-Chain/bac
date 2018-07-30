@@ -99,7 +99,7 @@ function Delegate() {
                 return setImmediate(cb, "Username contains invalid characters");
             }
 
-            var isAddress = /^[0-9]+[L|l]$/g;
+            var isAddress = /^[B]+[A-Za-z|0-9]{33}$/;
             if (isAddress.test(txObj.asset.delegate.username)) {
                 return setImmediate(cb, "Username cannot be a potential address");
             }

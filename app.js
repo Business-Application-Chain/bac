@@ -17,7 +17,7 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
 app.use(require('express-domain-middleware'));
-app.use(favicon(path.join(__dirname, 'public/public', 'favicon.ico')));
+app.use(favicon(path.join(__dirname, 'public/dist', 'favicon.ico')));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true, parameterLimit: 5000 }));
 app.use(cookieParser());

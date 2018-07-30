@@ -394,7 +394,7 @@ Blocks.prototype.onInit = function (scope) {
     modules_loaded = scope && scope != undefined ? true : false;
 };
 
-/*Blocks.prototype.getCommonBlock = function(peer, height, cb) {
+Blocks.prototype.getCommonBlock = function(peer, height, cb) {
     var commonBlock = null;
     var lastBlockHeight = height;
     var count = 0;
@@ -450,8 +450,9 @@ Blocks.prototype.onInit = function (scope) {
             setImmediate(cb, err, commonBlock);
         }
     );
-};*/
+};
 
+/*
 Blocks.prototype.getCommonBlock = function(peer, height, cb) {
     var commonBlock = null;
     var lastBlockHeight = height;
@@ -501,6 +502,7 @@ Blocks.prototype.getCommonBlock = function(peer, height, cb) {
         }
     );
 };
+*/
 
 
 Blocks.prototype.deleteBlocksBefore = function (block, cb) {

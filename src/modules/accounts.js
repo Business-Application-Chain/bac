@@ -254,7 +254,7 @@ function Username() {
             return setImmediate(cb, "Username must only contain alphanumeric characters (with the exception of !@$&_)");
         }
 
-        var isAddress = /^[0-9]+[L|l]$/g;
+        var isAddress = /^[B]+[A-Za-z|0-9]{33}$/;
         if (isAddress.test(txObj.asset.username.alias.toLowerCase())) {
             return setImmediate(cb, "Username cannot be a potential address");
         }
@@ -487,7 +487,7 @@ Accounts.prototype.onInit = function (scope) {
 
 shared_1_0.getBalance = function(params, cb) {
     let address = params[0];
-    let isAddress = /^[0-9]+[L|l]$/g;
+    let isAddress = /^[B]+[A-Za-z|0-9]{33}$/;
     if (!isAddress.test(address)) {
         return cb("Invalid address");
     }
