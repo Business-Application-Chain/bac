@@ -452,59 +452,6 @@ Blocks.prototype.getCommonBlock = function(peer, height, cb) {
     );
 };
 
-/*
-Blocks.prototype.getCommonBlock = function(peer, height, cb) {
-    var commonBlock = null;
-    var lastBlockHeight = height;
-    var count = 0;
-
-    async.whilst(
-        function () {
-            return !commonBlock && count < 30 && lastBlockHeight > 1;
-        },
-        function (next) {
-            count++;
-            privated.getIdSequence(lastBlockHeight, function (err, data) {
-                if(err) {
-                    return next(err);
-                }
-                let max = lastBlockHeight;
-                lastBlockHeight = data.firstHeight;
-                library.modules.kernel.getFromPeer(peer, {
-                    api: "/blocks/common?ids=" + data.ids + ',&max=' + max + '&min=' + lastBlockHeight,
-                    method: "GET"
-                }, function (err, data) {
-                    if (err) {
-                        return next(err || data.message);
-                    }
-                    var cBlock = data.body.common || null;
-                    if (!cBlock) {
-                        return next();
-                    }
-                    library.dbClient.query(`SELECT COUNT(*) as cnt from blocks where id="${cBlock.id}" and height=${cBlock.height}`,{
-                        type:Sequelize.QueryTypes.SELECT
-                    }).then((rows) => {
-                        if(!rows.length) {
-                            return next("Can't compare blocks");
-                        }
-                        if (rows[0].cnt) {
-                            commonBlock = cBlock;
-                        }
-                        next();
-                    }).catch((err) => {
-                        setImmediate(cb, err, commonBlock);
-                    });
-                });
-            });
-        },
-        function (err) {
-            setImmediate(cb, err, commonBlock);
-        }
-    );
-};
-*/
-
-
 Blocks.prototype.deleteBlocksBefore = function (block, cb) {
     var blocks = [];
 
@@ -589,6 +536,8 @@ Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
                                 lastValidBlock = block;
                                 cb();
                             } else {
+                                console.log('err err err err err err err err err')
+                                console.log(err);
                                 var peerStr = data.peer ? ip.fromLong(data.peer.ip) + ":" + data.peer.port : 'unknown';
                                 library.log.Info('Block ' + (block ? block.id : 'null') + ' is not valid, ban 60 min', peerStr);
                                 library.modules.peer.state(peer.ip, peer.port, 0, 3600);
@@ -609,83 +558,6 @@ Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
             setImmediate(cb, err, lastValidBlock);
         });
 };
-
-/*Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
-    var loaded = false;
-    var count = 0;
-    var lastValidBlock = null;
-
-    async.whilst(
-        function () {
-            return !loaded && count < 30;
-        },
-        function (next) {
-            async.waterfall([
-                function (cb) {
-                    count++;
-                    library.modules.kernel.getFromPeer(peer, {
-                        method: "GET",
-                        api: '/blocks?lastBlockId=' + lastCommonBlockId
-                    }, function (err, data) {
-                        if (err) {
-                            return next(err || data.message);
-                        }
-                        let blocks = data.body.blocks;
-                        let blocksTemp = [];
-                        if (typeof blocks === 'string') {
-                            csvtojson({
-                                noheader: true,
-                                headers: header
-                            }).fromString(blocks).subscribe((csvLine) => {
-                                blocksTemp.push(csvLine);
-                            }).then(() => {
-                                blocks = privated.readDbRows(blocksTemp);
-                                cb(null, blocks, data);
-                            }).catch((err) => {
-                                cb(err);
-                            });
-                        }
-                    });
-                }, function (blocks, data, cb) {
-                    async.eachSeries(blocks, function (block, cb) {
-                        try {
-                            block = library.base.block.objectNormalize(block);
-                        } catch (e) {
-                            var peerStr = data.peer ? ip.fromLong(data.peer.ip) + ":" + data.peer.port : 'unknown';
-                            library.log.Debug('Block ' + (block ? block.id : 'null') + ' is not valid, ban 60 min', peerStr);
-                            library.modules.peer.state(peer.ip, peer.port, 0, 3600);
-                            cb(e.toString());
-                        }
-                        self.processBlock(block, false, function (err) {
-                            if (!err) {
-                                lastCommonBlockId = block.id;
-                                lastValidBlock = block;
-                                cb();
-                            } else {
-                                var peerStr = data.peer ? ip.fromLong(data.peer.ip) + ":" + data.peer.port : 'unknown';
-                                library.log.Info('Block ' + (block ? block.id : 'null') + ' is not valid, ban 60 min', peerStr);
-                                library.modules.peer.state(peer.ip, peer.port, 0, 3600, function (err) {
-                                    if(err) {
-                                        cb(err);
-                                    }
-                                });
-                            }
-                        });
-                    }, cb);
-                }
-            ], function (err, data) {
-                if(err) {
-                    return setImmediate(cb, err);
-                } else {
-                    cb();
-                }
-            });
-        },
-        function (err) {
-            setImmediate(cb, err, lastValidBlock);
-        });
-};*/
-
 
 Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
     var newLimit = limit + (offset || 0);
