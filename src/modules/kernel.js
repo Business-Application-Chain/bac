@@ -44,12 +44,12 @@ Kernel.prototype.broadcast = function (config, options, cb) {
     library.modules.peer.list(config, function (err, peers) {
         if (!err) {
             async.eachLimit(peers, 3, function (peer, cb) {
-                self.getFromPeer(peer, options);
+                self.getFromPeerNews(peer, options);
 
                 setImmediate(cb);
             }, function () {
                 cb && cb(null, {body: null, peer: peers});
-            })
+            });
         } else {
             cb && setImmediate(cb, err);
         }
@@ -121,7 +121,7 @@ Kernel.prototype.getFromRandomPeerNews = function (config, options, cb) {
             }
         });
     }, function (err, result) {
-        cb(err, result);
+        return cb(err, result);
     });
 };
 
@@ -141,7 +141,7 @@ Kernel.prototype.getFromPeerNews = function (peer, options, cb) {
         timeout: library.config.peers.optional.timeout,
         pool: {maxSockets: 1000},
     };
-    return request(req, function (err, response, body) {
+    request(req, function (err, response, body) {
         if (err || response.statusCode !== 200) {
             library.log.Debug("Request", "Error", err);
 
@@ -163,8 +163,8 @@ Kernel.prototype.getFromPeerNews = function (peer, options, cb) {
                 }
             }
 
-            cb && cb(err || ("Request status code " + response.statusCode));
-            return;
+            return cb && cb(err || ("Request status code " + response.statusCode));
+
         }
 
         response.headers.port = parseInt(response.headers.port);
@@ -340,7 +340,7 @@ Kernel.prototype.onBlockchainReady = function () {
 
 Kernel.prototype.onUnconfirmedTransaction = function (transaction, broadcast) {
     if (broadcast) {
-        self.broadcast({limit: 100}, {api: '/transactions', data: {transaction: transaction}, method: "POST"});
+        // self.broadcast({limit: 100}, {api: '/transactions', data: {transaction: transaction}, method: "POST"});
         self.broadcastNew({limit: 100}, {
             api:'kernel',
             method:'POST',
@@ -352,13 +352,6 @@ Kernel.prototype.onUnconfirmedTransaction = function (transaction, broadcast) {
         library.socket.webSocket.send('201|transactions|transaction|' + JSON.stringify(transaction));
         // 通知前端，产生新的交易
     }
-};
-
-shared_1_0.test = function (params, cb) {
-    let p = [];
-    params = params.slice(1, params.length - 1);
-    p = params.split(',');
-    return cb(null, 200, '1.0 success params1 -> ' + p[0] + ';params2 -> ' + p[1]);
 };
 
 
@@ -396,6 +389,10 @@ shared_1_0.blocks = function (params, cb) {
     });
 };
 
+shared_1_0.lastBlockId = function (req, cb) {
+    return cb(null, 200, library.modules.blocks.getLastBlock().id);
+};
+
 shared_1_0.blocks_common = function (params, cb) {
     let reqParams = JSON.parse(params);
     let max = reqParams.max || 0;
@@ -428,7 +425,7 @@ shared_1_0.getTransactions = function(req, cb) {
 
 shared_1_0.addTransactions = function(params, cb) {
     try {
-        var transaction = library.logic.transaction.objectNormalize(params.transaction);
+        var transaction = library.base.transaction.objectNormalize(params.transaction);
     } catch (e) {
         // var peerIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
         // var peerStr = peerIp ? peerIp + ":" + (isNaN(req.headers.port) ? 'unknown' : req.headers.port) : 'unknown';
@@ -494,6 +491,18 @@ shared_1_0.transactions = function (req, cb) {
             return cb(null, 200, "SUCCESS");
         }
     });
+};
+
+shared_1_0.signatures = function(req, cb) {
+
+};
+
+shared_1_0.getUnconfirmedTransactions = function(req, cb) {
+    let unTransactions = library.modules.transactions.getUnconfirmedTransactionList();
+    let data = {
+        unconfirmedTransactions : unTransactions
+    };
+    return cb(null, 200, data);
 };
 
 // export

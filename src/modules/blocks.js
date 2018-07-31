@@ -15,12 +15,12 @@ var csvtojson = require('csvtojson');
 var	ip = require('ip');
 var Json2csv = require('json2csv').Parser;
 
-/*var header = ['b_id', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward', 'b_payloadLength', 'b_payloadHash','b_generatorPublicKey','b_blockSignature','t_id',
-    't_type','t_timestamp','t_senderPublicKey', 't_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature', 'd_username', 's_publicKey','c_address','u_alias',
-    'm_min','m_lifetime','m_keysgroup','t_requesterPublicKey','t_signatures'];*/
 var header = ['b_id', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward', 'b_payloadLength', 'b_payloadHash','b_generatorPublicKey','b_blockSignature','t_id',
+    't_type','t_timestamp','t_senderPublicKey', 't_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature', 'd_username', 's_publicKey','c_address','u_alias',
+    'm_min','m_lifetime','m_keysgroup','t_requesterPublicKey','t_signatures'];
+/*var header = ['b_id', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward', 'b_payloadLength', 'b_payloadHash','b_generatorPublicKey','b_blockSignature','t_id',
     't_type','t_timestamp','t_senderPublicKey', 't_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature','s_publicKey','d_username','v_votes','c_address','u_alias',
-    'm_min','m_lifetime','m_keysgroup','dapp_name','dapp_description','dapp_tags','dapp_type','dapp_siaAscii','dapp_siaIcon','dapp_git','dapp_category','dapp_icon','in_dappId','ot_dappId','ot_outTransactionId','t_requesterPublicKey','t_signatures'];
+    'm_min','m_lifetime','m_keysgroup','dapp_name','dapp_description','dapp_tags','dapp_type','dapp_siaAscii','dapp_siaIcon','dapp_git','dapp_category','dapp_icon','in_dappId','ot_dappId','ot_outTransactionId','t_requesterPublicKey','t_signatures'];*/
 
 require('array.prototype.findindex'); // Old node fix
 
@@ -394,7 +394,7 @@ Blocks.prototype.onInit = function (scope) {
     modules_loaded = scope && scope != undefined ? true : false;
 };
 
-/*Blocks.prototype.getCommonBlock = function(peer, height, cb) {
+Blocks.prototype.getCommonBlock = function(peer, height, cb) {
     var commonBlock = null;
     var lastBlockHeight = height;
     var count = 0;
@@ -450,58 +450,7 @@ Blocks.prototype.onInit = function (scope) {
             setImmediate(cb, err, commonBlock);
         }
     );
-};*/
-
-Blocks.prototype.getCommonBlock = function(peer, height, cb) {
-    var commonBlock = null;
-    var lastBlockHeight = height;
-    var count = 0;
-
-    async.whilst(
-        function () {
-            return !commonBlock && count < 30 && lastBlockHeight > 1;
-        },
-        function (next) {
-            count++;
-            privated.getIdSequence(lastBlockHeight, function (err, data) {
-                if(err) {
-                    return next(err);
-                }
-                let max = lastBlockHeight;
-                lastBlockHeight = data.firstHeight;
-                library.modules.kernel.getFromPeer(peer, {
-                    api: "/blocks/common?ids=" + data.ids + ',&max=' + max + '&min=' + lastBlockHeight,
-                    method: "GET"
-                }, function (err, data) {
-                    if (err) {
-                        return next(err || data.message);
-                    }
-                    var cBlock = data.body.common || null;
-                    if (!cBlock) {
-                        return next();
-                    }
-                    library.dbClient.query(`SELECT COUNT(*) as cnt from blocks where id="${cBlock.id}" and height=${cBlock.height}`,{
-                        type:Sequelize.QueryTypes.SELECT
-                    }).then((rows) => {
-                        if(!rows.length) {
-                            return next("Can't compare blocks");
-                        }
-                        if (rows[0].cnt) {
-                            commonBlock = cBlock;
-                        }
-                        next();
-                    }).catch((err) => {
-                        setImmediate(cb, err, commonBlock);
-                    });
-                });
-            });
-        },
-        function (err) {
-            setImmediate(cb, err, commonBlock);
-        }
-    );
 };
-
 
 Blocks.prototype.deleteBlocksBefore = function (block, cb) {
     var blocks = [];
@@ -531,7 +480,7 @@ Blocks.prototype.onReceiveBlock = function (blockObj) {
 
 };
 
-/*Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
+Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
     var loaded = false;
     var count = 0;
     var lastValidBlock = null;
@@ -587,6 +536,8 @@ Blocks.prototype.onReceiveBlock = function (blockObj) {
                                 lastValidBlock = block;
                                 cb();
                             } else {
+                                console.log('err err err err err err err err err')
+                                console.log(err);
                                 var peerStr = data.peer ? ip.fromLong(data.peer.ip) + ":" + data.peer.port : 'unknown';
                                 library.log.Info('Block ' + (block ? block.id : 'null') + ' is not valid, ban 60 min', peerStr);
                                 library.modules.peer.state(peer.ip, peer.port, 0, 3600);
@@ -606,84 +557,7 @@ Blocks.prototype.onReceiveBlock = function (blockObj) {
         function (err) {
             setImmediate(cb, err, lastValidBlock);
         });
-};*/
-
-Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
-    var loaded = false;
-    var count = 0;
-    var lastValidBlock = null;
-
-    async.whilst(
-        function () {
-            return !loaded && count < 30;
-        },
-        function (next) {
-            async.waterfall([
-                function (cb) {
-                    count++;
-                    library.modules.kernel.getFromPeer(peer, {
-                        method: "GET",
-                        api: '/blocks?lastBlockId=' + lastCommonBlockId
-                    }, function (err, data) {
-                        if (err) {
-                            return next(err || data.message);
-                        }
-                        let blocks = data.body.blocks;
-                        let blocksTemp = [];
-                        if (typeof blocks === 'string') {
-                            csvtojson({
-                                noheader: true,
-                                headers: header
-                            }).fromString(blocks).subscribe((csvLine) => {
-                                blocksTemp.push(csvLine);
-                            }).then(() => {
-                                blocks = privated.readDbRows(blocksTemp);
-                                cb(null, blocks, data);
-                            }).catch((err) => {
-                                cb(err);
-                            });
-                        }
-                    });
-                }, function (blocks, data, cb) {
-                    async.eachSeries(blocks, function (block, cb) {
-                        try {
-                            block = library.base.block.objectNormalize(block);
-                        } catch (e) {
-                            var peerStr = data.peer ? ip.fromLong(data.peer.ip) + ":" + data.peer.port : 'unknown';
-                            library.log.Debug('Block ' + (block ? block.id : 'null') + ' is not valid, ban 60 min', peerStr);
-                            library.modules.peer.state(peer.ip, peer.port, 0, 3600);
-                            cb(e.toString());
-                        }
-                        self.processBlock(block, false, function (err) {
-                            if (!err) {
-                                lastCommonBlockId = block.id;
-                                lastValidBlock = block;
-                                cb();
-                            } else {
-                                var peerStr = data.peer ? ip.fromLong(data.peer.ip) + ":" + data.peer.port : 'unknown';
-                                library.log.Info('Block ' + (block ? block.id : 'null') + ' is not valid, ban 60 min', peerStr);
-                                library.modules.peer.state(peer.ip, peer.port, 0, 3600, function (err) {
-                                    if(err) {
-                                        cb(err);
-                                    }
-                                });
-                            }
-                        });
-                    }, cb);
-                }
-            ], function (err, data) {
-                if(err) {
-                    return setImmediate(cb, err);
-                } else {
-                    cb();
-                }
-            });
-        },
-        function (err) {
-            setImmediate(cb, err, lastValidBlock);
-        });
 };
-
 
 Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
     var newLimit = limit + (offset || 0);

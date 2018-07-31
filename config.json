@@ -9,12 +9,12 @@
         "host": "10.0.248.211",
         "port": "3306",
         "name": "db_entu",
-        "user": "root",
-        "password": "123456"
+        "user": "test",
+        "password": "test"
     },
     "peers": {
         "list": [
-            {"ip": "10.0.100.48", "port": 8000}
+            {"ip": "10.0.100.66", "port": 8000}
         ],
         "blackList": [],
         "optional": {

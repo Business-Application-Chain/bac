@@ -24,23 +24,20 @@ function Peer(cb, scope) {
 }
 
 // private methods
-/*privated.updatePeerList = function (cb) {
-    library.modules.kernel.getFromRandomPeer({
-        api: '/list',
-        method: 'GET'
-        // library.modules.kernel.getFromRandomPeer({
-        //     api:'kernel',
-        //     method:'POST',
-        //     func:'list',
-        //     data:'[]',
-        //     jsonrpc: '1.0',
-        //     id: Math.random()
+privated.updatePeerList = function (cb) {
+    library.modules.kernel.getFromRandomPeerNews({
+        api:'kernel',
+        method:'POST',
+        func:'list',
+        data:'[]',
+        jsonrpc: '1.0',
+        id: Math.random()
     }, function (err, data) {
         if (err) {
             return cb();
         }
 
-        let peers = data.body.peers || [];
+        let peers = data.result || [];
         if(!peers) {
             return cb();
         }
@@ -95,9 +92,9 @@ function Peer(cb, scope) {
             });
         }, cb);
     });
-};*/
+};
 
-privated.updatePeerList = function (cb) {
+/*privated.updatePeerList = function (cb) {
     library.modules.kernel.getFromRandomPeer({
         api: '/list',
         method: 'GET'
@@ -167,7 +164,7 @@ privated.updatePeerList = function (cb) {
             });
         }, cb);
     });
-};
+};*/
 
 
 privated.count = function (cb) {
@@ -478,10 +475,6 @@ shared_1_0.count = function(req, cb) {
 
 shared_1_0.version = function(req, cb) {
     return cb(null, errorCode.server.SUCCESS, library.config.version);
-};
-
-shared.peer_list = function (req, cb) {
-    console.log(req);
 };
 
 // export
