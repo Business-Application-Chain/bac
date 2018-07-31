@@ -24,6 +24,7 @@
     "bitcoinjs-lib": "^3.3.2",
     "bitcore-mnemonic": "^1.5.0",
     "crypto-js": "^3.1.9-1",
+    "lodash": "^4.17.10",
     "node-sass": "^4.9.1",
     "sass-loader": "^7.0.1",
     "vue-click-outside": "^1.0.7",

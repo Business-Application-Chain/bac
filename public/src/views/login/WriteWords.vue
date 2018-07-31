@@ -29,7 +29,6 @@
     import Modal from '../../components/ui/Modal.vue'
     import api from '../../js/api/index'
     import LoginStep from '../../components/LoginStep.vue'
-    import exportPrivateKey from '../../js/plugins/private-key'
     import Toast from '~/components/ui/toast/index'
 
     export default {
@@ -60,11 +59,16 @@
                     Toast.warn('请输入助记词')
                     return;
                 }
-                this.$store.dispatch('setKey', {
-                    mnemonic: this.mnemonic,
-                    privateKey: exportPrivateKey(this.mnemonic)   
+                api.account.getPrivateKey([this.mnemonic]).then(res => {
+                    if (res === null) return;
+
+                    this.$store.dispatch('setKey', {
+                        mnemonic: this.mnemonic,
+                        privateKey: res  
+                    })
+                    this.$router.push({ path: 'set' })
                 })
-                this.$router.push({ path: 'set' })
+                
             }
         }
     }

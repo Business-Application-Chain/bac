@@ -13,12 +13,26 @@
 
 <script>
     import api from '../../js/api/index.js'
+    import Toast from '~/components/ui/toast/index'
     
     export default {
         data () {
             return {
                 searchTxt: ''
             }
+        },
+
+        created() {
+            if (this.$route.params.query) {
+                this.searchTxt = this.$route.params.query
+            }
+        },
+
+        beforeRouteUpdate (to, from, next) {
+            if (to.params.query) {
+                this.searchTxt = to.params.query
+            }
+            next()
         },
         
         methods: {
@@ -30,7 +44,11 @@
             },
 
             search () {
-                if (this.searchTxt == '') return;
+
+                if (this.searchTxt == '' || !this.searchTxt){
+                    Toast.warn('请输入要搜索的内容')
+                    return;
+                }
 
                 this.$router.push({
                     name: 'explorerResult',

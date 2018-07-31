@@ -35,8 +35,6 @@
 
 <script>
     import XBtn from '../../components/ui/XBtn.vue'
-    import {mnemonic, privateKey} from '../../js/plugins/mnemonic'
-    import exportPrivateKey from '../../js/plugins/private-key'
     import Modal from '../../components/ui/Modal.vue'
     import api from '../../js/api/index'
     import LoginStep from '../../components/LoginStep.vue'
@@ -47,7 +45,8 @@
     export default {
         data () {
             return {
-                mnemonic,
+                mnemonic: '',
+                privateKey: '',
                 confirmVisible: false,
                 nextLoading: false
             }
@@ -56,6 +55,14 @@
             XBtn,
             Modal,
             LoginStep
+        },
+        created () {
+            api.account.getMnemonic().then(res => { 
+                if (res === null) return;
+                
+                this.mnemonic = res.mnemonic
+                this.privateKey = res.privateKey
+            })
         },
         mounted () {
             
@@ -72,7 +79,7 @@
                 this.confirmVisible = false
                 this.$store.dispatch('setKey', {
                     mnemonic: this.mnemonic,
-                    privateKey: privateKey
+                    privateKey: this.privateKey
                 })
                 this.$router.push({ path: 'set' })
             }

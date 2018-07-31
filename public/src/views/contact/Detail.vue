@@ -35,6 +35,7 @@
     import Send from '~/components/Send.vue'
     import AddContact from '~/components/AddContact.vue'
     import {mapState} from 'vuex'
+    import Toast from '~/components/ui/toast/index'
 
     export default {
         data () {
@@ -68,20 +69,22 @@
         
         beforeRouteUpdate (to, from, next) {
             // console.log(from, to )
-            // this.id = to.params.id
-            // this.fetch()
-            
+            this.id = to.params.id
+            this.fetch()
+            next()
         },
 
         methods: {
             fetch () {
                 api.account.getAccount([this.id, this.account.address[0]]).then(res => {
                     if (res === null) return;
+                    
                     this.userAccount = res.account
                 })
             },
 
             successHandle () {
+                Toast.success('添加联系人成功')
                 this.userAccount.isFriend = true
             }
         }

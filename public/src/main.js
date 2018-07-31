@@ -5,6 +5,7 @@ import store from './store/index'
 import VueI18n from 'vue-i18n'
 import zh from './js/lang/zh'
 import en from './js/lang/en'
+import {padStart} from 'lodash'
 
 Vue.config.productionTip = false
 
@@ -18,6 +19,15 @@ Vue.filter('bac',  (value, decimal) => {
         num = Math.floor(num * n) / n
     }
     return num
+})
+
+Vue.filter('date', value => {
+    const date = new Date(value)
+    const YYYY = padStart(date.getFullYear(), 2, '0')
+    const MM = padStart(date.getMonth() + 1, 2, '0')
+    const DD = padStart(date.getDate(), 2, '0')
+    
+    return `${YYYY}/${MM}/${DD}`
 })
 
 const i18n = new VueI18n({
