@@ -325,7 +325,7 @@ privated.addUnconfirmedTransaction = function (txObj, sender, cb) {
 
         privated.unconfirmedTransactions.push(txObj);
         var index = privated.unconfirmedTransactions.length - 1;
-        privated.unconfirmedTransactionsIdIndex[txObj.id] = index;
+        privated.unconfirmedTransactionsIdIndex[txObj.hash] = index;
 
         setImmediate(cb);
     });
@@ -367,7 +367,7 @@ Transactions.prototype.undoUnconfirmedList = function (cb) {
 };
 
 Transactions.prototype.addDoubleSpendingTransaction = function (txObj) {
-    privated.doubleSpendingTransactions[txObj.id] = txObj;
+    privated.doubleSpendingTransactions[txObj.hash] = txObj;
 };
 
 Transactions.prototype.pushHiddenTransaction = function (txObj) {
@@ -435,7 +435,7 @@ Transactions.prototype.processUnconfirmedTransaction = function (txObj, broadcas
                     }
 
                     // Check in confirmed transactions
-                    if (privated.unconfirmedTransactionsIdIndex[txObj.id] !== undefined || privated.doubleSpendingTransactions[txObj.id]) {
+                    if (privated.unconfirmedTransactionsIdIndex[txObj.hash] !== undefined || privated.doubleSpendingTransactions[txObj.hash]) {
                         return cb("Transaction is already existed");
                     }
 
@@ -449,7 +449,7 @@ Transactions.prototype.processUnconfirmedTransaction = function (txObj, broadcas
                 }
 
                 // Check in confirmed transactions
-                if (privated.unconfirmedTransactionsIdIndex[txObj.id] !== undefined || privated.doubleSpendingTransactions[txObj.id]) {
+                if (privated.unconfirmedTransactionsIdIndex[txObj.hash] !== undefined || privated.doubleSpendingTransactions[txObj.hash]) {
                     return cb("Transaction is already existed");
                 }
 

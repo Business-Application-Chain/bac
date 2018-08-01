@@ -229,7 +229,7 @@ privated.list = function (filter, cb) {
     });
 };
 
-privated.getById = function (id, cb) {
+privated.getById = function (hash, cb) {
     async.waterfall([
         function (cb) {
             library.dbClient.query(`SELECT blockHash FROM transactions WHERE hash = ${hash}`, {
@@ -238,11 +238,11 @@ privated.getById = function (id, cb) {
                 if(rows[0]) {
                     cb(null, rows[0].hash);
                 } else {
-                    cb(null, id);
+                    cb(null, hash);
                 }
             }).catch((err) => {
                 console.log(err);
-                cb(null, id);
+                cb(null, hash);
             });
         }
     ], function (err, id) {
@@ -262,7 +262,7 @@ privated.getById = function (id, cb) {
             "left outer join contacts as c on c.transactionHash=t.hash " +
             "left outer join usernames as u on u.transactionHash=t.hash " +
             "left outer join multisignatures as m on m.transactionHash=t.hash " +
-            `where b.hash = "${id}" or b.height = ${id} `, {
+            `where b.hash = "${hash}" or b.height = ${hash} `, {
             type: Sequelize.QueryTypes.SELECT
         }).then((rows) => {
             var blocks = privated.readDbRows(rows);
