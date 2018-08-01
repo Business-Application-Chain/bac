@@ -1,7 +1,7 @@
 <template>
     <div class="explorer-index-page">
         <div class="page-search">
-            <input v-model.trim="searchTxt" @keyup.enter="search" placeholder="区块高度 / 交易ID " type="text" class="search-input">
+            <input v-model.trim="searchTxt" @keyup.enter="search" placeholder="区块高度 / 交易HASH " type="text" class="search-input">
             <div v-if="searchTxt" @click="clear" class="search-close"><i class="iconfont">&#xe60f;</i></div>
             <div @click="search" class="search-btn">搜索</div>
         </div>

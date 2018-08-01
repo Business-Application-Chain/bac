@@ -7,7 +7,7 @@
 
         <div v-if="active == 1" class="tabs-content">
             <div class="table-header">
-                <div class="tb-1">交易ID</div>
+                <div class="tb-1">交易HASH</div>
                 <div class="tb-2">区块</div>
                 <div class="tb-3">时间</div>
             </div>
@@ -33,7 +33,7 @@
         <div v-if="active == 2" class="tabs-content">
             <div class="table-header">
                 <div class="tb-2-1">区块高度</div>
-                <div class="tb-2-2">区块ID</div>
+                <div class="tb-2-2">区块HASH</div>
                 <div class="tb-2-3">交易数量</div>
                 <div class="tb-2-4">时间</div>
             </div>

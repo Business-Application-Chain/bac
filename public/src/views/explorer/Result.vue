@@ -23,7 +23,7 @@
 
         <div class="table">
             <div class="table-header">
-                <div class="table-5">交易ID</div>
+                <div class="table-5">交易HASH</div>
                 <div class="table-1">发送地址</div>
                 <div class="table-2"></div>
                 <div class="table-3">接收地址</div>
