@@ -14,10 +14,10 @@
 
             <div class="tab-list" id="tabList" :style="{maxHeight: listCssHeight}">
                 <transition-group name="explorer-list" tag="div" mode="out-in">
-                    <div v-for="item in transactionsList" :key="item.t_id" class="table-cell">
-                        <div class="tb-1">
-                            <div>{{item.t_id}}</div>
-                        </div>
+                    <div v-for="item in transactionsList" :key="item.t_hash" class="table-cell">
+                        
+                        <div class="tb-1">{{item.t_hash}}</div>
+                        
                         <div class="tb-2">
                             <router-link :to="{name: 'explorerResult', params: {query: item.b_height}}" class="link">{{item.b_height}}</router-link>
                         </div>
@@ -40,12 +40,12 @@
 
             <div class="tab-list" :style="{maxHeight: listCssHeight}">
                 <transition-group name="explorer-list" tag="div" mode="out-in">
-                    <div v-for="item in blocksList" :key="item.id" class="table-cell">
+                    <div v-for="item in blocksList" :key="item.hash" class="table-cell">
                         <div class="tb-2-1">
                             <router-link :to="{name: 'explorerResult', params: {query: item.height}}" class="link">{{item.height}}</router-link>
                         </div>
                         <div class="tb-2-2">
-                            <router-link :to="{name: 'explorerResult', params: {query: item.height}}" class="link">{{item.id}}</router-link>
+                            <router-link :to="{name: 'explorerResult', params: {query: item.height}}" class="link">{{item.hash}}</router-link>
                         </div>
                         <div class="tb-2-3">{{item.numberOfTransactions}}</div>
                         <div class="tb-2-4">{{item.timestamp | listDate(now)}}</div>
@@ -64,7 +64,6 @@
     import InfiniteLoading from 'vue-infinite-loading'
     import ws from '~/js/plugins/ws'
     import {padStart} from 'lodash'
-    console.log(padStart)
 
     export default {
         data () {
@@ -103,7 +102,7 @@
                 ws.add(({mod, name, data}) => {
                     if (mod == 'blocks' && name == 'block') {
                         //去重
-                        if (this.blocksList[0].id != data.id) {
+                        if (this.blocksList[0].hash != data.hash) {
                             this.blocksList.unshift(data)
                         }
                     }
@@ -179,6 +178,8 @@
 </script>
 
 <style lang="scss" scoped>
+    @import "~/css/utils.scss";
+
     .explorer-list-page{
         .tabs-nav{
             display: flex;
@@ -222,6 +223,7 @@
             height: 50px;
             line-height: 50px;
             font-size: 14px;
+            
             color: #4A4A4A;
 
             &:not(:last-child){
@@ -240,14 +242,18 @@
         .tb-1{
             flex: 2;
             margin-left: 40px;
+            
+            @include text-overflow();
         }
 
         .tb-2{
-            flex:2
+            flex:1;
+            margin-left: 40px;
         }
 
         .tb-3{
-            flex: 1
+            flex: 1;
+            margin-left: 40px;
         }
 
         .tb-2-1{
@@ -256,11 +262,14 @@
         }
 
         .tb-2-2{
-            flex: 1
+            flex: 2;
+            margin-left: 40px;
+            @include text-overflow();
         }
 
         .tb-2-3{
-            flex: 1
+            flex: 1;
+            margin-left: 40px;
         }
         .tb-2-4{
             flex:1 

@@ -30,8 +30,8 @@
                 <div class="table-4">数量/手续费（BAC）</div>
             </div>
         
-            <div v-for="item in result.transactions" :key="item.id" class="table-cell">
-                <div class="table-5">{{item.id}}</div>
+            <div v-for="item in result.transactions" :key="item.hash" class="table-cell">
+                <div class="table-5">{{item.hash}}</div>
                 <div class="table-1">
                     <router-link :to="{name: 'contactDetail', params:{id: item.senderId}}" class="link">{{item.senderId}}</router-link>
                 </div>
