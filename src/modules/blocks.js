@@ -245,7 +245,7 @@ privated.getById = function (hash, cb) {
                 cb(null, hash);
             });
         }
-    ], function (err, id) {
+    ], function (err, hash) {
         library.dbClient.query('SELECT ' +
             'b.hash as b_hash, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward, b.payloadLength as b_payloadLength, b.payloadHash as b_payloadHash, b.generatorPublicKey as b_generatorPublicKey,  lower(b.blockSignature) as b_blockSignature, ' +
             't.hash as t_hash, t.type as t_type, t.timestamp as t_timestamp, t.senderPublicKey as t_senderPublicKey, t.senderId as t_senderId, t.recipientId as t_recipientId, t.senderUsername as t_senderUsername, t.recipientUsername as t_recipientUsername, t.amount as t_amount, t.fee as t_fee, t.signature as t_signature, t.signSignature as t_signSignature,  ' +
@@ -262,7 +262,7 @@ privated.getById = function (hash, cb) {
             "left outer join contacts as c on c.transactionHash=t.hash " +
             "left outer join usernames as u on u.transactionHash=t.hash " +
             "left outer join multisignatures as m on m.transactionHash=t.hash " +
-            `where b.hash = "${hash}" or b.height = ${hash} `, {
+            `where b.hash = "${hash}" or b.height = "${hash}" `, {
             type: Sequelize.QueryTypes.SELECT
         }).then((rows) => {
             var blocks = privated.readDbRows(rows);
