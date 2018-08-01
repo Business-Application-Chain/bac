@@ -21,7 +21,7 @@
                         <div class="tb-2">
                             <router-link :to="{name: 'explorerResult', params: {query: item.b_height}}" class="link">{{item.b_height}}</router-link>
                         </div>
-                        <div class="tb-3">{{item.t_timestamp}}</div>
+                        <div class="tb-3">{{item.t_timestamp | listDate(now)}}</div>
                     </div>
                 </transition-group>
                 
@@ -48,7 +48,7 @@
                             <router-link :to="{name: 'explorerResult', params: {query: item.height}}" class="link">{{item.id}}</router-link>
                         </div>
                         <div class="tb-2-3">{{item.numberOfTransactions}}</div>
-                        <div class="tb-2-4">{{item.timestamp}}</div>
+                        <div class="tb-2-4">{{item.timestamp | listDate(now)}}</div>
                     </div>
                 </transition-group>
 
@@ -63,6 +63,8 @@
     import api from '~/js/api/index.js'
     import InfiniteLoading from 'vue-infinite-loading'
     import ws from '~/js/plugins/ws'
+    import {padStart} from 'lodash'
+    console.log(padStart)
 
     export default {
         data () {
@@ -72,7 +74,8 @@
                 transactionsList: [],
                 listCssHeight: 'auto',
                 blocksHasNext: false,
-                transactionsHasNext: false
+                transactionsHasNext: false,
+                now: Date.now()
             }
         },
         mounted () {
@@ -81,7 +84,6 @@
             const height = document.body.clientHeight
             
             this.listCssHeight = height - top - 30 + 'px'  //30是右边主体的边距
-            
 
             const trans = api.transactions.allTransactions([0, 50]).then(res => {
                 if (res === null) return;
@@ -107,10 +109,43 @@
                     }
                 })
             })
+
+           setInterval(()=>{
+               this.now = Date.now()
+           }, 1000)
         },
 
         components: {
             InfiniteLoading
+        },
+
+        filters:{
+            listDate (timestamp, now) {
+                const t = now - timestamp
+                if (t < 0) {
+                    return `0秒前`
+                }else if (t < 10 * 60 * 1000) {  //如果小于10分钟
+                    let m = Math.floor(t / 60 / 1000)
+                    let s = padStart(Math.floor((t - m * 60 * 1000) / 1000), 2, '0')
+                    if (m > 0) {
+                        m = padStart(m, 2, '0')
+                        return `${m}分${s}秒前`
+                    }else {
+                        return `${s}秒前`
+                    }
+                    
+                } else {
+                    const date = new Date(timestamp)
+                    const YYYY = date.getFullYear()
+                    const MM = padStart(date.getMonth() + 1, 2, '0')
+                    const DD = padStart(date.getDate(), 2, '0')
+                    const hh = padStart(date.getHours(), 2, '0')
+                    const mm = padStart(date.getMinutes(), 2, '0')
+                    const ss = padStart(date.getSeconds(), 2, '0')
+
+                    return `${YYYY}/${MM}/${DD} ${hh}:${mm}:${ss}`
+                }
+            }
         },
 
         methods: {
@@ -228,7 +263,7 @@
             flex: 1
         }
         .tb-2-4{
-            width: 125px;
+            flex:1 
         }
 
         .tab-list{

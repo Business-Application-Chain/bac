@@ -10,7 +10,7 @@
         </div>
         <div v-for="item in list" :key="item.id" class="comp-item active">
             <div class="comp-t1">
-                <router-link :to="{name: 'browserResult', params:{query: item.id}}" class="comp-link" >{{item.id}}</router-link>
+                <router-link :to="{name: 'explorerResult', params:{query: item.id}}" class="comp-link" >{{item.id}}</router-link>
             </div>
             <div class="comp-t2">
                 <router-link :to="{name: 'contactDetail', params:{id: item.senderId}}" class="comp-link" replace>{{item.senderId}}</router-link>
@@ -21,13 +21,13 @@
                 <div v-else>-</div>
                 <!-- <div @click="go(item.recipientId)" class="comp-link">{{item.recipientId}}</div> -->
             </div>
-            <div class="comp-t4">{{item.timestamp}}</div>
+            <div class="comp-t4">{{item.timestamp | date}}</div>
             <div class="comp-t5">
                 
             </div>
             <div class="comp-t6">
                 <div class="status-tag" :class="[item.senderType]">{{item.senderType | upper}}</div>
-                {{item.amount | bac}}/{{item.fee | bac}}
+                {{item.amount | bac}} / {{item.fee | bac}}
             </div>
         </div>
     </div>
@@ -64,6 +64,8 @@
 </script>
 
 <style lang="scss" scoped>
+@import "~/css/utils.scss";
+
     .orders-comp{
         .comp-header{
             font-size: 12px;
@@ -91,17 +93,20 @@
 
         .comp-t1{
             margin-left: 24px;
-            flex: 1
+            flex: 1;
+            @include text-overflow();
         }
 
         .comp-t2{
             margin-left: 40px;
             flex: 1;
+            @include text-overflow();
         }
 
         .comp-t3{
             margin-left: 40px;
-            flex: 1
+            flex: 1;
+            @include text-overflow();
         }
 
         .comp-t4{

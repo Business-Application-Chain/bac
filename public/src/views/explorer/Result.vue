@@ -15,7 +15,7 @@
                 
                 <div class="desc-item">
                     <div class="desc-item_hd">确认数</div>
-                    <div class="desc-item_ft">{{result.confirmations}}</div>
+                    <div class="desc-item_ft">{{result.confirmations || 0}}</div>
                 </div>
             </div>
         </div>
@@ -81,6 +81,8 @@
 </script>
 
 <style lang="scss" scoped>
+    @import "~/css/utils.scss";
+
     .explorer-result-page{
         padding-bottom: 40px;
         .page-desc{
@@ -153,11 +155,13 @@
         .table-5{
             margin-left: 30px;
             flex: 1;
+            @include text-overflow();
         }
 
         .table-1{
             margin-left: 30px;
             flex: 1;
+            @include text-overflow();
         }
 
         .table-2{
@@ -167,7 +171,8 @@
 
         .table-3{
             margin-left: 30px;
-            flex: 1
+            flex: 1;
+            @include text-overflow();
         }
 
         .table-4{

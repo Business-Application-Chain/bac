@@ -51,5 +51,22 @@ export default {
             method: 'addSignature',
             params
         })
+    },
+
+    //通过助记词生成私钥  params: [mnemonic]
+    getPrivateKey (params) {
+        return io.post({
+            api: 'accounts',
+            method: 'getPrivateKey',
+            params
+        })
+    },
+
+    //生成助记词和私钥
+    getMnemonic () {
+        return io.post({
+            api: 'accounts',
+            method: 'getMnemonic'
+        })
     }
 }

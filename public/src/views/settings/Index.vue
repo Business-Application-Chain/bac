@@ -81,7 +81,9 @@
                 api.account.addSignature([this.key.mnemonic, secret, this.account.publicKey]).then(res => {
                     this.loading = false
                     if (res === null) return;
+
                     Toast.success('设置密码成功')
+                    location.reload()
                 })
             }
         }
