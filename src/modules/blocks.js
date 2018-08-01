@@ -136,7 +136,7 @@ privated.saveBlock = function (blockObj, cb) {
 };
 
 privated.deleteBlock = function (blockHash, cb) {
-    library.dbClient.query(`DELETE FROM blocks WHERE hash = ${blockHash}`, {
+    library.dbClient.query(`DELETE FROM blocks WHERE hash = "${blockHash}"`, {
         type: Sequelize.QueryTypes.DELETE
     }).then((data) => {
         cb(null, data);
@@ -232,7 +232,7 @@ privated.list = function (filter, cb) {
 privated.getById = function (hash, cb) {
     async.waterfall([
         function (cb) {
-            library.dbClient.query(`SELECT blockHash FROM transactions WHERE hash = ${hash}`, {
+            library.dbClient.query(`SELECT blockHash FROM transactions WHERE hash = "${hash}"`, {
                 type: Sequelize.QueryTypes.SELECT
             }).then((rows) => {
                 if(rows[0]) {
@@ -699,7 +699,7 @@ Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
 
 Blocks.prototype.simpleDeleteAfterBlock = function (blockHash, cb) {
     // library.dbClient.query(`DELETE FROM blocks WHERE height not in (SELECT height FROM blocks where id = ${blockId}) `, {
-    library.dbClient.query(`DELETE FROM blocks WHERE height >= (SELECT height from (SELECT height FROM blocks where hash = ${blockHash}) a) `, {
+    library.dbClient.query(`DELETE FROM blocks WHERE height >= (SELECT height from (SELECT height FROM blocks where hash = "${blockHash}") a) `, {
         type: Sequelize.QueryTypes.DELETE
     }).then((rows) => {
         cb(null, rows);
@@ -956,7 +956,7 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
         method = false;
     }
     library.dbSequence.add(function (cb) {
-        library.dbClient.query(`SELECT height as Number FROM blocks WHERE hash = ${filter.lastHash || null}`, {
+        library.dbClient.query(`SELECT height as Number FROM blocks WHERE hash = "${filter.lastHash || null}"`, {
             type: Sequelize.QueryTypes.SELECT
         }).then((rows) => {
             var height = rows.length ? rows[0].Number : 0;
