@@ -1,4 +1,4 @@
-const baseUrl = '//localhost'
+const baseUrl = '//10.0.248.211'
 
 export default {
     url: `http:${baseUrl}:8000/`,
