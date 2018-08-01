@@ -1,7 +1,7 @@
 <template>
     <div class="orders-comp">
         <div class="comp-header">
-            <div class="comp-t1">交易ID</div>
+            <div class="comp-t1">交易HASH</div>
             <div class="comp-t2">发送者</div>
             <div class="comp-t3">接受者</div>
             <div class="comp-t4">日期</div>

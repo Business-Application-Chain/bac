@@ -18,7 +18,7 @@ export default {
         })
     },
 
-    //获取单个区块  params: [id]  id可以是区块id  也可以是交易id
+    //获取单个区块  params: [hash]  hash可以是区块hash  也可以是交易hash
     block (params) {
         return io.post({
             api: 'blocks',
