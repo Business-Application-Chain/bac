@@ -224,6 +224,11 @@ function getHash(transaction) {
 	return crypto.createHash('sha256').update(getBytes(transaction)).digest();
 }
 
+function getTrsHash(transaction) {
+    var hash = crypto.createHash('sha256').update(getBytes(transaction).toString('hex'), 'hex').digest();
+    return hash.toString('hex');
+}
+
 function getFee(transaction, percent) {
 	switch (transaction.type) {
 		case 0:
@@ -333,6 +338,7 @@ module.exports = {
 	getKeys : getKeys,
 	getAddress : getAddress,
 	verify : verify,
+    getTrsHash: getTrsHash,
 	verifySecondSignature : verifySecondSignature,
 	fixedPoint : fixedPoint
 }

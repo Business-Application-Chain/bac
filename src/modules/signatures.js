@@ -149,10 +149,10 @@ function Signature() {
             return cb(e.toString())
         }
 
-        library.dbClient.query("INSERT INTO signatures(transactionId, publicKey) VALUES($transactionId, $publicKey)", {
+        library.dbClient.query("INSERT INTO signatures(transactionHash, publicKey) VALUES($transactionHash, $publicKey)", {
             type: Sequelize.QueryTypes.INSERT,
             bind: {
-                transactionId: txObj.id,
+                transactionHash: txObj.hash,
                 publicKey: publicKey.toString('hex')
             }
         }).then(() => {

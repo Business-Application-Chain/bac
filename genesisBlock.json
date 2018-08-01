@@ -19,7 +19,7 @@
       "timestamp": 1532420482220,
       "asset": {},
       "signature": "1f3e21717548892f0db583698dc58c7ed4bcc73106b6afc8b08cca6a0b4a1ba149602180daf73afcfbeeeda7afc9600b0ca2f1edfd4f4ff9a63a54e71a5355145e",
-      "id": "5534571359943011068",
+      "hash": "5534571359943011068",
       "fee": 0
     },
     {
@@ -35,7 +35,7 @@
         }
       },
       "signature": "203a46f0cac586dd7e42e0a57b2baf7eecd5da4b88d191186599ec4bdc721d761d42adb1cadbed3a3f2efe6c771e268db5c3b91534a91de326b55b4c0b43cfb4ff",
-      "id": "8450945453657670454",
+      "hash": "8450945453657670454",
       "fee": 0
     },
     {
@@ -51,11 +51,11 @@
         ]
       },
       "signature": "202c507072bd7ecf2662723063feadbe9d0af4f0ff70ee8f39f382391e0b6af2c01bbf6284feaf918c27b490284723350eeac686d0e07f3eb3e395aec0d0feb677",
-      "id": "10175549538740098435",
+      "hash": "10175549538740098435",
       "fee": 0
     }
   ],
   "height": 1,
   "blockSignature": "20f9190673424d8aba5d3ac831d6aa512d20173bee2903cc303d3b6636d4c0a70b7e1a389bc83d9935568c8d030301825fde59a4bd2d6ec489aacba2d8fb74b024",
-  "id": "8593810399212843182"
+  "hash": "8593810399212843182"
 }

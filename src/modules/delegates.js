@@ -244,10 +244,10 @@ function Delegate() {
     };
 
     this.save = function (txObj, cb) {
-        library.dbClient.query("INSERT INTO delegates (transactionId, username) VALUES ($transactionId, $username)", {
+        library.dbClient.query("INSERT INTO delegates (transactionHash, username) VALUES ($transactionHash, $username)", {
             type: Sequelize.QueryTypes.INSERT,
             bind: {
-                transactionId: txObj.id,
+                transactionHash: txObj.hash,
                 username: txObj.asset.delegate.username
             }
         }).then(function (rows) {
@@ -342,7 +342,7 @@ privated.loop = function (cb) {
         library.mainWorkQueue.add(function (cb) {
             if (slots.getSlotNumber(currentBlockData.time) == slots.getSlotNumber()) {
                 library.modules.blocks.generateBlock(currentBlockData.keypair, currentBlockData.time, function (err) {
-                    library.log.Info("Round " + library.modules.round.calc(library.modules.blocks.getLastBlock().height) + " new block id: " + library.modules.block.getLastBlock().id + " height: " + library.modules.blocks.height + " slot: " + slots.getSlotNumber(currentBlockData.time) + " reward: " + library.modules.blocks.getLastBlock().reward);
+                    library.log.Info("Round " + library.modules.round.calc(library.modules.blocks.getLastBlock().height) + " new block hash: " + library.modules.block.getLastBlock().hash + " height: " + library.modules.blocks.height + " slot: " + slots.getSlotNumber(currentBlockData.time) + " reward: " + library.modules.blocks.getLastBlock().reward);
                     cb(err);
                 });
             } else {
@@ -520,16 +520,16 @@ Delegates.prototype.checkUnconfirmedDelegates = function (publicKey, votes, cb) 
 Delegates.prototype.fork = function (block, cause) {
     library.log.Info("Fork", "Message", JSON.stringify({
         delegate: block.generatorPublicKey,
-        block: {id: block.id, timestamp: block.timestamp, height: block.height, previousBlock: block.previousBlock},
+        block: {hash: block.hash, timestamp: block.timestamp, height: block.height, previousBlock: block.previousBlock},
         cause: cause
     }));
-    library.dbClient.query("INSERT INTO forks_stat (delegatePublicKey, blockTimestamp, blockId, blockHeight, previousBlock, cause) " +
-        "VALUES ($delegatePublicKey, $blockTimestamp, $blockId, $blockHeight, $previousBlock, $cause);", {
+    library.dbClient.query("INSERT INTO forks_stat (delegatePublicKey, blockTimestamp, blockHash, blockHeight, previousBlock, cause) " +
+        "VALUES ($delegatePublicKey, $blockTimestamp, $blockHash, $blockHeight, $previousBlock, $cause);", {
         type: Sequelize.QueryTypes.INSERT,
         bind: {
             delegatePublicKey: block.generatorPublicKey,
             blockTimestamp: block.timestamp,
-            blockId: block.id,
+            blockHash: block.hash,
             blockHeight: block.height,
             previousBlock: block.previousBlock,
             cause: cause

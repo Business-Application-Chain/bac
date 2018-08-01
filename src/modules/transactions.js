@@ -33,7 +33,7 @@ function Transaction() {
     };
 
     this.objectNormalize = function (txObj) {
-        delete txObj.blockId;
+        delete txObj.blockHash;
         return txObj;
     };
 
@@ -79,7 +79,7 @@ function Transaction() {
                 master_address: txObj.recipientId,
                 balance: txObj.amount,
                 balance_unconfirmed: txObj.amount,
-                blockId: blockObj.id,
+                blockHash: blockObj.hash,
                 round: library.modules.round.calc(blockObj.height)
             }, function (err) {
                 cb(err);
@@ -97,7 +97,7 @@ function Transaction() {
                 master_address: txObj.recipientId,
                 balance: -txObj.amount,
                 balance_unconfirmed: -txObj.amount,
-                blockId: blockObj.id,
+                blockHash: blockObj.hash,
                 round: library.modules.round.calc(blockObj.height)
             }, function (err) {
                 cb(err);
@@ -135,12 +135,12 @@ function Transactions(cb, scope) {
 
 // private methods
 privated.list = function (filter, cb) {
-    var sortFields = ['t.id', 't.blockId', 't.amount', 't.fee', 't.type', 't.timestamp', 't.senderPublicKey', 't.senderId', 't.recipientId', 't.senderUsername', 't.recipientUsername', 't.confirmations', 'b.height'];
+    var sortFields = ['t.hash', 't.blockHash', 't.amount', 't.fee', 't.type', 't.timestamp', 't.senderPublicKey', 't.senderId', 't.recipientId', 't.senderUsername', 't.recipientUsername', 't.confirmations', 'b.height'];
     var fields = {}, fields_or = [], owner = '';
 
-    if (filter.blockId) {
-        fields_or.push('blockId = $blockId');
-        fields.blockId = filter.blockId;
+    if (filter.blockHash) {
+        fields_or.push('blockHash = $blockHash');
+        fields.blockHash = filter.blockHash;
     }
     if (filter.senderPublicKey) {
         fields_or.push('lower(senderPublicKey) = $senderPublicKey');
@@ -189,9 +189,9 @@ privated.list = function (filter, cb) {
         return cb("Invalid limit. Maximum is 100");
     }
 
-    library.dbClient.query('SELECT COUNT(t.id) AS count ' +
+    library.dbClient.query('SELECT COUNT(t.hash) AS count ' +
         'FROM transactions t ' +
-        'INNER JOIN blocks b on t.blockId = b.id ' +
+        'INNER JOIN blocks b on t.blockHash = b.hash ' +
         (fields_or.length || owner ? 'WHERE ' : '') + ' ' +
         (fields_or.length ? '(' + fields_or.join(' or ') + ') ' : '') + (fields_or.length && owner ? ' AND ' + owner : owner), {
         type: Sequelize.QueryTypes.SELECT,
@@ -199,9 +199,9 @@ privated.list = function (filter, cb) {
     }).then(function (rows) {
         var count = rows.length ? rows[0].count : 0;
 
-        library.dbClient.query('SELECT t.id AS t_id, b.height AS b_height, t.blockId AS t_blockId, t.type AS t_type, t.timestamp AS t_timestamp, lower(t.senderPublicKey) AS t_senderPublicKey, t.senderId AS t_senderId, t.recipientId AS t_recipientId, t.senderUsername AS t_senderUsername, t.recipientUsername AS t_recipientUsername, t.amount AS t_amount, t.fee AS t_fee, lower(t.signature) AS t_signature, lower(t.signSignature) AS t_signSignature, (SELECT MAX(height) + 1 FROM blocks) AS t_confirmations ' +
+        library.dbClient.query('SELECT t.hash AS t_hash, b.height AS b_height, t.blockHash AS t_blockHash, t.type AS t_type, t.timestamp AS t_timestamp, lower(t.senderPublicKey) AS t_senderPublicKey, t.senderId AS t_senderId, t.recipientId AS t_recipientId, t.senderUsername AS t_senderUsername, t.recipientUsername AS t_recipientUsername, t.amount AS t_amount, t.fee AS t_fee, lower(t.signature) AS t_signature, lower(t.signSignature) AS t_signSignature, (SELECT MAX(height) + 1 FROM blocks) AS t_confirmations ' +
             'FROM transactions t ' +
-            'INNER JOIN blocks b on t.blockId = b.id ' +
+            'INNER JOIN blocks b on t.blockHash = b.hash ' +
             (fields_or.length || owner ? 'WHERE ' : '') + ' ' +
             (fields_or.length ? '(' + fields_or.join(' or ') + ') ' : '') + (fields_or.length && owner ? ' AND ' + owner : owner) + ' ' +
             (filter.orderBy ? 'ORDER BY ' + filter.orderBy : '') + ' ' +
@@ -228,9 +228,9 @@ privated.list = function (filter, cb) {
 };
 
 privated.getAllTransactions = function (filter, cb) {
-    let sql = 'SELECT t.id AS t_id, b.height AS b_height, t.blockId AS t_blockId, t.type AS t_type, t.timestamp AS t_timestamp, lower(t.senderPublicKey) AS t_senderPublicKey, t.senderId AS t_senderId, t.recipientId AS t_recipientId, t.senderUsername AS t_senderUsername, t.recipientUsername AS t_recipientUsername, t.amount AS t_amount, t.fee AS t_fee, lower(t.signature) AS t_signature, lower(t.signSignature) AS t_signSignature';
+    let sql = 'SELECT t.hash AS t_hash, b.height AS b_height, t.blockHash AS t_blockHash, t.type AS t_type, t.timestamp AS t_timestamp, lower(t.senderPublicKey) AS t_senderPublicKey, t.senderId AS t_senderId, t.recipientId AS t_recipientId, t.senderUsername AS t_senderUsername, t.recipientUsername AS t_recipientUsername, t.amount AS t_amount, t.fee AS t_fee, lower(t.signature) AS t_signature, lower(t.signSignature) AS t_signSignature';
     sql += ' FROM transactions t ';
-    sql += ' INNER JOIN blocks b on t.blockId = b.id ';
+    sql += ' INNER JOIN blocks b on t.blockHash = b.hash ';
     if (filter.height) {
         sql += ' WHERE height < ' + filter.height;
     }
@@ -271,13 +271,13 @@ privated.getUserTransactions = function (filter, cb) {
     });
 };
 
-privated.getById = function (id, cb) {
-    library.dbClient.query('SELECT t.id AS t_id, b.height AS b_height, t.blockId AS t_blockId, t.type AS t_type, t.timestamp AS t_timestamp, lower(t.senderPublicKey) AS t_senderPublicKey, t.senderId AS t_senderId, t.recipientId AS t_recipientId, t.senderUsername AS t_senderUsername, t.recipientUsername AS t_recipientUsername, t.amount AS t_amount, t.fee AS t_fee, lower(t.signature) AS t_signature, lower(t.signSignature) AS t_signSignature, (SELECT MAX(height) + 1 FROM blocks) AS t_confirmations ' +
+privated.getByHash = function (hash, cb) {
+    library.dbClient.query('SELECT t.hash AS t_hash, b.height AS b_height, t.blockHash AS t_blockHash, t.type AS t_type, t.timestamp AS t_timestamp, lower(t.senderPublicKey) AS t_senderPublicKey, t.senderId AS t_senderId, t.recipientId AS t_recipientId, t.senderUsername AS t_senderUsername, t.recipientUsername AS t_recipientUsername, t.amount AS t_amount, t.fee AS t_fee, lower(t.signature) AS t_signature, lower(t.signSignature) AS t_signSignature, (SELECT MAX(height) + 1 FROM blocks) AS t_confirmations ' +
         'FROM transactions t ' +
-        'INNER JOIN blocks b on t.blockId = b.id WHERE t.id = $id', {
+        'INNER JOIN blocks b on t.blockHash = b.hash WHERE t.hash = $hash', {
         type: Sequelize.QueryTypes.SELECT,
         bind: {
-            id: id
+            hash: hash
         }
     }).then(function (rows) {
         if (!rows.length) {
@@ -297,13 +297,13 @@ privated.getById = function (id, cb) {
     });
 };
 
-privated.getByBlockId = function (id, cb) {
-    library.dbClient.query(`SELECT * FROM transactions where blockId = ${id}`, {
+privated.getByBlockHash = function (hash, cb) {
+    library.dbClient.query(`SELECT * FROM transactions where blockHash = ${hash}`, {
         type: Sequelize.QueryTypes.SELECT
     }).then((rows) => {
         if (!rows.length) {
             return cb({
-                msg : ("Can't find transaction: " + id),
+                msg : ("Can't find transaction: " + hash),
                 code: 23003
             });
         }
@@ -398,7 +398,7 @@ Transactions.prototype.removeUnconfirmTransactionById = function (id) {
 };
 
 Transactions.prototype.processUnconfirmedTransaction = function (txObj, broadcast, cb) {
-    library.modules.accounts.setAccountAndGet({master_pub: txObj.senderPublicKey}, function (err, sender) {
+        library.modules.accounts.setAccountAndGet({master_pub: txObj.senderPublicKey}, function (err, sender) {
         function done(err) {
             if (err) {
                 return cb(err);
@@ -468,7 +468,7 @@ Transactions.prototype.undo = function (txObj, blockObj, sender, cb) {
 };
 
 Transactions.prototype.applyUnconfirmed = function (txObj, sender, cb) {
-    if (!sender && txObj.blockId != genesisblock.block.id) {
+    if (!sender && txObj.blockHash != genesisblock.block.hash) {
         return cb("Invalid account");
     } else {
         if (txObj.requesterPublicKey) {
@@ -557,12 +557,12 @@ Transactions.prototype.onInit = function (scope) {
 };
 
 shared_1_0.transaction = function (params, cb) {
-    let tId = params[0] || undefined;
-    if (!tId) {
+    let tHash = params[0] || undefined;
+    if (!tHash) {
         return cb('missing params', 11000);
     }
     // privated.getByTrsId(tId, function (err, data) {
-    privated.getById(tId, function (err, data) {
+    privated.getByHash(tHash, function (err, data) {
         if (err) {
             return cb(err.msg, err.code);
         }
@@ -570,12 +570,12 @@ shared_1_0.transaction = function (params, cb) {
     });
 };
 
-shared_1_0.byBlockId = function (params, cb) {
-    let bId = params[0] || undefined;
-    if (!bId) {
+shared_1_0.byBlockHash = function (params, cb) {
+    let bHash = params[0] || undefined;
+    if (!bHash) {
         return cb('missing params', 11000);
     }
-    privated.getByBlockId(bId, function (err, data) {
+    privated.getByBlockHash(bHash, function (err, data) {
         if (err) {
             return cb(err.msg, err.code);
         }
@@ -801,7 +801,7 @@ shared_1_0.addTransaction = function (params, cb) {
         if (err) {
             return cb(err.toString(), 13009);
         }
-        cb(null, 200, {transactionId: transaction[0].id});
+        cb(null, 200, {transactionHash: transaction[0].hash});
     });
 };
 

@@ -30,11 +30,11 @@ function Contact() {
 
     this.verify = function (trs, sender, cb) {
         if (!trs.asset.contact) {
-            return setImmediate(cb, "Invalid transaction asset: " + trs.id);
+            return setImmediate(cb, "Invalid transaction asset: " + trs.hash);
         }
 
         if (!trs.asset.contact.address) {
-            return setImmediate(cb, "Invalid transaction asset: " + trs.id);
+            return setImmediate(cb, "Invalid transaction asset: " + trs.hash);
         }
 
         var isAddress = /^[\+|\-][B]+[A-Za-z|0-9]{33}$/; // 判斷地址合法性
@@ -43,11 +43,11 @@ function Contact() {
         }
 
         if (trs.amount !== 0) {
-            return setImmediate(cb, "Invalid amount: " + trs.id);
+            return setImmediate(cb, "Invalid amount: " + trs.hash);
         }
 
         if (trs.recipientId) {
-            return setImmediate(cb, "Invalid recipient: " + trs.id);
+            return setImmediate(cb, "Invalid recipient: " + trs.hash);
         }
 
         self.checkContacts(trs.senderPublicKey, [trs.asset.contact.address], function (err) {
@@ -83,7 +83,7 @@ function Contact() {
         this.scope.account.merge(sender.master_address,
             {
                 contacts: [trs.asset.contact.address],
-                blockId: block.id,
+                blockHash: block.hash,
                 round: library.modules.round.calc(block.height)
             }, function (err) {
                 cb(err);
@@ -98,7 +98,7 @@ function Contact() {
 
         this.scope.account.merge(sender.master_address, {
             contacts: contactsInvert,
-            blockId: block.id,
+            blockHash: block.hash,
             round: library.modules.round.calc(block.height)
         }, function (err) {
             cb(err);
@@ -159,13 +159,11 @@ function Contact() {
     };
 
     this.save = function (trs, cb) {
-        console.log("run this.save height -> ", trs.height);
-        library.dbClient.query(`INSERT INTO contacts(address, transactionId) VALUES("${trs.asset.contact.address}", "${trs.id}")`, {
+        library.dbClient.query(`INSERT INTO contacts(address, transactionHash) VALUES("${trs.asset.contact.address}", "${trs.hash}")`, {
             type: Sequelize.QueryTypes.INSERT
         }).then(() => {
             return cb();
         }).catch((err) => {
-            console.log('error !!!!!!!!!!!!!!');
             console.log(err);
             cb(err);
         });

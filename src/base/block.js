@@ -49,7 +49,7 @@ Block.prototype.objectNormalize = function (block) {
     var report = this.scope.schema.validate(block, {
         type: "object",
         properties: {
-            id: {
+            hash: {
                 type: "string"
             },
             height: {
@@ -117,27 +117,21 @@ Block.prototype.objectNormalize = function (block) {
     return block;
 };
 
-Block.prototype.getId = function (blockObj) {
-    var hash = this.getHash(blockObj);
-    var temp = new Buffer(8);
-    for (var i = 0; i < 8; i++) {
-        temp[i] = hash[7 - i];
-    }
-
-    var id = bignum.fromBuffer(temp).toString();
-    return id;
+Block.prototype.getBlockHash = function(blockObj) {
+    let blockHash = this.getHash(blockObj).toString('hex');
+    return blockHash;
 };
 
 Block.prototype.getHash = function (blockObj) {
-    return crypto.createHash('sha256').update(this.getBytes(blockObj)).digest();
+    return crypto.createHash('sha256').update(this.getBytes(blockObj)).digest().toString('hex');
 };
 
 Block.prototype.dbRead = function (raw) {
-    if (!raw.b_id) {
+    if (!raw.b_hash) {
         return null
     } else {
         var block = {
-            id: raw.b_id,
+            hash: raw.b_hash,
             version: parseInt(raw.b_version),
             timestamp: parseInt(raw.b_timestamp),
             height: parseInt(raw.b_height),
@@ -175,7 +169,8 @@ Block.prototype.getBytes = function (blockObj) {
         bb.writeInt(blockObj.timestamp);
 
         if (blockObj.previousBlock) {
-            var pb = bignum(blockObj.previousBlock).toBuffer({size: 8});
+            var pb = Buffer.from(blockObj.previousBlock, 'hex');
+            // var pb = bignum(blockObj.previousBlock).toBuffer({size: 8});
 
             for (var i = 0; i < 8; i++) {
                 bb.writeByte(pb[i] || 0);
@@ -251,11 +246,11 @@ Block.prototype.verifySignature = function (blockObj) {
 };
 
 Block.prototype.load = function (raw) {
-    if (!raw_b_id) {
+    if (!raw_b_hash) {
         return null;
     } else {
         var blockObj = {
-            id: raw.b_id,
+            hash: raw.b_hash,
             version: parseInt(raw.b_version),
             timestamp: parseInt(raw.b_timestamp),
             height: parseInt(raw.b_height),
@@ -281,10 +276,10 @@ Block.prototype.save = function (blockObj, t, cb) {
         t = null;
     }
 
-    this.scope.dbClient.query("INSERT INTO blocks (id, version, timestamp, height, previousBlock, numberOfTransactions, totalAmount, totalFee, reward, payloadLength, payloadHash, generatorPublicKey, blockSignature) VALUES ($id, $version, $timestamp, $height, $previousBlock, $numberOfTransactions, $totalAmount, $totalFee, $reward, $payloadLength, $payloadHash, $generatorPublicKey, $blockSignature)", {
+    this.scope.dbClient.query("INSERT INTO blocks (hash, version, timestamp, height, previousBlock, numberOfTransactions, totalAmount, totalFee, reward, payloadLength, payloadHash, generatorPublicKey, blockSignature) VALUES ($hash, $version, $timestamp, $height, $previousBlock, $numberOfTransactions, $totalAmount, $totalFee, $reward, $payloadLength, $payloadHash, $generatorPublicKey, $blockSignature)", {
         type: Sequelize.QueryTypes.INSERT,
         bind: {
-            id: blockObj.id,
+            hash: blockObj.hash,
             version: blockObj.version,
             timestamp: blockObj.timestamp,
             height: blockObj.height,

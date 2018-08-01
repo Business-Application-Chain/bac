@@ -15,7 +15,7 @@ var csvtojson = require('csvtojson');
 var	ip = require('ip');
 var Json2csv = require('json2csv').Parser;
 
-var header = ['b_id', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward', 'b_payloadLength', 'b_payloadHash','b_generatorPublicKey','b_blockSignature','t_id',
+var header = ['b_hash', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward', 'b_payloadLength', 'b_payloadHash','b_generatorPublicKey','b_blockSignature','t_hash',
     't_type','t_timestamp','t_senderPublicKey', 't_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature', 'd_username', 's_publicKey','c_address','u_alias',
     'm_min','m_lifetime','m_keysgroup','t_requesterPublicKey','t_signatures'];
 /*var header = ['b_id', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward', 'b_payloadLength', 'b_payloadHash','b_generatorPublicKey','b_blockSignature','t_id',
@@ -33,7 +33,7 @@ privated.lastBlock = {};
 privated.blockStatus = new blockStatus();
 // @formatter: off
 privated.blocksDataFields = {
-    'b_id': String,
+    'b_hash': String,
     'b_version': String,
     'b_timestamp': Number,
     'b_height': Number,
@@ -46,7 +46,7 @@ privated.blocksDataFields = {
     'b_payloadHash': String,
     'b_generatorPublicKey': String,
     'b_blockSignature': String,
-    't_id': String,
+    't_hash': String,
     't_type': Number,
     't_timestamp': Number,
     't_senderPublicKey': String,
@@ -84,15 +84,15 @@ function Blocks(cb, scope) {
 
 // private methods
 privated.saveGenesisBlock = function (cb) {
-    library.dbClient.query("SELECT id FROM blocks WHERE id = $id", {
+    library.dbClient.query("SELECT hash FROM blocks WHERE hash = $hash", {
         type: Sequelize.QueryTypes.SELECT,
         bind: {
-            id: genesisblock.block.id
+            hash: genesisblock.block.hash
         }
     }).then(function (rows) {
-        var blockId = rows.length && rows[0].id;
+        var blockHash = rows.length && rows[0].hash;
 
-        if (!blockId) {
+        if (!blockHash) {
             privated.saveBlock(genesisblock.block, function (err) {
                 if (err) {
                     library.log.Error("saveBlock", "Error", err.toString());
@@ -118,7 +118,7 @@ privated.saveBlock = function (blockObj, cb) {
             }
         }));
         blockObj.transactions.forEach(function (txObj) {
-            txObj.blockId = blockObj.id;
+            txObj.blockHash = blockObj.hash;
             save_records.push(library.base.transaction.save(txObj, t1, function (err) {
                 if (err) {
                     library.log.Error("saveBlock", "Error", err.toString());
@@ -135,8 +135,8 @@ privated.saveBlock = function (blockObj, cb) {
     });
 };
 
-privated.deleteBlock = function (blockId, cb) {
-    library.dbClient.query(`DELETE FROM blocks WHERE id = ${blockId}`, {
+privated.deleteBlock = function (blockHash, cb) {
+    library.dbClient.query(`DELETE FROM blocks WHERE hash = ${blockHash}`, {
         type: Sequelize.QueryTypes.DELETE
     }).then((data) => {
         cb(null, data);
@@ -146,7 +146,7 @@ privated.deleteBlock = function (blockId, cb) {
 };
 
 privated.list = function (filter, cb) {
-    var sortFields = ['b.id', 'b.timestamp', 'b.height', 'b.previousBlock', 'b.totalAmount', 'b.totalFee', 'b.reward', 'b.numberOfTransactions', 'b.generatorPublicKey'];
+    var sortFields = ['b.hash', 'b.timestamp', 'b.height', 'b.previousBlock', 'b.totalAmount', 'b.totalFee', 'b.reward', 'b.numberOfTransactions', 'b.generatorPublicKey'];
     var params = {}, fields = [], sortMethod = '', sortBy = '';
     if (filter.generatorPublicKey) {
         fields.push('lower(hex(generatorPublicKey)) = $generatorPublicKey');
@@ -202,11 +202,11 @@ privated.list = function (filter, cb) {
     if (filter.limit > 100) {
         return cb("Invalid limit. Maximum is 100");
     }
-    library.dbClient.query(`SELECT count(b.id) as Number FROM blocks b ${fields.length ? "WHERE " + fields.join(' and ') : ''}`, {
+    library.dbClient.query(`SELECT count(b.hash) as Number FROM blocks b ${fields.length ? "WHERE " + fields.join(' and ') : ''}`, {
         type: Sequelize.QueryTypes.SELECT
     }).then((rows) => {
         let count = rows[0].count;
-        library.dbClient.query('SELECT b.id, b.version, b.timestamp, b.height, b.previousBlock, b.numberOfTransactions, b.totalAmount, b.totalFee, b.reward, b.payloadLength, lower(hex(b.payloadHash)), lower(hex(b.generatorPublicKey)), lower(hex(b.blockSignature)), (select max(height) + 1 from blocks) - b.height' +
+        library.dbClient.query('SELECT b.hash, b.version, b.timestamp, b.height, b.previousBlock, b.numberOfTransactions, b.totalAmount, b.totalFee, b.reward, b.payloadLength, lower(hex(b.payloadHash)), lower(hex(b.generatorPublicKey)), lower(hex(b.blockSignature)), (select max(height) + 1 from blocks) - b.height' +
         "from blocks b " + (fields.length ? "where " + fields.join(' and ') : '') + " " +
         (filter.orderBy ? 'order by ' + sortBy + ' ' + sortMethod : '') + ` limit ${params.limit} offset ${params.offset} `, {
             type: Sequelize.QueryTypes.SELECT
@@ -232,11 +232,11 @@ privated.list = function (filter, cb) {
 privated.getById = function (id, cb) {
     async.waterfall([
         function (cb) {
-            library.dbClient.query(`SELECT blockId FROM transactions WHERE id = ${id}`, {
+            library.dbClient.query(`SELECT blockHash FROM transactions WHERE hash = ${hash}`, {
                 type: Sequelize.QueryTypes.SELECT
             }).then((rows) => {
                 if(rows[0]) {
-                    cb(null, rows[0].blockId);
+                    cb(null, rows[0].hash);
                 } else {
                     cb(null, id);
                 }
@@ -247,8 +247,8 @@ privated.getById = function (id, cb) {
         }
     ], function (err, id) {
         library.dbClient.query('SELECT ' +
-            'b.id as b_id, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward, b.payloadLength as b_payloadLength, b.payloadHash as b_payloadHash, b.generatorPublicKey as b_generatorPublicKey,  lower(b.blockSignature) as b_blockSignature, ' +
-            't.id as t_id, t.type as t_type, t.timestamp as t_timestamp, t.senderPublicKey as t_senderPublicKey, t.senderId as t_senderId, t.recipientId as t_recipientId, t.senderUsername as t_senderUsername, t.recipientUsername as t_recipientUsername, t.amount as t_amount, t.fee as t_fee, t.signature as t_signature, t.signSignature as t_signSignature,  ' +
+            'b.hash as b_hash, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward, b.payloadLength as b_payloadLength, b.payloadHash as b_payloadHash, b.generatorPublicKey as b_generatorPublicKey,  lower(b.blockSignature) as b_blockSignature, ' +
+            't.hash as t_hash, t.type as t_type, t.timestamp as t_timestamp, t.senderPublicKey as t_senderPublicKey, t.senderId as t_senderId, t.recipientId as t_recipientId, t.senderUsername as t_senderUsername, t.recipientUsername as t_recipientUsername, t.amount as t_amount, t.fee as t_fee, t.signature as t_signature, t.signSignature as t_signSignature,  ' +
             's.publicKey as s_publicKey, ' +
             'd.username as d_username, ' +
             'c.address as c_address, ' +
@@ -256,13 +256,13 @@ privated.getById = function (id, cb) {
             'm.min as m_min, m.lifetime as m_lifetime, m.keysgroup as m_keysgroup, ' +
             't.requesterPublicKey as t_requesterPublicKey, t.signatures as t_signatures ' +
             "FROM blocks b " +
-            "left outer join transactions as t on t.blockId=b.id " +
-            "left outer join delegates as d on d.transactionId=t.id " +
-            "left outer join signatures as s on s.transactionId=t.id " +
-            "left outer join contacts as c on c.transactionId=t.id " +
-            "left outer join usernames as u on u.transactionId=t.id " +
-            "left outer join multisignatures as m on m.transactionId=t.id " +
-            `where b.id = ${id} or b.height = ${id} `, {
+            "left outer join transactions as t on t.blockHash=b.hash " +
+            "left outer join delegates as d on d.transactionHash=t.hash " +
+            "left outer join signatures as s on s.transactionHash=t.hash " +
+            "left outer join contacts as c on c.transactionHash=t.hash " +
+            "left outer join usernames as u on u.transactionHash=t.hash " +
+            "left outer join multisignatures as m on m.transactionHash=t.hash " +
+            `where b.hash = "${id}" or b.height = ${id} `, {
             type: Sequelize.QueryTypes.SELECT
         }).then((rows) => {
             var blocks = privated.readDbRows(rows);
@@ -283,7 +283,7 @@ privated.getBlocks = function(option, cb) {
     let height = option.height || 0;
     let size = option.size || 10;
     let sql = 'SELECT ' +
-        'id, version, timestamp, height , previousBlock , numberOfTransactions , totalAmount , totalFee , reward , payloadLength, lower(payloadHash) as payloadHash, lower(generatorPublicKey) as generatorPublicKey, lower(blockSignature) as blockSignature FROM blocks';
+        'hash, version, timestamp, height , previousBlock , numberOfTransactions , totalAmount , totalFee , reward , payloadLength, lower(payloadHash) as payloadHash, lower(generatorPublicKey) as generatorPublicKey, lower(blockSignature) as blockSignature FROM blocks';
     if(height) {
         sql += ' WHERE height < ' + height;
     }
@@ -323,19 +323,19 @@ privated.readDbRows = function (rows) {
     for (var i = 0, length = rows.length; i < length; i++) {
         var __block = library.base.block.dbRead(rows[i]);
         if (__block) {
-            if (!blocks[__block.id]) {
+            if (!blocks[__block.hash]) {
                 // if (__block.id == genesisblock.block.id) {
                 //     __block.generationSignature = (new Array(65)).join('0');
                 // }
-                order.push(__block.id);
-                blocks[__block.id] = __block;
+                order.push(__block.hash);
+                blocks[__block.hash] = __block;
             }
 
             var __transaction = library.base.transaction.dbRead(rows[i]);
-            blocks[__block.id].transactions = blocks[__block.id].transactions || {};
+            blocks[__block.hash].transactions = blocks[__block.hash].transactions || {};
             if (__transaction) {
-                if (!blocks[__block.id].transactions[__transaction.id]) {
-                    blocks[__block.id].transactions[__transaction.id] = __transaction;
+                if (!blocks[__block.hash].transactions[__transaction.hash]) {
+                    blocks[__block.hash].transactions[__transaction.hash] = __transaction;
                 }
             }
         }
@@ -364,7 +364,7 @@ privated.applyTransaction = function (block, transaction, sender, cb) {
         library.modules.transactions.apply(transaction, block, sender, function (err) {
             if (err) {
                 return setImmediate(cb, {
-                    message: "Can't apply transaction: " + transaction.id,
+                    message: "Can't apply transaction: " + transaction.hash,
                     transaction: transaction,
                     block: block
                 });
@@ -430,7 +430,7 @@ Blocks.prototype.getCommonBlock = function(peer, height, cb) {
                     if (!cBlock) {
                         return next();
                     }
-                    library.dbClient.query(`SELECT COUNT(*) as cnt from blocks where id="${cBlock.id}" and height=${cBlock.height}`,{
+                    library.dbClient.query(`SELECT COUNT(*) as cnt from blocks where hash="${cBlock.hash}" and height=${cBlock.height}`,{
                         type:Sequelize.QueryTypes.SELECT
                     }).then((rows) => {
                         if(!rows.length) {
@@ -526,20 +526,18 @@ Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
                             block = library.base.block.objectNormalize(block);
                         } catch (e) {
                             var peerStr = data.peer ? ip.fromLong(data.peer.ip) + ":" + data.peer.port : 'unknown';
-                            library.log.Debug('Block ' + (block ? block.id : 'null') + ' is not valid, ban 60 min', peerStr);
+                            library.log.Debug('Block ' + (block ? block.hash : 'null') + ' is not valid, ban 60 min', peerStr);
                             library.modules.peer.state(peer.ip, peer.port, 0, 3600);
                             cb(e.toString());
                         }
                         self.processBlock(block, false, function (err) {
                             if (!err) {
-                                lastCommonBlockId = block.id;
+                                lastCommonBlockId = block.hash;
                                 lastValidBlock = block;
                                 cb();
                             } else {
-                                console.log('err err err err err err err err err')
-                                console.log(err);
                                 var peerStr = data.peer ? ip.fromLong(data.peer.ip) + ":" + data.peer.port : 'unknown';
-                                library.log.Info('Block ' + (block ? block.id : 'null') + ' is not valid, ban 60 min', peerStr);
+                                library.log.Info('Block ' + (block ? block.hash : 'null') + ' is not valid, ban 60 min', peerStr);
                                 library.modules.peer.state(peer.ip, peer.port, 0, 3600);
                                 cb(err);
                             }
@@ -565,8 +563,8 @@ Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
 
     library.dbSequence.add(function (cb) {
         var sql = 'SELECT ' +
-            'b.id as b_id, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward, b.payloadLength as b_payloadLength, b.payloadHash as b_payloadHash, b.generatorPublicKey as b_generatorPublicKey, b.blockSignature as b_blockSignature, ' +
-            't.id as t_id, t.type as t_type, t.timestamp as t_timestamp, t.senderPublicKey as t_senderPublicKey, t.senderId as t_senderId, t.recipientId as t_recipientId, t.senderUsername as t_senderUsername, t.recipientUsername as t_recipientUsername, t.amount as t_amount, t.fee as t_fee, t.signature as t_signature, t.signSignature as t_signSignature,  ' +
+            'b.hash as b_hash, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward, b.payloadLength as b_payloadLength, b.payloadHash as b_payloadHash, b.generatorPublicKey as b_generatorPublicKey, b.blockSignature as b_blockSignature, ' +
+            't.hash as t_hash, t.type as t_type, t.timestamp as t_timestamp, t.senderPublicKey as t_senderPublicKey, t.senderId as t_senderId, t.recipientId as t_recipientId, t.senderUsername as t_senderUsername, t.recipientUsername as t_recipientUsername, t.amount as t_amount, t.fee as t_fee, t.signature as t_signature, t.signSignature as t_signSignature,  ' +
             's.publicKey as s_publicKey, ' +
             'd.username as d_username, ' +
             'c.address as c_address, ' +
@@ -574,14 +572,14 @@ Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
             'm.min as m_min, m.lifetime as m_lifetime, m.keysgroup as m_keysgroup, ' +
             't.requesterPublicKey as t_requesterPublicKey, t.signatures as t_signatures ' +
             "FROM blocks b " +
-            "left outer join transactions as t on t.blockId=b.id " +
-            "left outer join delegates as d on d.transactionId=t.id " +
-            "left outer join signatures as s on s.transactionId=t.id " +
-            "left outer join contacts as c on c.transactionId=t.id " +
-            "left outer join usernames as u on u.transactionId=t.id " +
-            "left outer join multisignatures as m on m.transactionId=t.id " +
+            "left outer join transactions as t on t.blockHash=b.hash " +
+            "left outer join delegates as d on d.transactionHash=t.hash " +
+            "left outer join signatures as s on s.transactionHash=t.hash " +
+            "left outer join contacts as c on c.transactionHash=t.hash " +
+            "left outer join usernames as u on u.transactionHash=t.hash " +
+            "left outer join multisignatures as m on m.transactionHash=t.hash " +
             `where b.height >= ${params.offset} and b.height < ${params.limit} ` +
-            "ORDER BY b.height, t.id";
+            "ORDER BY b.height, t.hash";
         library.dbClient.query(sql, {
             type: Sequelize.QueryTypes.SELECT
         }).then((rows) => {
@@ -590,9 +588,9 @@ Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
             async.eachSeries(blocks, function (block, cb) {
                 async.series([
                     function (cb) {
-                        if (block.id !== genesisblock.block.id) {
+                        if (block.hash !== genesisblock.block.hash) {
                             if (verify) {
-                                if (block.previousBlock !== privated.lastBlock.id) {
+                                if (block.previousBlock !== privated.lastBlock.hash) {
                                     return cb({
                                         message: "Can't verify previous block",
                                         block: block
@@ -622,7 +620,7 @@ Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
                         }
                     }, function (cb) {
                         block.transactions = block.transactions.sort(function (a, b) {
-                            if (block.id === genesisblock.block.id) {
+                            if (block.hash === genesisblock.block.hash) {
                                 if (a.type === TransactionTypes.VOTE)
                                     return 1;
                             }
@@ -643,7 +641,7 @@ Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
                                             block: block
                                         });
                                     }
-                                    if (block.id !== genesisblock.block.id) {
+                                    if (block.hash !== genesisblock.block.hash) {
                                         library.base.transaction.verify(transaction, sender, function (err) {
                                             if (err) {
                                                 return setImmediate(cb, {
@@ -666,7 +664,7 @@ Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
                                 // library.log.Error(err.message.stack);
                                 console.log(err.message.stack);
                                 var lastValidTransaction = block.transactions.findIndex(function (trs) {
-                                    return trs.id == err.transaction.id;
+                                    return trs.hash == err.transaction.hash;
                                 });
                                 var transactions = block.transactions.slice(0, lastValidTransaction + 1);
                                 async.eachSeries(transactions.reverse(), function (transaction, cb) {
@@ -699,9 +697,9 @@ Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
     }, cb);
 };
 
-Blocks.prototype.simpleDeleteAfterBlock = function (blockId, cb) {
+Blocks.prototype.simpleDeleteAfterBlock = function (blockHash, cb) {
     // library.dbClient.query(`DELETE FROM blocks WHERE height not in (SELECT height FROM blocks where id = ${blockId}) `, {
-    library.dbClient.query(`DELETE FROM blocks WHERE height >= (SELECT height from (SELECT height FROM blocks where id = ${blockId}) a) `, {
+    library.dbClient.query(`DELETE FROM blocks WHERE height >= (SELECT height from (SELECT height FROM blocks where hash = ${blockHash}) a) `, {
         type: Sequelize.QueryTypes.DELETE
     }).then((rows) => {
         cb(null, rows);
@@ -712,7 +710,7 @@ Blocks.prototype.simpleDeleteAfterBlock = function (blockId, cb) {
 
 
 Blocks.prototype.count = function(cb) {
-    library.dbClient.query('SELECT count(id) as Number from blocks', {
+    library.dbClient.query('SELECT count(hash) as Number from blocks', {
         type: Sequelize.QueryTypes.SELECT
     }).then((rows) => {
         cb(null, rows[0].Number);
@@ -728,7 +726,7 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
     privated.isActive = true;
     library.balancesSequence.add(function (cb) {
         try {
-            block.id = library.base.block.getId(block);
+            block.hash = library.base.block.getBlockHash(block);
         } catch (e) {
             privated.isActive = false;
             return setImmediate(cb, e.toString());
@@ -755,12 +753,12 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
             if (block.height != 1 && expectedReward !== block.reward) {
                 return setImmediate(done, "Invalid block reward");
             }
-            library.dbClient.query(`SELECT id FROM blocks WHERE id=${block.id}`,{
+            library.dbClient.query(`SELECT hash FROM blocks WHERE hash="${block.hash}"`,{
                 type:Sequelize.QueryTypes.SELECT
             }).then((rows) => {
-                let bId = rows.length && rows[0].id;
-                if (bId) {
-                    return done("Block already exists: " + block.id);
+                let bHash = rows.length && rows[0].hash;
+                if (bHash) {
+                    return done("Block already exists: " + block.hash);
                 }
                 try {
                     var valid = library.base.block.verifySignature(block);
@@ -768,15 +766,15 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                     return setImmediate(cb, e.toString());
                 }
                 if (!valid) {
-                    return done("Can't verify signature: " + block.id);
+                    return done("Can't verify signature: " + block.hash);
                 }
-                if (block.previousBlock != privated.lastBlock.id) {
+                if (block.previousBlock != privated.lastBlock.hash) {
                     // Fork same height and different previous block
                     library.modules.delegates.fork(block, 1);
-                    return done("Can't verify previous block: " + block.id);
+                    return done("Can't verify previous block: " + block.hash);
                 }
                 if (block.version > 0) {
-                    return done("Invalid block version: " + block.id);
+                    return done("Invalid block version: " + block.hash);
                 }
                 // var blockSlotNumber = slots.getSlotNumber(block.timestamp);
                 // var lastBlockSlotNumber = slots.getSlotNumber(privated.lastBlock.timestamp);
@@ -791,27 +789,27 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                 //         return done("Can't verify slot: " + block.id);
                 //     }
                 if (block.payloadLength > constants.maxPayloadLength) {
-                    return done("Can't verify payload length of block: " + block.id);
+                    return done("Can't verify payload length of block: " + block.hash);
                 }
                 if (block.transactions.length != block.numberOfTransactions || block.transactions.length > 100) {
-                    return done("Invalid amount of block assets: " + block.id);
+                    return done("Invalid amount of block assets: " + block.hash);
                 }
                 var totalAmount = 0, totalFee = 0, payloadHash = crypto.createHash('sha256'), appliedTransactions = {}, acceptedRequests = {}, acceptedConfirmations = {};
                 async.eachSeries(block.transactions, function (transaction, cb) {
                     try {
-                        transaction.id = library.base.transaction.getId(transaction);
+                        transaction.hash = library.base.transaction.getTrsHash(transaction);
                     } catch (e) {
                         return setImmediate(cb, e.toString());
                     }
-                    transaction.blockId = block.id;
-                    library.dbClient.query(`SELECT id FROM transactions WHERE id="${transaction.id}"`,{
+                    transaction.blockHash = block.hash;
+                    library.dbClient.query(`SELECT hash FROM transactions WHERE hash="${transaction.hash}"`,{
                         type: Sequelize.QueryTypes.SELECT
                     }).then((rows) => {
-                        var tId = rows.length && rows[0].id;
+                        var tId = rows.length && rows[0].hash;
                         if (tId) {
                             // Fork transactions already exist
                             library.modules.delegates.fork(block, 2);
-                            setImmediate(cb, "Transaction already exists: " + transaction.id);
+                            setImmediate(cb, "Transaction already exists: " + transaction.hash);
                         } else {
                             // cb();
                             // if (appliedTransactions[transaction.id]) {
@@ -828,7 +826,7 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
 
                                     library.modules.transactions.applyUnconfirmed(transaction, sender, function (err) {
                                         if (err) {
-                                            return setImmediate(cb, "Failed to apply transaction: " + transaction.id);
+                                            return setImmediate(cb, "Failed to apply transaction: " + transaction.hash);
                                         }
 
                                         try {
@@ -837,9 +835,9 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                             return setImmediate(cb, e.toString());
                                         }
 
-                                        appliedTransactions[transaction.id] = transaction;
+                                        appliedTransactions[transaction.hash] = transaction;
 
-                                        var index = unconfirmedTransactions.indexOf(transaction.id);
+                                        var index = unconfirmedTransactions.indexOf(transaction.hash);
                                         if (index >= 0) {
                                             unconfirmedTransactions.splice(index, 1);
                                         }
@@ -869,16 +867,16 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                     // }
 
                     if (totalAmount != block.totalAmount) {
-                        errors.push("Invalid total amount: " + block.id);
+                        errors.push("Invalid total amount: " + block.hash);
                     }
 
                     if (totalFee != block.totalFee) {
-                        errors.push("Invalid total fee: " + block.id);
+                        errors.push("Invalid total fee: " + block.hash);
                     }
 
                     if (errors.length > 0) {
                         async.eachSeries(block.transactions, function (transaction, cb) {
-                            if (appliedTransactions[transaction.id]) {
+                            if (appliedTransactions[transaction.hash]) {
                                 library.modules.transactions.undoUnconfirmed(transaction, cb);
                             } else {
                                 setImmediate(cb);
@@ -897,15 +895,15 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                             // setImmediate(cb);
                             library.modules.accounts.setAccountAndGet({master_pub: transaction.senderPublicKey}, function (err, sender) {
                                 if (err) {
-                                    library.log.Error("Failed to apply transactions: " + transaction.id);
+                                    library.log.Error("Failed to apply transactions: " + transaction.hash);
                                     process.exit(0);
                                 }
                                 library.modules.transactions.apply(transaction, block, sender, function (err) {
                                     if (err) {
-                                        library.log.Error("Failed to apply transactions: " + transaction.id);
+                                        library.log.Error("Failed to apply transactions: " + transaction.hash);
                                         process.exit(0);
                                     }
-                                    library.modules.transactions.removeUnconfirmedTransaction(transaction.id);
+                                    library.modules.transactions.removeUnconfirmedTransaction(transaction.hash);
                                     setImmediate(cb);
                                 });
                             });
@@ -942,12 +940,12 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
         options = {};
     }
     options = options || {};
-    if (filter.lastId && filter.id) {
+    if (filter.lastHash && filter.hash) {
         return cb("Invalid filter");
     }
     var params = {limit: filter.limit || 1};
-    filter.lastId && (params.lastId = filter.lastId);
-    filter.id && !filter.lastId && (params.id = filter.id);
+    filter.lastHash && (params.lastHash = filter.lastHash);
+    filter.hash && !filter.lastHash && (params.hash = filter.hash);
     var fields = privated.blocksDataFields;
     var method;
 
@@ -958,24 +956,24 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
         method = false;
     }
     library.dbSequence.add(function (cb) {
-        library.dbClient.query(`SELECT height as Number FROM blocks WHERE id = ${filter.lastId || null}`, {
+        library.dbClient.query(`SELECT height as Number FROM blocks WHERE hash = ${filter.lastHash || null}`, {
             type: Sequelize.QueryTypes.SELECT
         }).then((rows) => {
             var height = rows.length ? rows[0].Number : 0;
             if(height === 0) {
-                return cb('id is error, height is 0');
+                return cb('hash is error, height is 0');
             }
             var realLimit = height + (parseInt(filter.limit) || 1);
             params.limit = realLimit;
             params.height = height;
             var limitPart = "";
 
-            if (!filter.id && !filter.lastId) {
+            if (!filter.hash && !filter.lastHash) {
                 limitPart = "where b.height < $limit ";
             }
             library.dbClient.query('SELECT '+
-                'b.id as b_id, b.version , b.timestamp as b_timestamp , b.height , b.previousBlock , b.numberOfTransactions , b.totalAmount , b.totalFee , b.reward , b.payloadLength, lower(b.payloadHash) as payloadHash, lower(b.generatorPublicKey) as generatorPublicKey, lower(b.blockSignature) as blockSignature, ' +
-                "t.id as t_id, t.type , t.timestamp as t_timestamp , t.senderPublicKey , t.senderId , t.recipientId , t.senderUsername , t.recipientUsername , t.amount , t.fee , t.signature , t.signSignature , " +
+                'b.hash as b_hash, b.version , b.timestamp as b_timestamp , b.height , b.previousBlock , b.numberOfTransactions , b.totalAmount , b.totalFee , b.reward , b.payloadLength, lower(b.payloadHash) as payloadHash, lower(b.generatorPublicKey) as generatorPublicKey, lower(b.blockSignature) as blockSignature, ' +
+                "t.hash as t_hash, t.type, t.timestamp as t_timestamp , t.senderPublicKey , t.senderId , t.recipientId , t.senderUsername , t.recipientUsername , t.amount , t.fee , t.signature , t.signSignature , " +
                 'd.username as d_username , ' +
                 "s.publicKey , " +
                 'c.address , ' +
@@ -983,16 +981,16 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
                 'm.min , m.lifetime , m.keysgroup , ' +
                 't.requesterPublicKey , t.signatures ' +
                 "FROM blocks b " +
-                "left outer join transactions as t on t.blockId=b.id " +
-                "left outer join delegates as d on d.transactionId=t.id " +
-                "left outer join signatures as s on s.transactionId=t.id " +
-                "left outer join contacts as c on c.transactionId=t.id " +
-                "left outer join usernames as u on u.transactionId=t.id " +
-                "left outer join multisignatures as m on m.transactionId=t.id " +
-                (filter.id || filter.lastId ? "where " : "") + " " +
-                (filter.id ? " b.id = $id " : "") + (filter.id && filter.lastId ? " and " : "") + (filter.lastId ? " b.height > $height and b.height < $limit " : "") +
+                "left outer join transactions as t on t.blockHash=b.hash " +
+                "left outer join delegates as d on d.transactionHash=t.hash " +
+                "left outer join signatures as s on s.transactionHash=t.hash " +
+                "left outer join contacts as c on c.transactionHash=t.hash " +
+                "left outer join usernames as u on u.transactionHash=t.hash " +
+                "left outer join multisignatures as m on m.transactionHash=t.hash " +
+                (filter.hash || filter.lastHash ? "where " : "") + " " +
+                (filter.hash ? " b.hash = $hash " : "") + (filter.hash && filter.lastHash ? " and " : "") + (filter.lastHash ? " b.height > $height and b.height < $limit " : "") +
                 limitPart +
-                "ORDER BY b.height, t.id", {
+                "ORDER BY b.height, t.hash", {
                 type: Sequelize.QueryTypes.SELECT,
                 bind: params,
             }).then((blocks) => {
