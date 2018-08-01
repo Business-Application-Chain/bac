@@ -219,17 +219,17 @@ shared.sign = function (req, cb) {
                 type: "string",
                 format: "publicKey"
             },
-            transactionId: {
+            transactionHash: {
                 type: "string"
             }
         },
-        required: ['transactionId', 'secret']
+        required: ['transactionHash', 'secret']
     }, function (err) {
         if (err) {
             return cb(err[0].message);
         }
 
-        var transaction = modules.transactions.getUnconfirmedTransaction(body.transactionId);
+        var transaction = modules.transactions.getUnconfirmedTransaction(body.transactionHash);
 
         if (!transaction) {
             return cb("Transaction not found");
@@ -248,7 +248,7 @@ shared.sign = function (req, cb) {
 
         function done(cb) {
             library.balancesSequence.add(function (cb) {
-                var transaction = modules.transactions.getUnconfirmedTransaction(body.transactionId);
+                var transaction = modules.transactions.getUnconfirmedTransaction(body.transactionHash);
 
                 if (!transaction) {
                     return cb("Transaction not found");
@@ -259,7 +259,7 @@ shared.sign = function (req, cb) {
 
                 library.bus.message('signature', {
                     signature: sign,
-                    transaction: transaction.id
+                    transaction: transaction.hash
                 }, true);
                 cb();
             }, function (err) {
@@ -267,7 +267,7 @@ shared.sign = function (req, cb) {
                     return cb(err.toString());
                 }
 
-                cb(null, {transactionId: transaction.id});
+                cb(null, {transactionHash: transaction.hash});
             });
         }
 

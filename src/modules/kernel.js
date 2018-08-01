@@ -210,8 +210,6 @@ Kernel.prototype.getFromPeerNews = function (peer, options, cb) {
             });
         }
         if(body.code !== 200) {
-            console.log('err >>>>>>>>>>>>>>>>>>>>>>>>>>> ');
-            console.log(body);
             return cb && cb(body.err, {error: body.error, code: body.code, peer: peer});
         }
 
@@ -374,13 +372,13 @@ shared_1_0.height = function (req, cb) {
 };
 
 shared_1_0.blocks = function (params, cb) {
-    let lastBlockId = params[0] || 0;
-    if (lastBlockId === 0) {
-        return cb('lastBlockId is not 0', 11000);
+    let lastBlockHash = params[0] || undefined;
+    if (lastBlockHash) {
+        return cb('params is error', 11000);
     }
     let blocksLimit = 1440;
     library.modules.blocks.loadBlocksData({
-        limit: blocksLimit, lastId: lastBlockId
+        limit: blocksLimit, lastId: lastBlockHash
     }, {
         plain: false
     }, function (err, data) {
@@ -391,8 +389,8 @@ shared_1_0.blocks = function (params, cb) {
     });
 };
 
-shared_1_0.lastBlockId = function (req, cb) {
-    return cb(null, 200, library.modules.blocks.getLastBlock().id);
+shared_1_0.lastBlockHash = function (req, cb) {
+    return cb(null, 200, library.modules.blocks.getLastBlock().hash);
 };
 
 shared_1_0.blocks_common = function (params, cb) {
@@ -475,7 +473,7 @@ shared_1_0.transactions = function (req, cb) {
     } catch (e) {
         var peerIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
         var peerStr = peerIp ? peerIp + ":" + (isNaN(req.headers.port) ? 'unknown' : req.headers.port) : 'unknown';
-        library.log.Debug('Received transaction ' + (transaction ? transaction.id : 'null') + ' is not valid, ban 60 min', peerStr);
+        library.log.Debug('Received transaction ' + (transaction ? transaction.hash : 'null') + ' is not valid, ban 60 min', peerStr);
 
         if (peerIp && report) {
             library.modules.peer.state(ip.toLong(peerIp), req.headers.port, 0, 3600);

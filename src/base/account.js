@@ -582,7 +582,7 @@ Account.prototype.createTables = function (cb) {
                 length: 64
             },
             {
-                name: 'blockId',
+                name: 'blockHash',
                 type: 'String',
                 length: 20
             },
@@ -841,11 +841,11 @@ Account.prototype.merge = function (master_address, fields, cb) {
                         update.$inc[key] = value;
                         if (key == 'balance') {
                             round.push({
-                                query: `INSERT INTO accounts_round (master_address, amount, delegate, blockId, round) SELECT $master_address, $amount, dependentId, $blockId, $round from accounts2delegates WHERE accountId = $master_address`,
+                                query: `INSERT INTO accounts_round (master_address, amount, delegate, blockHash, round) SELECT $master_address, $amount, dependentId, $blockHash, $round from accounts2delegates WHERE accountId = $master_address`,
                                 values: {
                                     master_address: master_address,
                                     amount: value,
-                                    blockId: fields.blockId,
+                                    blockHash: fields.blockHash,
                                     round: fields.round
                                 }
                             });
@@ -856,11 +856,11 @@ Account.prototype.merge = function (master_address, fields, cb) {
                         update.$dec[key] = Math.abs(value);
                         if (key == 'balance') {
                             round.push({
-                                query: `INSERT INTO accounts_round (master_address, amount, delegate, blockId, round) SELECT $master_address, $amount, dependentId, $blockId, $round from accounts2delegates WHERE accountId = $master_address`,
+                                query: `INSERT INTO accounts_round (master_address, amount, delegate, blockHash, round) SELECT $master_address, $amount, dependentId, $blockHash, $round from accounts2delegates WHERE accountId = $master_address`,
                                 values: {
                                     master_address: master_address,
                                     amount: value,
-                                    blockId: fields.blockId,
+                                    blockHash: fields.blockHash,
                                     round: fields.round
                                 }
                             });
@@ -895,11 +895,11 @@ Account.prototype.merge = function (master_address, fields, cb) {
                                 remove[key].push(val);
                                 if (key == "delegates") {
                                     round.push({
-                                        query: `INSERT INTO accounts_round (master_address, amount, delegate, blockId, round) SELECT $master_address, -balance, $delegate, $blockId, $round from accounts WHERE master_address = $master_address`,
+                                        query: `INSERT INTO accounts_round (master_address, amount, delegate, blockHash, round) SELECT $master_address, -balance, $delegate, $blockHash, $round from accounts WHERE master_address = $master_address`,
                                         values: {
                                             master_address: master_address,
                                             delegate: val,
-                                            blockId: fields.blockId,
+                                            blockHash: fields.blockHash,
                                             round: fields.round
                                         }
                                     });
@@ -910,11 +910,11 @@ Account.prototype.merge = function (master_address, fields, cb) {
                                 insert[key].push(val);
                                 if (key == "delegates") {
                                     round.push({
-                                        sql: `INSERT INTO accounts_round (master_address, amount, delegate, blockId, round) SELECT $master_address,  balance, $delegate, $blockId, $round from accounts WHERE master_address = $master_address`,
+                                        sql: `INSERT INTO accounts_round (master_address, amount, delegate, blockHash, round) SELECT $master_address,  balance, $delegate, $blockHash, $round from accounts WHERE master_address = $master_address`,
                                         values: {
                                             master_address: master_address,
                                             delegate: val,
-                                            blockId: fields.blockId,
+                                            blockHash: fields.blockHash,
                                             round: fields.round
                                         }
                                     });
@@ -925,11 +925,11 @@ Account.prototype.merge = function (master_address, fields, cb) {
                                 insert[key].push(val);
                                 if (key == "delegates") {
                                     round.push({
-                                        sql: `INSERT INTO accounts_round (master_address, amount, delegate, blockId, round) SELECT $master_address,  balance, $delegate, $blockId, $round from accounts WHERE master_address = $master_address`,
+                                        sql: `INSERT INTO accounts_round (master_address, amount, delegate, blockHash, round) SELECT $master_address,  balance, $delegate, $blockHash, $round from accounts WHERE master_address = $master_address`,
                                         values: {
                                             master_address: master_address,
                                             delegate: val,
-                                            blockId: fields.blockId,
+                                            blockHash: fields.blockHash,
                                             round: fields.round
                                         }
                                     });

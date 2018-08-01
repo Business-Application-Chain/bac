@@ -24,7 +24,7 @@ function createContact(secret, address, secondSecret) {
         crypto.secondSign(transaction, secondKeys);
     }
 
-    transaction.id = crypto.getId(transaction);
+    transaction.hash = crypto.getHash(transaction);
     return transaction;
 }
 

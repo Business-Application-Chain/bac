@@ -103,7 +103,7 @@ Round.prototype.backwardTick = function (blockObj, previousBlockObj, cb) {
     library.modules.accounts.mergeAccountAndGet({
         master_address: blockObj.generatorPublicKey,
         prod_blocks: -1,
-        blockId: blockObj.id,
+        blockHash: blockObj.hash,
         round: self.calc(blockObj.height)
     }, function (err) {
         if (err) {
@@ -194,7 +194,7 @@ Round.prototype.backwardTick = function (blockObj, previousBlockObj, cb) {
                                 master_pub: delegate,
                                 balance: -changes.balance,
                                 balance_unconfirmed: -changes.balance,
-                                blockId: blockObj.id,
+                                blockHash: blockObj.hash,
                                 round: self.calc(blockObj.height),
                                 fees: -changes.fees,
                                 rewards: -changes.rewards
@@ -207,7 +207,7 @@ Round.prototype.backwardTick = function (blockObj, previousBlockObj, cb) {
                                         master_pub: delegate,
                                         balance: -changes.feesRemaining,
                                         balance_unconfirmed: -changes.feesRemaining,
-                                        blockId: blockObj.id,
+                                        blockHash: blockObj.hash,
                                         round: self.calc(blockObj.height),
                                         fees: -changes.feesRemaining
                                     }, cb);
@@ -267,7 +267,7 @@ Round.prototype.tick = function (blockObj, cb) {
     library.modules.accounts.mergeAccountAndGet({
         master_address: blockObj.generatorPublicKey,
         prod_blocks: 1,
-        blockId: blockObj.id,
+        blockHash: blockObj.hash,
         round: self.calc(blockObj.height)
     }, function (err) {
         if (err) {
@@ -355,7 +355,7 @@ Round.prototype.tick = function (blockObj, cb) {
                                 master_pub: delegate,
                                 balance: changes.balance,
                                 balance_unconfirmed: changes.balance,
-                                blockId: blockObj.id,
+                                blockHash: blockObj.hash,
                                 round: self.calc(blockObj.height),
                                 fees: changes.fees,
                                 rewards: changes.rewards
@@ -368,7 +368,7 @@ Round.prototype.tick = function (blockObj, cb) {
                                         master_pub: delegate,
                                         balance: changes.feesRemaining,
                                         balance_unconfirmed: changes.feesRemaining,
-                                        blockId: blockObj.id,
+                                        blockHash: blockObj.hash,
                                         round: self.calc(blockObj.height),
                                         fees: changes.feesRemaining
                                     }, cb);

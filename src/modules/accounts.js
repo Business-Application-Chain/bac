@@ -98,7 +98,7 @@ function Vote() {
     this.apply = function (txObj, blockObj, sender, cb) {
         this.scope.account.merge(sender.master_address, {
             delegates: txObj.asset.votes,
-            blockId: blockObj.id,
+            blockHash: blockObj.hash,
             round: library.modules.round.calc(blockObj.height)
         }, function (err) {
             cb(err);
@@ -112,7 +112,7 @@ function Vote() {
 
         this.scope.account.merge(sender.master_address, {
             delegates: votesInvert,
-            blockId: blockObj.id,
+            blockHash: blockObj.hash,
             round: library.modules.round.calc(blockObj.height)
         }, function (err) {
             cb(err);
@@ -155,14 +155,14 @@ function Vote() {
 
     this.save = function (txObj, cb) {
 
-        library.dbClient.query("INSERT INTO votes (transactionId, votes) VALUES ($transactionId, $votes)", {
+        library.dbClient.query("INSERT INTO votes (transactionHash, votes) VALUES ($transactionHash, $votes)", {
             type: Sequelize.QueryTypes.INSERT,
             bind: {
-                transactionId: txObj.id,
+                transactionHash: txObj.hash,
                 votes: util.isArray(txObj.asset.votes) ? txObj.asset.votes.join(',') : null
             }
         }).then(function (rows) {
-            console.log(txObj.id+": "+rows);
+            console.log(txObj.hash+": "+rows);
             cb();
         }, function (err) {
             console.log(err.toString());
@@ -356,7 +356,7 @@ function Username() {
     };
 
     this.save = function (txObj, cb) {
-        library.dbClient.query(`INSERT INTO usernames (transactionId, username) VALUES ("${txObj.id}", "${txObj.asset.username.alias}")`, {
+        library.dbClient.query(`INSERT INTO usernames (transactionHash, username) VALUES ("${txObj.hash}", "${txObj.asset.username.alias}")`, {
             type: Sequelize.QueryTypes.INSERT,
         }).then(() => {
             cb();

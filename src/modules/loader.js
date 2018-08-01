@@ -57,7 +57,7 @@ privated.loadBlocks = function(lastBlock, cb) {
                 peerHeight: height,
                 peerCount: library.modules.peer.getCount()
             }));
-            if (lastBlock.id != privated.genesisBlock.block.id) { // Have to find common block
+            if (lastBlock.hash != privated.genesisBlock.block.hash) { // Have to find common block
                 // console.log('findUpdate');
                 privated.findUpdate(lastBlock, data.peer, cb);
             } else { // Have to load full db
@@ -106,7 +106,7 @@ privated.loadBlockChain = function () {
                                     library.log.Error('loadBlocksOffset', err);
                                     if (err.block) {
                                         library.log.Error('Blockchain failed at ', err.block.height);
-                                        library.modules.blocks.simpleDeleteAfterBlock(err.block.id, function (err, res) {
+                                        library.modules.blocks.simpleDeleteAfterBlock(err.block.hash, function (err, res) {
                                             if(err) {
                                                 console.log('simpleDeleteAfterBlock is err');
                                                 console.log(err);
@@ -133,7 +133,7 @@ privated.loadBlockChain = function () {
         if (err) {
             throw err;
         } else {
-            library.dbClient.query('SELECT count(*) as Number from accounts where create_block = (select id from blocks where numberOfTransactions > 0 order by height desc limit 1)', {
+            library.dbClient.query('SELECT count(*) as Number from accounts where create_block = (select hash from blocks where numberOfTransactions > 0 order by height desc limit 1)', {
                 type: Sequelize.QueryTypes.SELECT
             }).then((rows) => {
                 var reject = !(rows[0].Number);
@@ -218,7 +218,7 @@ privated.loadUnconfirmedTransactions = function (cb) {
                 transactions[i] = library.base.transaction.objectNormalize(transactions[i]);
             } catch (e) {
                 var peerStr = data.peer ? ip.fromLong(data.peer.ip) + ":" + data.peer.port : 'unknown';
-                library.log.Debug('Transaction ' + (transactions[i] ? transactions[i].id : 'null') + ' is not valid, ban 60 min', peerStr);
+                library.log.Debug('Transaction ' + (transactions[i] ? transactions[i].hash : 'null') + ' is not valid, ban 60 min', peerStr);
                 library.modules.peer.state(data.peer.ip, data.peer.port, 0, 3600);
                 return setImmediate(cb);
             }
@@ -237,7 +237,7 @@ privated.findUpdate = function(lastBlock, peer, cb) {
         if(err) {
             return cb(err);
         }
-        library.log.Info("Found common block " + commonBlock.id + " (at " + commonBlock.height + ")" + " with peer " + peerStr);
+        library.log.Info("Found common block " + commonBlock.hash + " (at " + commonBlock.height + ")" + " with peer " + peerStr);
         var toRemove = lastBlock.height - commonBlock.height;
         if (toRemove > 1010) {
             library.log.log("long fork, ban 60 min", peerStr);
@@ -256,7 +256,7 @@ privated.findUpdate = function(lastBlock, peer, cb) {
             }
             async.series([
                 function (cb) {
-                    if (commonBlock.id != lastBlock.id) {
+                    if (commonBlock.hash != lastBlock.hash) {
                         library.modules.round.directionSwap('backward', lastBlock, cb);
                         console.log('modules.round.directionSwap -> backward')
                     } else {
@@ -270,7 +270,7 @@ privated.findUpdate = function(lastBlock, peer, cb) {
                     library.modules.blocks.deleteBlocksBefore(commonBlock, cb);
                 },
                 function (cb) {
-                    if (commonBlock.id != lastBlock.id) {
+                    if (commonBlock.hash != lastBlock.hash) {
                         console.log('modules.round.directionSwap -> forward');
                         library.modules.round.directionSwap('backward', lastBlock, cb);
                     } else {
@@ -279,7 +279,7 @@ privated.findUpdate = function(lastBlock, peer, cb) {
                 },
                 function (cb) {
                     library.log.Debug("Loading blocks from peer " + peerStr);
-                    library.modules.blocks.loadBlocksFromPeer(peer, commonBlock.id, function (err, lastValidBlock) {
+                    library.modules.blocks.loadBlocksFromPeer(peer, commonBlock.hash, function (err, lastValidBlock) {
                         if(err) {
                             console.log(err);
                             //撤销操作
@@ -351,10 +351,10 @@ privated.loadSignatures = function (cb) {
 
 privated.loadFullDb = function(peer, cb) {
     var peerStr = peer ? ip.fromLong(peer.ip) + ":" + peer.port : 'unknown';
-    var commonBlockId = privated.genesisBlock.block.id;
+    var commonBlockHash = privated.genesisBlock.block.hash;
     library.log.Debug("Loading blocks from genesis from " + peerStr);
 
-    library.modules.blocks.loadBlocksFromPeer(peer, commonBlockId, cb);
+    library.modules.blocks.loadBlocksFromPeer(peer, commonBlockHash, cb);
 };
 
 // public methods

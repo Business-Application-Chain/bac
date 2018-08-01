@@ -13,7 +13,20 @@ var changeCase = require('change-case');
 var WorkQueue = require('../src/utils/workqueue.js');
 var Sequelize = require('sequelize');
 var z_schema = require('z-schema');
-
+var accounts = require('../src/modules/accounts.js');
+var blocks = require('../src/modules/blocks.js');
+var crypto = require('../src/modules/crypto.js');
+var delegates = require("../src/modules/delegates.js");
+var kernel = require("../src/modules/kernel.js");
+var loader = require("../src/modules/loader.js");
+var multisignatures = require("../src/modules/multisignatures.js");
+var peer = require("../src/modules/peer.js");
+var round = require("../src/modules/round.js");
+var server = require("../src/modules/server.js");
+var signatures = require("../src/modules/signatures.js");
+var system = require("../src/modules/system.js");
+var transactions = require("../src/modules/transactions.js");
+var contacts = require("../src/modules/contacts.js");
 var Sequence = require('../src/utils/sequence.js');
 
 process.stdin.resume();
@@ -25,6 +38,23 @@ var log = new Log15({echo: appConfig.echoLogLevel, recLevel: appConfig.outputLog
 var params = {
     "db": appConfig.db.host,
     "modules": {
+        "accounts": accounts,
+        "blocks": blocks,
+        "crypto": crypto,
+        "delegates": delegates,
+        "kernel": kernel,
+        "loader": loader,
+        "multisignatures": multisignatures,
+        "peer": peer,
+        "round": round,
+        "server": server,
+        "signatures": signatures,
+        "system": system,
+        "transactions": transactions,
+        "contacts": contacts,
+
+    }
+    /*"modules": {
         "accounts": "../src/modules/accounts.js",
         "blocks": "../src/modules/blocks.js",
         "crypto": "../src/modules/crypto.js",
@@ -39,7 +69,7 @@ var params = {
         "system": "../src/modules/system.js",
         "transactions": "../src/modules/transactions.js",
         "contacts": "../src/modules/contacts.js",
-    }
+    }*/
 };
 
 process.on('uncaughtException', function (err) {
@@ -330,7 +360,8 @@ d.run(function () {
                         scope.log.Fatal('Domain ' + module_name, "Error", err.message, "Stack", err.stack);
                     });
                     d.run(function () {
-                        var Klass = require(params.modules[module_name]);
+                        // var Klass = require(params.modules[module_name]);
+                        var Klass = params.modules[module_name];
                         var obj = new Klass(cb, scope);
                         modules.push(obj);
                     });

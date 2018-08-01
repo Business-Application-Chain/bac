@@ -56,7 +56,7 @@ Transaction.prototype.create = function (data) {
         txObj.signSignature = this.secondSign(txObj, data.secondKeypair);
     }
 
-    txObj.id = this.getId(txObj);
+    txObj.hash = this.getTrsHash(txObj);
 
     txObj.fee = privated.types[txObj.type].calculateFee.call(this, txObj, data.sender) || false;
 
@@ -98,7 +98,7 @@ Transaction.prototype.objectNormalize = function (txObj) {
             height: {
                 type: 'integer'
             },
-            blockId: {
+            blockHash: {
                 type: 'string'
             },
             type: {
@@ -165,19 +165,13 @@ Transaction.prototype.objectNormalize = function (txObj) {
     return txObj;
 };
 
-Transaction.prototype.getId = function (txObj) {
-    var hash = this.getHash(txObj);
-    var temp = new Buffer(8);
-    for (var i = 0; i < 8; i++) {
-        temp[i] = hash[7 - i];
-    }
-
-    var id = bignum.fromBuffer(temp).toString();
-    return id;
-};
-
 Transaction.prototype.getHash = function (txObj) {
     return crypto.createHash('sha256').update(this.getBytes(txObj)).digest();
+};
+
+Transaction.prototype.getTrsHash = function(txObj) {
+    let hash = this.getHash(txObj);
+    return hash.toString('hex');
 };
 
 Transaction.prototype.getBytes = function (txObj, skipSignature, skipSecondSignature) {
@@ -284,14 +278,14 @@ Transaction.prototype.process = function (txObj, sender, requester, cb) {
     // }
 
     try {
-        var txId = this.getId(txObj);
+        var txHash = this.getTrsHash(txObj);
     } catch (err) {
         return setImmediate(cb, "Invalid transaction id");
     }
-    if (txObj.id && txObj.id != txId) {
+    if (txObj.hash && txObj.hash !== txHash) {
         return setImmediate(cb, "Invalid transaction id");
     } else {
-        txObj.id = txId;
+        txObj.hash = txHash;
     }
 
     if (!sender) {
@@ -322,10 +316,10 @@ Transaction.prototype.process = function (txObj, sender, requester, cb) {
             return setImmediate(cb, err);
         }
 
-        this.scope.dbClient.query('SELECT COUNT(id) AS count FROM transactions WHERE id = $id', {
+        this.scope.dbClient.query('SELECT COUNT(hash) AS count FROM transactions WHERE hash = $hash', {
             type: Sequelize.QueryTypes.SELECT,
             bind: {
-                id: txObj.id
+                hash: txObj.hash
             }
         }).then(function (rows) {
             var res = rows.length && rows[0];
@@ -405,7 +399,7 @@ Transaction.prototype.verify = function (txObj, sender, requester, cb) {
             return setImmediate(cb, err.toString());
         }
         if (!valid) {
-            return setImmediate(cb, "Failed to verify second signature: " + txObj.id);
+            return setImmediate(cb, "Failed to verify second signature: " + txObj.hash);
         }
     } else if (txObj.requesterPublicKey && requester.secondsign) {
         try {
@@ -414,7 +408,7 @@ Transaction.prototype.verify = function (txObj, sender, requester, cb) {
             return setImmediate(cb, err.toString());
         }
         if (!valid) {
-            return setImmediate(cb, "Failed to verify second signature: " + txObj.id);
+            return setImmediate(cb, "Failed to verify second signature: " + txObj.hash);
         }
     }
 
@@ -460,26 +454,26 @@ Transaction.prototype.verify = function (txObj, sender, requester, cb) {
             }
 
             if (!valid) {
-                return setImmediate(cb, "Failed to verify multisignature: " + txObj.id);
+                return setImmediate(cb, "Failed to verify multisignature: " + txObj.hash);
             }
         }
     }
 
     // Check sender
-    if (txObj.senderId != sender.master_address) {
-        return setImmediate(cb, "Invalid sender address: " + txObj.id);
+    if (txObj.senderId !== sender.master_address) {
+        return setImmediate(cb, "Invalid sender address: " + txObj.hash);
     }
 
     // Calculate fee
     var fee = privated.types[txObj.type].calculateFee.call(this, txObj, sender) || false;
     // var fee = privated.types[txObj.type].calculateFee(txObj, sender) || false;
-    if (!fee || txObj.fee != fee) {
-        return setImmediate(cb, "Invalid transaction type/fee: " + txObj.id);
+    if (!fee || txObj.fee !== fee) {
+        return setImmediate(cb, "Invalid transaction type/fee: " + txObj.hash);
     }
 
     // Check amount
     if (txObj.amount < 0 || txObj.amount > 100000000 * constants.fixedPoint || String(txObj.amount).indexOf('.') >= 0 || txObj.amount.toString().indexOf('e') >= 0) {
-        return setImmediate(cb, "Invalid transaction amount: " + txObj.id);
+        return setImmediate(cb, "Invalid transaction amount: " + txObj.hash);
     }
 
     // Check timestamp
@@ -589,18 +583,18 @@ Transaction.prototype.apply = function (txObj, blockObj, sender, cb) {
     }
 
     if (!this.ready(txObj, sender)) {
-        return setImmediate(cb, "Transaction is not ready: " + txObj.id);
+        return setImmediate(cb, "Transaction is not ready: " + txObj.hash);
     }
 
     var amount = txObj.amount + txObj.fee;
 
-    if (sender.balance < amount && txObj.blockId != genesisblock.block.id) {
-        return setImmediate(cb, "Account [apply-sender] does not have enough token: " + txObj.id);
+    if (sender.balance < amount && txObj.blockHash != genesisblock.block.hash) {
+        return setImmediate(cb, "Account [apply-sender] does not have enough token: " + txObj.hash);
     }
 
     this.scope.account.merge(sender.master_address, {
         balance: -amount,
-        blockId: blockObj.id,
+        blockHash: blockObj.hash,
         round: calc(blockObj.height)
     }, function (err, sender) {
         if (err) {
@@ -611,7 +605,7 @@ Transaction.prototype.apply = function (txObj, blockObj, sender, cb) {
             if (err) { // once error ocurrs, rollback the balance amount
                 this.scope.account.merge(sender.master_address, {
                     balance: amount,
-                    blockId: blockObj.id,
+                    blockHash: blockObj.hash,
                     round: calc(blockObj.height)
                 }, function (err2) {
                     cb(err2);
@@ -656,7 +650,7 @@ Transaction.prototype.undo = function (txObj, blockObj, sender, cb) {
 
     this.scope.account.merge(sender.master_address, {
         balance: amount,
-        blockId: blockObj.id,
+        blockHash: blockObj.hash,
         round: calc(blockObj.height)
     }, function (err, sender) {
         if (err) {
@@ -667,7 +661,7 @@ Transaction.prototype.undo = function (txObj, blockObj, sender, cb) {
             if (err) { // once error ocurrs, rollback the balance amount
                 this.scope.account.merge(sender.master_address, {
                     balance: amount,
-                    blockId: blockObj.id,
+                    blockHash: blockObj.hash,
                     round: calc(blockObj.height)
                 }, function (err2) {
                     cb(err2);
@@ -688,8 +682,8 @@ Transaction.prototype.applyUnconfirmed = function (txObj, sender, requester, cb)
         throw new Error("Unknown transaction type " + txObj.type);
     }
 
-    if (!txObj.requesterPublicKey && sender.second_pub && !txObj.signSignature && txObj.blockId != genesisblock.block.id) {
-        return setImmediate(cb, "Failed second signature: " + txObj.id);
+    if (!txObj.requesterPublicKey && sender.second_pub && !txObj.signSignature && txObj.blockHash != genesisblock.block.hash) {
+        return setImmediate(cb, "Failed second signature: " + txObj.hash);
     }
 
     if (!txObj.requesterPublicKey && !sender.second_pub && (txObj.signSignature && txObj.signSignature.length > 0)) {
@@ -697,7 +691,7 @@ Transaction.prototype.applyUnconfirmed = function (txObj, sender, requester, cb)
     }
 
     if (txObj.requesterPublicKey && requester.second_pub && !txObj.signSignature) {
-        return setImmediate(cb, "Failed second signature: " + txObj.id);
+        return setImmediate(cb, "Failed second signature: " + txObj.hash);
     }
 
     if (txObj.requesterPublicKey && !requester.second_pub && (txObj.signSignature && txObj.signSignature.length > 0)) {
@@ -706,8 +700,8 @@ Transaction.prototype.applyUnconfirmed = function (txObj, sender, requester, cb)
 
     var amount = txObj.amount + txObj.fee;
 
-    if (sender.balance_unconfirmed < amount && txObj.blockId != genesisblock.block.id) {
-        return setImmediate(cb, "Account [applyUnconfirmed-sender] does not have enough token: " + txObj.id);
+    if (sender.balance_unconfirmed < amount && txObj.blockHash != genesisblock.block.hash) {
+        return setImmediate(cb, "Account [applyUnconfirmed-sender] does not have enough token: " + txObj.hash);
     }
 
     this.scope.account.merge(sender.master_address, {balance_unconfirmed: -amount}, function (err, sender) {
@@ -752,13 +746,13 @@ Transaction.prototype.undoUnconfirmed = function (txObj, sender, cb) {
 };
 
 Transaction.prototype.load = function (raw) {
-    if (!raw.t_id) {
+    if (!raw.t_hash) {
         return null;
     } else {
         var txObj = {
-            id: raw.t_id,
+            hash: raw.t_hash,
             height: raw.b_height,
-            blockId: raw.b_id || raw.t_blockId,
+            blockHash: raw.b_hash || raw.t_blockHash,
             type: parseInt(raw.t_type),
             timestamp: parseInt(raw.t_timestamp),
             senderPublicKey: raw.t_senderPublicKey,
@@ -800,10 +794,10 @@ Transaction.prototype.save = function (txObj, t, cb) {
         t = null;
     }
 
-    this.scope.dbClient.query("INSERT INTO transactions (id, blockId, type, timestamp, senderPublicKey, requesterPublicKey, senderId, recipientId, senderUsername, recipientUsername, amount, fee, signature, signSignature, signatures) VALUES ($id, $blockId, $type, $timestamp, $senderPublicKey, $requesterPublicKey, $senderId, $recipientId, $senderUsername, $recipientUsername, $amount, $fee, $signature, $signSignature, $signatures)", {
+    this.scope.dbClient.query("INSERT INTO transactions (hash, blockHash, type, timestamp, senderPublicKey, requesterPublicKey, senderId, recipientId, senderUsername, recipientUsername, amount, fee, signature, signSignature, signatures) VALUES ($hash, $blockHash, $type, $timestamp, $senderPublicKey, $requesterPublicKey, $senderId, $recipientId, $senderUsername, $recipientUsername, $amount, $fee, $signature, $signSignature, $signatures)", {
         bind: {
-            id: txObj.id,
-            blockId: txObj.blockId,
+            hash: txObj.hash,
+            blockHash: txObj.blockHash,
             type: txObj.type,
             timestamp: txObj.timestamp,
             senderPublicKey: txObj.senderPublicKey,
@@ -828,13 +822,13 @@ Transaction.prototype.save = function (txObj, t, cb) {
 };
 
 Transaction.prototype.dbRead = function (raw) {
-    if (!raw.t_id) {
+    if (!raw.t_hash) {
         return null
     } else {
         var tx = {
-            id: raw.t_id,
+            hash: raw.t_hash,
             height: parseInt(raw.b_height),
-            blockId: raw.b_id,
+            blockHash: raw.b_hash,
             type: parseInt(raw.t_type),
             timestamp: parseInt(raw.t_timestamp),
             senderPublicKey: raw.t_senderPublicKey,
