@@ -237,6 +237,7 @@ privated.findUpdate = function(lastBlock, peer, cb) {
             console.log(err);
             return cb(err);
         }
+        if(commonBlock)
         library.log.Info("Found common block " + commonBlock.hash + " (at " + commonBlock.height + ")" + " with peer " + peerStr);
         var toRemove = lastBlock.height - commonBlock.height;
         if (toRemove > 1010) {

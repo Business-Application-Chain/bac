@@ -254,7 +254,7 @@ Round.prototype.backwardTick = function (blockObj, previousBlockObj, cb) {
                 done();
             }
         } else {
-            cone();
+            done();
         }
     });
 };
@@ -324,28 +324,6 @@ Round.prototype.tick = function (blockObj, cb) {
                         });
                     },
                     function (cb) {
-                        self.getVotes(round, function (err, votes) {
-                            if (err) {
-                                return cb(err);
-                            }
-                            async.eachSeries(votes, function (vote, cb) {
-                                library.dbClient.query("UPDATE accounts SET vote = vote + $amount WHERE master_address = $master_address", {
-                                    type: Sequelize.QueryTypes.UPDATE,
-                                    bind: {
-                                        master_address: library.modules.accounts.generateAddressByPubKey(vote.delegate),
-                                        amount: vote.amount
-                                    }
-                                }).then(function (rows) {
-                                    self.flush(round, function (err) {
-                                        cb(err);
-                                    });
-                                }, function (err) {
-                                    cb(err, undefined);
-                                });
-                            });
-                        });
-                    },
-                    function (cb) {
                         var roundChanges = new RoundChanges(round);
 
                         async.forEachOfSeries(privated.delegatesByRound[round], function (delegate, index, cb) {
@@ -377,32 +355,6 @@ Round.prototype.tick = function (blockObj, cb) {
                                 }
                             });
                         }, cb);
-                    },
-                    function (cb) {
-                        self.getVotes(round, function (err, votes) {
-                            if (err) {
-                                return cb(err);
-                            }
-                            async.eachSeries(votes, function (vote, cb) {
-                                library.dbClient.query("UPDATE accounts SET vote = vote + $amount WHERE master_address = $master_address", {
-                                    type: Sequelize.QueryTypes.UPDATE,
-                                    bind: {
-                                        master_address: library.modules.accounts.generateAddressByPubKey(vote.delegate),
-                                        amount: vote.amount
-                                    }
-                                }).then(function (rows) {
-                                    library.notification_center.notify('finishRound', round);
-                                    self.flush(round, function (err) {
-                                        cb(err);
-                                    });
-                                }, function (err) {
-                                    library.notification_center.notify('finishRound', round);
-                                    self.flush(round, function (err) {
-                                        cb(err);
-                                    });
-                                });
-                            });
-                        });
                     }
                 ], function (err) {
                     done(err);

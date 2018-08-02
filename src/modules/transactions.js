@@ -282,7 +282,7 @@ privated.getByHash = function (hash, cb) {
     }).then(function (rows) {
         if (!rows.length) {
             return cb({
-                msg: ("Can't find transaction: " + id),
+                msg: ("Can't find transaction: " + hash),
                 code: 23004
             });
         }
@@ -356,7 +356,7 @@ Transactions.prototype.undoUnconfirmedList = function (cb) {
     var ids = [];
     async.eachSeries(privated.unconfirmedTransactions, function (transaction, cb) {
         if (transaction !== false) {
-            ids.push(transaction.id);
+            ids.push(transaction.hash);
             self.undoUnconfirmed(transaction, cb);
         } else {
             setImmediate(cb);
@@ -509,7 +509,7 @@ Transactions.prototype.removeUnconfirmedTransaction = function (id) {
 };
 
 Transactions.prototype.addDoubleSpending = function (transaction) {
-    privated.doubleSpendingTransactions[transaction.id] = transaction;
+    privated.doubleSpendingTransactions[transaction.hash] = transaction;
 };
 
 Transactions.prototype.onSendUnconfirmedTrs = function() {

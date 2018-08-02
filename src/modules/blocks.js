@@ -501,7 +501,6 @@ Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
                         id: Math.random(),
                         jsonrpc: '1.0'
                     }, function (err, data) {
-                        console.log(data);
                         if (err || data.code !== 200) {
                             return next(err || data.message);
                         }
@@ -745,6 +744,7 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                     privated.isActive = false;
                     setImmediate(cb, err);
                 });
+
             }
 
             if (!block.previousBlock && block.height != 1) {

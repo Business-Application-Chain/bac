@@ -10,8 +10,8 @@
   "delegates": [
     {
       "secret": "wKyoJM1vS4ucHmWvxDSdcpC23mJwqfg3G6MKZoXaFfcnWHTqo7",
-      "address": "12008943494300102578L",
-      "publicKey": "3319e5bb7b26eda2f3ba91d55536e8260b58bb37b968233823c2ba588200459f",
+      "address": "BBGiXeKL6tLQwe5Hqg6eXBBHn8ErUtNM1Z",
+      "publicKey": "021d830f0a86eb830d9154fd6c3ca89f5e8b319470f72fa08b6528bfb7f3f23b4e",
       "username": "genesisDelegate1"
     }
   ],
