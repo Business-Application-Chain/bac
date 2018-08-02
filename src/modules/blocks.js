@@ -941,12 +941,12 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
         options = {};
     }
     options = options || {};
-    if (filter.lastHash && filter.hash) {
+    if (filter.lastBlockHash && filter.hash) {
         return cb("Invalid filter");
     }
     var params = {limit: filter.limit || 1};
-    filter.lastHash && (params.lastHash = filter.lastHash);
-    filter.hash && !filter.lastHash && (params.hash = filter.hash);
+    filter.lastBlockHash && (params.lastBlockHash = filter.lastBlockHash);
+    filter.hash && !filter.lastBlockHash && (params.hash = filter.hash);
     var fields = privated.blocksDataFields;
     var method;
 
@@ -957,7 +957,7 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
         method = false;
     }
     library.dbSequence.add(function (cb) {
-        library.dbClient.query(`SELECT height as Number FROM blocks WHERE hash = "${filter.lastHash || null}"`, {
+        library.dbClient.query(`SELECT height as Number FROM blocks WHERE hash = "${filter.lastBlockHash || null}"`, {
             type: Sequelize.QueryTypes.SELECT
         }).then((rows) => {
             var height = rows.length ? rows[0].Number : 0;
@@ -988,8 +988,8 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
                 "left outer join contacts as c on c.transactionHash=t.hash " +
                 "left outer join usernames as u on u.transactionHash=t.hash " +
                 "left outer join multisignatures as m on m.transactionHash=t.hash " +
-                (filter.hash || filter.lastHash ? "where " : "") + " " +
-                (filter.hash ? " b.hash = $hash " : "") + (filter.hash && filter.lastHash ? " and " : "") + (filter.lastHash ? " b.height > $height and b.height < $limit " : "") +
+                (filter.hash || filter.lastBlockHash ? "where " : "") + " " +
+                (filter.hash ? " b.hash = $hash " : "") + (filter.hash && filter.lastBlockHash ? " and " : "") + (filter.lastBlockHash ? " b.height > $height and b.height < $limit " : "") +
                 limitPart +
                 "ORDER BY b.height, t.hash", {
                 type: Sequelize.QueryTypes.SELECT,
