@@ -967,12 +967,12 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
             var realLimit = height + (parseInt(filter.limit) || 1);
             params.limit = realLimit;
             params.height = height;
-            var limitPart = "";
+            var limitPart = " ";
 
             if (!filter.hash && !filter.lastHash) {
                 limitPart = "where b.height < $limit ";
             }
-            library.dbClient.query('SELECT '+
+            let sql = 'SELECT '+
                 'b.hash as b_hash, b.version , b.timestamp as b_timestamp , b.height , b.previousBlock , b.numberOfTransactions , b.totalAmount , b.totalFee , b.reward , b.payloadLength, lower(b.payloadHash) as payloadHash, lower(b.generatorPublicKey) as generatorPublicKey, lower(b.blockSignature) as blockSignature, ' +
                 "t.hash as t_hash, t.type, t.timestamp as t_timestamp , t.senderPublicKey , t.senderId , t.recipientId , t.senderUsername , t.recipientUsername , t.amount , t.fee , t.signature , t.signSignature , " +
                 'd.username as d_username , ' +
@@ -988,10 +988,10 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
                 "left outer join contacts as c on c.transactionHash=t.hash " +
                 "left outer join usernames as u on u.transactionHash=t.hash " +
                 "left outer join multisignatures as m on m.transactionHash=t.hash " +
-                (filter.hash || filter.lastBlockHash ? "where " : "") + " " +
-                (filter.hash ? " b.hash = $hash " : "") + (filter.hash && filter.lastBlockHash ? " and " : "") + (filter.lastBlockHash ? " b.height > $height and b.height < $limit " : "") +
-                limitPart +
-                "ORDER BY b.height", {
+                (filter.hash || filter.lastBlockHash ? " where " : " ") + " " +
+                (filter.hash ? " b.hash = $hash " : " ") + (filter.hash && filter.lastBlockHash ? " and " : " ") + (filter.lastBlockHash ? " b.height > $height and b.height < $limit " : " ") +
+                limitPart + "ORDER BY b.height";
+            library.dbClient.query(sql, {
                 type: Sequelize.QueryTypes.SELECT,
                 bind: params,
             }).then((blocks) => {
@@ -1006,6 +1006,7 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
                return cb(null, csv);
             });
         }).catch((err) => {
+            console.log(sql);
             return cb(err);
         })
     }, cb);
