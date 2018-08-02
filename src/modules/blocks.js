@@ -990,9 +990,7 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
                 "left outer join multisignatures as m on m.transactionHash=t.hash " +
                 (filter.hash || filter.lastBlockHash ? " where " : " ") + " " +
                 (filter.hash ? " b.hash = $hash " : " ") + (filter.hash && filter.lastBlockHash ? " and " : " ") + (filter.lastBlockHash ? " b.height > $height and b.height < $limit " : " ") +
-                limitPart + "ORDER BY b.height";
-
-            console.log(sql);
+                "ORDER BY b.height";
             library.dbClient.query(sql, {
                 type: Sequelize.QueryTypes.SELECT,
                 bind: params,
