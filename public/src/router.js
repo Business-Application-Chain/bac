@@ -11,6 +11,7 @@ import Main from './views/Main'
 import DashboardIndex from './views/dashboard/Index.vue'
 import ExplorerIndex from './views/explorer/Index.vue'
 import ExplorerList from './views/explorer/List.vue'
+import ExplorerTransaction from './views/explorer/Transaction.vue'
 import ExplorerResult from './views/explorer/Result.vue'
 import AccountIndex from './views/account/Index.vue'
 import ContactIndex from './views/contact/Index.vue'
@@ -78,6 +79,11 @@ export default new Router({
 							path: 'result/:query',
 							name: 'explorerResult',
 							component: ExplorerResult
+						},
+						{
+							path: 'transaction/:id',
+							name: 'explorerTransaction',
+							component: ExplorerTransaction
 						}
 					]
 				},

@@ -1,26 +1,5 @@
 <template>
-    <div class="explorer-result-page">
-        <div class="sec">
-            <div class="sec-header">交易详情</div>
-
-            <div class="page-desc">
-                <div class="desc-item">
-                    <div class="desc-item_hd">哈希</div>
-                    <div class="desc-item_ft">{{result.payloadHash}}</div>
-                </div>
-                <div class="desc-item">
-                    <div class="desc-item_hd">区块</div>
-                    <div class="desc-item_ft">{{result.height}}</div>
-                </div>
-                
-                <div class="desc-item">
-                    <div class="desc-item_hd">确认数</div>
-                    <div class="desc-item_ft">{{result.confirmations || 0}}</div>
-                </div>
-            </div>
-        </div>
-            
-
+    <div class="explorer-transaction-page">
         <div class="table">
             <div class="table-header">
                 <div class="table-5">交易HASH</div>
@@ -30,24 +9,22 @@
                 <div class="table-4">数量/手续费（BAC）</div>
             </div>
         
-            <div v-for="item in result.transactions" :key="item.hash" class="table-cell">
-                <div class="table-5">
-                    <router-link :to="{name: 'explorerTransaction', params:{id: item.hash}}" class="link">{{item.hash}}</router-link>
-                </div>
+            <div class="table-cell">
+                <div class="table-5">{{res.hash}}</div>
                 <div class="table-1">
-                    <router-link :to="{name: 'contactDetail', params:{id: item.senderId}}" class="link">{{item.senderId}}</router-link>
+                    <router-link :to="{name: 'contactDetail', params:{id: res.senderId}}" class="link">{{res.senderId}}</router-link>
                 </div>
                 <div class="table-2">
                     <i class="iconfont arrow-icon">&#xe610;</i>
                 </div>
                 <div class="table-3">
                     
-                    <router-link v-if="item.recipientId" :to="{name: 'contactDetail', params:{id: item.recipientId}}" class="link">{{item.recipientId}}</router-link>
+                    <router-link v-if="res.recipientId" :to="{name: 'contactDetail', params:{id: res.recipientId}}" class="link">{{res.recipientId}}</router-link>
                     <div v-else>-</div>
                     
                 </div>
                 <div class="table-4">
-                    {{item.amount | bac}} / {{item.fee | bac}}
+                    {{res.amount | bac}} / {{res.fee | bac}}
                 </div>
             </div>
         </div>
@@ -55,27 +32,25 @@
 </template>
 
 <script>
-    import api from '../../js/api/index.js'
+    import api from '~/js/api'
     
     export default {
         data () {
             return {
-                result: {}
+                res: {}
             }
         },
-        watch :{
-            '$route': 'search'
-        },
+
         created () {
             this.search()
         },
 
         methods: {
             search () {
-                api.blocks.block([this.$route.params.query]).then(res => {
+                api.transactions.transaction([this.$route.params.id]).then(res => {
                     if(res === null) return;
                     
-                    this.result = res
+                    this.res = res
                 })
             }
         }
@@ -85,7 +60,7 @@
 <style lang="scss" scoped>
     @import "~/css/utils.scss";
 
-    .explorer-result-page{
+    .explorer-transaction-page{
         padding-bottom: 40px;
         .page-desc{
             margin-top: 31px;

@@ -26,5 +26,14 @@ export default {
             method: 'addTransaction',
             params
         })
+    },
+
+    //获取单笔交易信息 params: [id]
+    transaction (params) {
+        return io.post({
+            api: 'transactions',
+            method: 'transaction',
+            params
+        }) 
     }
 }
