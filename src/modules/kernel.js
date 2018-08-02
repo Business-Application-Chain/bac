@@ -405,11 +405,10 @@ shared_1_0.blocks_common = function (params, cb) {
     // ids = ids.split(',').filter(function (id) {
     //     return /^\d+$/.test(id);
     // });
-    let escapedIds = ids.map(function (id) {
-        return "'" + id + "'";
-    });
-    let sql = `SELECT height, hash, previousBlock, timestamp from blocks where hash in ( ${escapedIds.join(',')} ) and height >= ${min} and height <= ${max} ORDER BY height DESC LIMIT 1`;
-    console.log(sql);
+    // let escapedIds = ids.map(function (id) {
+    //     return "'" + id + "'";
+    // });
+    let sql = `SELECT height, hash, previousBlock, timestamp from blocks where hash = "${ids}" and height >= ${min} and height <= ${max} ORDER BY height DESC LIMIT 1`;
     library.dbClient.query(sql, {
         type: Sequelize.QueryTypes.SELECT,
     }).then((rows) => {

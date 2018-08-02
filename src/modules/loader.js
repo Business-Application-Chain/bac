@@ -208,7 +208,6 @@ privated.loadUnconfirmedTransactions = function (cb) {
         // }
 
         if(data.code !== 200) {
-            console.log(data);
             return cb();
         }
         var transactions = data.result;

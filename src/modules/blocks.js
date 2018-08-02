@@ -1002,7 +1002,6 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
                 });
                 let json2csv = new Json2csv({header: false});
                 let csv = json2csv.parse(blocks);
-                console.log(csv);
                return cb(null, csv);
             });
         }).catch((err) => {
