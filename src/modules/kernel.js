@@ -401,9 +401,9 @@ shared_1_0.blocks_common = function (params, cb) {
     if (max === 0 || min === 0 || ids === '') {
         return cb('params is error', 11000);
     }
-    ids = ids.split(',').filter(function (id) {
-        return /^\d+$/.test(id);
-    });
+    // ids = ids.split(',').filter(function (id) {
+    //     return /^\d+$/.test(id);
+    // });
     let escapedIds = ids.map(function (id) {
         return "'" + id + "'";
     });
