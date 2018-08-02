@@ -235,6 +235,7 @@ privated.findUpdate = function(lastBlock, peer, cb) {
 
     library.modules.blocks.getCommonBlock(peer, lastBlock.height, function (err, commonBlock) {
         if(err) {
+            console.log(err);
             return cb(err);
         }
         library.log.Info("Found common block " + commonBlock.hash + " (at " + commonBlock.height + ")" + " with peer " + peerStr);

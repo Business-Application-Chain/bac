@@ -308,7 +308,7 @@ privated.popLastBlock = function (oldLastBlock, cb) {
 };
 
 privated.getIdSequence = function (height, cb) {
-    library.dbClient.query('SELECT height AS firstHeight, id AS ids FROM blocks ORDER BY height DESC LIMIT 1', {
+    library.dbClient.query('SELECT height AS firstHeight, hash AS ids FROM blocks ORDER BY height DESC LIMIT 1', {
         type: Sequelize.QueryTypes.SELECT
     }).then((rows) => {
         cb(null, rows[0]);
