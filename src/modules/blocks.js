@@ -991,6 +991,8 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
                 (filter.hash || filter.lastBlockHash ? " where " : " ") + " " +
                 (filter.hash ? " b.hash = $hash " : " ") + (filter.hash && filter.lastBlockHash ? " and " : " ") + (filter.lastBlockHash ? " b.height > $height and b.height < $limit " : " ") +
                 limitPart + "ORDER BY b.height";
+
+            console.log(sql);
             library.dbClient.query(sql, {
                 type: Sequelize.QueryTypes.SELECT,
                 bind: params,
@@ -1006,7 +1008,6 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
                return cb(null, csv);
             });
         }).catch((err) => {
-            console.log(sql);
             return cb(err);
         })
     }, cb);
