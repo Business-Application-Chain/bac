@@ -378,7 +378,7 @@ shared_1_0.blocks = function (params, cb) {
     }
     let blocksLimit = 1440;
     library.modules.blocks.loadBlocksData({
-        limit: blocksLimit, lastId: lastBlockHash
+        limit: blocksLimit, lastBlockHash: lastBlockHash
     }, {
         plain: false
     }, function (err, data) {
