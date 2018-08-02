@@ -141,6 +141,7 @@ Kernel.prototype.getFromPeerNews = function (peer, options, cb) {
         timeout: library.config.peers.optional.timeout,
         pool: {maxSockets: 1000},
     };
+    console.log(req.body);
     request(req, function (err, response, body) {
         if (err || response.statusCode !== 200) {
             library.log.Debug("Request", "Error", err);
@@ -373,7 +374,7 @@ shared_1_0.height = function (req, cb) {
 
 shared_1_0.blocks = function (params, cb) {
     let lastBlockHash = params[0] || undefined;
-    if (lastBlockHash) {
+    if (!lastBlockHash) {
         return cb('params is error', 11000);
     }
     let blocksLimit = 1440;
