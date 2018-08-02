@@ -10,7 +10,7 @@
         </div>
         <div v-for="item in list" :key="item.hash" class="comp-item active">
             <div class="comp-t1">
-                <router-link :to="{name: 'explorerResult', params:{query: item.hash}}" class="comp-link" >{{item.hash}}</router-link>
+                <router-link :to="{name: 'explorerTransaction', params:{id: item.hash}}" class="comp-link" >{{item.hash}}</router-link>
             </div>
             <div class="comp-t2">
                 <router-link :to="{name: 'contactDetail', params:{id: item.senderId}}" class="comp-link" replace>{{item.senderId}}</router-link>
