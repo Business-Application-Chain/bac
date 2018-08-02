@@ -991,7 +991,7 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
                 (filter.hash || filter.lastBlockHash ? "where " : "") + " " +
                 (filter.hash ? " b.hash = $hash " : "") + (filter.hash && filter.lastBlockHash ? " and " : "") + (filter.lastBlockHash ? " b.height > $height and b.height < $limit " : "") +
                 limitPart +
-                "ORDER BY b.height, t.hash", {
+                "ORDER BY b.height", {
                 type: Sequelize.QueryTypes.SELECT,
                 bind: params,
             }).then((blocks) => {
