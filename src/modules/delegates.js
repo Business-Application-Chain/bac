@@ -9,6 +9,7 @@ var util = require('util');
 var shuffle = require('knuth-shuffle').knuthShuffle;
 var ed = require('ed25519');
 var slots = require('../utils/slots.js');
+var crypto = require('crypto');
 
 require('array.prototype.find'); // Old node fix
 
@@ -282,7 +283,7 @@ privated.attachApi = function () {
 privated.getKeysSortByVote = function (cb) {
     library.modules.accounts.getAccount({
         isDelegate: 1,
-        sort: {"vote": -1, "publicKey": 1},
+        sort: {"uservote": -1},
         limit: constants.delegates
     }, ["publicKey"], function (err, rows) {
         if (err) {

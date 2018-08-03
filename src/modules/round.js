@@ -28,12 +28,12 @@ function Round(cb, scope) {
 //Round changes
 function RoundChanges (round) {
     var roundFees = parseInt(privated.feesByRound[round]) || 0;
-    var roundRewards = (privated.rewardsByRound[round] || []);
+    var roundRewards = (privated.rewardsByRound[round + 1] || []);
 
-    this.at = function (index) {
+    this.at = function () {
         var fees = Math.floor(roundFees / constants.delegates);
         var feesRemaining = roundFees - (fees * constants.delegates);
-        var rewards = parseInt(roundRewards[index]) || 0;
+        var rewards = parseInt(roundRewards) || 0;
 
         return {
             fees: fees,
@@ -285,29 +285,12 @@ Round.prototype.tick = function (blockObj, cb) {
         privated.delegatesByRound[round].push(blockObj.generatorPublicKey);
 
         var nextRound = self.calc(blockObj.height + 1);
-        return done();
-        if (round !== nextRound || blockObj.height == 1) { // means it is the last item in current round
-            if (privated.delegatesByRound[round].length == constants.delegates || blockObj.height == 1 || blockObj.height == 101) {
+        // return done();
+        if (round !== nextRound || blockObj.height === 1) { // means it is the last item in current round
+            if (privated.delegatesByRound[round].length === constants.delegates || blockObj.height === 1 || blockObj.height === 101) {
                 var outsiders = [];
 
                 async.series([
-                    function (cb) {
-                        if (blockObj.height != 1) { // create new round delegates
-                            library.modules.delegates.generateDelegateList(blockObj.height, function (err, roundDelegates) {
-                                if (err) {
-                                    return cb(err);
-                                }
-                                for (var i = 0; i < roundDelegates.length; i++) {
-                                    if (privated.delegatesByRound[round].indexOf(roundDelegates[i])) { // if ... then out!!!
-                                        outsiders.push(library.modules.accounts.generateAddressByPubKey(roundDelegates[i]));
-                                    }
-                                }
-                                cb();
-                            });
-                        } else {
-                            cb();
-                        }
-                    },
                     function (cb) {
                         if (!outsiders.length) {
                             return cb();
@@ -325,11 +308,34 @@ Round.prototype.tick = function (blockObj, cb) {
                     },
                     function (cb) {
                         var roundChanges = new RoundChanges(round);
+                        var changes = roundChanges.at();
 
-                        async.forEachOfSeries(privated.delegatesByRound[round], function (delegate, index, cb) {
+                        library.modules.accounts.mergeAccountAndGet({
+                            master_pub: blockObj.generatorPublicKey,
+                            balance: changes.balance,
+                            balance_unconfirmed: changes.balance,
+                            blockHash: blockObj.hash,
+                            round: self.calc(blockObj.height),
+                            fees: changes.fees,
+                            rewards: changes.rewards
+                        }, function (err) {
+                            if (err) {
+                                return cb(err);
+                            }
+                            library.modules.accounts.mergeAccountAndGet({
+                                master_pub: blockObj.generatorPublicKey,
+                                balance: changes.feesRemaining,
+                                balance_unconfirmed: changes.feesRemaining,
+                                blockHash: blockObj.hash,
+                                round: self.calc(blockObj.height),
+                                fees: changes.feesRemaining
+                            }, cb);
+                        });
+
+                        /*async.forEachOfSeries(privated.delegatesByRound[round], function (delegate, index, cb) {
                             var changes = roundChanges.at(index);
 
-                            library.modules.account.mergeAccountAndGet({
+                            library.modules.accounts.mergeAccountAndGet({
                                 master_pub: delegate,
                                 balance: changes.balance,
                                 balance_unconfirmed: changes.balance,
@@ -342,7 +348,7 @@ Round.prototype.tick = function (blockObj, cb) {
                                     return cb(err);
                                 }
                                 if (index === privated.delegatesByRound[round].length - 1) {
-                                    library.modules.account.mergeAccountAndGet({
+                                    library.modules.accounts.mergeAccountAndGet({
                                         master_pub: delegate,
                                         balance: changes.feesRemaining,
                                         balance_unconfirmed: changes.feesRemaining,
@@ -354,10 +360,9 @@ Round.prototype.tick = function (blockObj, cb) {
                                     cb();
                                 }
                             });
-                        }, cb);
+                        }, cb);*/
                     }
                 ], function (err) {
-                    done(err);
                     delete privated.feesByRound[round];
                     delete privated.rewardsByRound[round];
                     delete privated.delegatesByRound[round];
@@ -379,8 +384,8 @@ Round.prototype.onInit = function (modules_loaded) {
 };
 
 Round.prototype.onBlockchainReady = function () {
-    // var round = self.calc(library.base.block.getLastBlock().height);
-    // var sql = 'SELECT SUM(b.totalFee), GROUP_CONCAT(b.reward), GROUP_CONCAT(lower(b.generatorPublicKey)) FROM blocks b WHERE (SELECT (CAST(b.height / 101 AS INTEGER) + (CASE WHEN b.height % 101 > 0 THEN 1 ELSE 0 END))) = $round';
+    // var round = self.calc(library.modules.blocks.getLastBlock().height);
+    // var sql = 'SELECT SUM(b.totalFee), GROUP_CONCAT(b.reward), GROUP_CONCAT(lower(b.generatorPublicKey)) FROM blocks b WHERE (SELECT (CAST(b.height / 1 AS INTEGER) + (CASE WHEN b.height % 101 > 0 THEN 1 ELSE 0 END))) = $round';
     //
     // library.dbClient.query(sql, {
     //     type: Sequelize.QueryTypes.SELECT,
