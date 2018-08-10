@@ -46,7 +46,7 @@ Transaction.prototype.create = function (data) {
         recipientId: data.recipientId || null,
         senderPublicKey: data.sender.master_pub.toString('hex'),
         timestamp: Date.now(),
-        asset: {}
+        asset: {},
     };
 
     txObj = privated.types[txObj.type].create.call(this, data, txObj);
@@ -59,6 +59,7 @@ Transaction.prototype.create = function (data) {
     txObj.hash = this.getTrsHash(txObj);
 
     txObj.fee = privated.types[txObj.type].calculateFee.call(this, txObj, data.sender) || false;
+    txObj.message = data.message || '';
 
     return txObj;
 };
@@ -109,11 +110,9 @@ Transaction.prototype.objectNormalize = function (txObj) {
             },
             senderPublicKey: {
                 type: 'string',
-                // format: 'publicKey'
             },
             requesterPublicKey: {
                 type: 'string',
-                // format: 'publicKey'
             },
             senderId: {
                 type: 'string'
@@ -139,14 +138,15 @@ Transaction.prototype.objectNormalize = function (txObj) {
             },
             signature: {
                 type: 'string',
-                // format: 'signature'
             },
             signSignature: {
                 type: 'string',
-                format: 'signature'
             },
             asset: {
                 type: 'object'
+            },
+            message: {
+                type: 'string'
             }
         },
         required: ['type', 'timestamp', 'senderPublicKey', 'signature']
@@ -210,19 +210,6 @@ Transaction.prototype.getBytes = function (txObj, skipSignature, skipSecondSigna
         }
 
         bb.writeByte(0);
-        // if (txObj.recipientId) {
-        //     var recipient = txObj.recipientId.slice(0, -1);
-        //     recipient = bignum(recipient).toBuffer({size: 8});
-        //
-        //     for (var i = 0; i < 8; i++) {
-        //         bb.writeByte(recipient[i] || 0);
-        //     }
-        // } else {
-        //     for (var i = 0; i < 8; i++) {
-        //         bb.writeByte(0);
-        //     }
-        // }
-
         bb.writeLong(txObj.amount);
 
         if (assetSize > 0) {
@@ -284,8 +271,6 @@ Transaction.prototype.process = function (txObj, sender, requester, cb) {
     }
     if (txObj.hash && txObj.hash !== txHash) {
         return setImmediate(cb, "Invalid transaction id");
-    } else {
-        txObj.hash = txHash;
     }
 
     if (!sender) {
@@ -794,7 +779,7 @@ Transaction.prototype.save = function (txObj, t, cb) {
         t = null;
     }
 
-    this.scope.dbClient.query("INSERT INTO transactions (hash, blockHash, type, timestamp, senderPublicKey, requesterPublicKey, senderId, recipientId, senderUsername, recipientUsername, amount, fee, signature, signSignature, signatures) VALUES ($hash, $blockHash, $type, $timestamp, $senderPublicKey, $requesterPublicKey, $senderId, $recipientId, $senderUsername, $recipientUsername, $amount, $fee, $signature, $signSignature, $signatures)", {
+    this.scope.dbClient.query("INSERT INTO transactions (hash, blockHash, type, timestamp, senderPublicKey, requesterPublicKey, senderId, recipientId, senderUsername, recipientUsername, amount, fee, signature, signSignature, signatures, message) VALUES ($hash, $blockHash, $type, $timestamp, $senderPublicKey, $requesterPublicKey, $senderId, $recipientId, $senderUsername, $recipientUsername, $amount, $fee, $signature, $signSignature, $signatures, $message)", {
         bind: {
             hash: txObj.hash,
             blockHash: txObj.blockHash,
@@ -810,7 +795,8 @@ Transaction.prototype.save = function (txObj, t, cb) {
             fee: txObj.fee,
             signature: txObj.signature ? txObj.signature : null,
             signSignature: txObj.signSignature ? txObj.signSignature : null,
-            signatures: txObj.signatures ? txObj.signatures.join(',') : null
+            signatures: txObj.signatures ? txObj.signatures.join(',') : null,
+            message: txObj.message ? txObj.message : ""
         },
         type: Sequelize.QueryTypes.INSERT,
         transaction: t

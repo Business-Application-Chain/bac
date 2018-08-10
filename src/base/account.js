@@ -597,6 +597,36 @@ Account.prototype.createTables = function (cb) {
 
     sqles.push("INSERT INTO accounts2delegates_unconfirmed SELECT * FROM accounts2delegates;");
 
+    var sql = jsonSql.build({
+        type: 'create',
+        table: this.table + '2asset_balance',
+        tableFields: [
+            {
+                name: 'assetsHash',
+                type: 'String',
+                length: 64
+            },
+            {
+                name: 'assets_name',
+                type: 'String',
+                length: 32
+            },
+            {
+                name: 'master_address',
+                type: 'String',
+                length: 64
+            },
+            {
+                name: 'balance',
+                type: 'BigInt',
+                length: 32
+            }
+        ]
+    });
+
+    sqles.push(sql.query);
+    sqles.push(`ALTER TABLE ${this.table + '2asset_balance'} CHARACTER SET utf8 COLLATE utf8_general_ci;`);
+
     var self = this;
 
     async.eachSeries(sqles, function (sql, cb) {
@@ -616,6 +646,12 @@ Account.prototype.removeTables = function (cb) {
     var sql = jsonSql.build({
         type: 'remove',
         table: this.table
+    });
+    sqles.push(sql.query);
+
+    var sql = jsonSql.build({
+        type: 'remove',
+        table: this.table + '2asset_balance',
     });
     sqles.push(sql.query);
 

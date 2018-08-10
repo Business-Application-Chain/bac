@@ -255,6 +255,9 @@ privated.getById = function (hash, cb) {
             'u.username as u_alias,' +
             'm.min as m_min, m.lifetime as m_lifetime, m.keysgroup as m_keysgroup, ' +
             't.requesterPublicKey as t_requesterPublicKey, t.signatures as t_signatures ' +
+            'a.name as a_name, a.description as a_description, a.hash as a_hash, a.publisherHash as a_publisherHash, a.decimal as a_decimal, a.total as a_total, a.publisherName as a_publisherName' +
+            'p.name as p_name, p.description as p_description, p.hash as p_hash' +
+            'tr.amount as tr_amount, tr.assetsHash as tr_assetsHash' +
             "FROM blocks b " +
             "left outer join transactions as t on t.blockHash=b.hash " +
             "left outer join delegates as d on d.transactionHash=t.hash " +
@@ -262,6 +265,9 @@ privated.getById = function (hash, cb) {
             "left outer join contacts as c on c.transactionHash=t.hash " +
             "left outer join usernames as u on u.transactionHash=t.hash " +
             "left outer join multisignatures as m on m.transactionHash=t.hash " +
+            "left outer join account2assets as a on a.transactionHash=t.hash " +
+            "left outer join account2publisher as p on p.transactionHash=t.hash " +
+            "left outer join transfers as tr on tr.transactionHash=t.hash " +
             `where b.hash = "${hash}" or b.height = "${hash}" `, {
             type: Sequelize.QueryTypes.SELECT
         }).then((rows) => {
@@ -570,7 +576,10 @@ Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
             'c.address as c_address, ' +
             'u.username as u_alias,' +
             'm.min as m_min, m.lifetime as m_lifetime, m.keysgroup as m_keysgroup, ' +
-            't.requesterPublicKey as t_requesterPublicKey, t.signatures as t_signatures ' +
+            't.requesterPublicKey as t_requesterPublicKey, t.signatures as t_signatures, ' +
+            'a.name as a_name, a.description as a_description, a.hash as a_hash, a.publisherHash as a_publisherHash, a.decimal as a_decimal, a.total as a_total, a.publisher_name as a_publisherName, ' +
+            'p.name as p_name, p.description as p_description, p.hash as p_hash, ' +
+            'tr.amount as tr_amount, tr.assetsHash as tr_assetsHash, tr.assets_name as tr_assetsName ' +
             "FROM blocks b " +
             "left outer join transactions as t on t.blockHash=b.hash " +
             "left outer join delegates as d on d.transactionHash=t.hash " +
@@ -578,6 +587,9 @@ Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
             "left outer join contacts as c on c.transactionHash=t.hash " +
             "left outer join usernames as u on u.transactionHash=t.hash " +
             "left outer join multisignatures as m on m.transactionHash=t.hash " +
+            "left outer join account2assets as a on a.transactionHash=t.hash " +
+            "left outer join account2publisher as p on p.transactionHash=t.hash " +
+            "left outer join transfers as tr on tr.transactionHash=t.hash " +
             `where b.height >= ${params.offset} and b.height < ${params.limit} ` +
             "ORDER BY b.height, t.hash";
         library.dbClient.query(sql, {
@@ -662,7 +674,7 @@ Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
                         }, function (err) {
                             if(err) {
                                 // library.log.Error(err.message.stack);
-                                console.log(err.message.stack);
+                                console.log(err.message);
                                 var lastValidTransaction = block.transactions.findIndex(function (trs) {
                                     return trs.hash == err.transaction.hash;
                                 });
@@ -915,10 +927,7 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                     library.log.Error(err);
                                     process.exit(0);
                                 }
-                                // library.bus.message('newBlock', block, broadcast);
                                 privated.lastBlock = block;
-                                // library.webSocket.sendUTF(sendFactory.sendNewBlocks(block));
-                                // done();
                                 library.notification_center.notify('newBlock', block, broadcast);
                                 library.modules.round.tick(block, done);
                             });
