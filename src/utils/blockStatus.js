@@ -10,7 +10,8 @@ function BlockStatus() {
     ];
 
     var distance = 3000000, // Distance between each milestone
-        rewardOffset = 60480; // Start rewards at block (n)
+        // rewardOffset = 60480; // Start rewards at block (n)
+        rewardOffset = 6480; // Start rewards at block (n)
 
     var parseHeight = function (height) {
         height = parseInt(height);

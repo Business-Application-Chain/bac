@@ -170,9 +170,37 @@ Publishers.prototype.onInit = function (scope) {
     modules_loaded = scope && scope != undefined ? true : false;
 };
 
+privated.getAccountPublisher = function(address, cb) {
+    library.dbClient.query('SELECT * FROM account2publisher WHERE accountId = $accountId', {
+        type: Sequelize.QueryTypes.SELECT,
+        bind: {
+            accountId: address
+        }
+    }).then((rows) => {
+        if(rows.length > 0) {
+            cb(null, rows);
+        } else {
+            cb('not find publisher for accountId');
+        }
+    }).catch((err) => {
+        cb(err);
+    })
+};
+
 shared_1_0.getFee = function(req, cb) {
     let fee = 100 * constants.fixedPoint;
     return cb(null, fee);
+};
+
+shared_1_0.getAccountPublisher = function(params, cb) {
+    let address = params[0];
+    privated.getAccountPublisher(address, function (err, rows) {
+        if(err) {
+            cb(err, 11000);
+        } else {
+            cb(null, 200, JSON.stringify(rows));
+        }
+    });
 };
 
 shared_1_0.addPublisher = function(params, cb) {

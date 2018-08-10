@@ -186,7 +186,7 @@ Transfers.prototype.callApi = function (call, rpcjson, args, cb) {
     }
 };
 
-shared_1_0.addTransfers = function(params, cb) {
+shared_1_0.sendTransfers = function(params, cb) {
     let amount = params[0] || 0;
     let recipientId = params[1] || '';
     let mnemonic = params[2] || '';
@@ -260,6 +260,11 @@ shared_1_0.addTransfers = function(params, cb) {
         }
         cb(null, 200, {transactionHash: transaction[0].hash});
     });
+};
+
+shared_1_0.getFee = function(req, cb) {
+    let fee = 0.1 * constants.fixedPoint;
+    return cb(null, fee);
 };
 
 module.exports = Transfers;

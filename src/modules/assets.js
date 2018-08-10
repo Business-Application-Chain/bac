@@ -197,6 +197,21 @@ Assets.prototype.getAssets = function(hash, cb) {
     });
 };
 
+privated.getAccountAssets = function(address, cb) {
+    // WHERE master_address = "${address}"
+    library.dbClient.query(`SELECT a.*, b.decimal FROM accounts2asset_balance a left outer join account2assets as b on a.assetsHash = b.hash where a.master_address = "${address}"`, {
+        type: Sequelize.QueryTypes.SELECT
+    }).then((rows) => {
+        if(rows[0]) {
+            cb(null, rows[0]);
+        } else {
+            cb('address not find');
+        }
+    }).catch((err) => {
+        cb(err);
+    });
+};
+
 shared_1_0.addAssets = function(params, cb) {
     let name = params[0] || '';
     let description = params[1] || '';
@@ -264,6 +279,28 @@ shared_1_0.addAssets = function(params, cb) {
         }
         return cb(null, 200, {transaction: transaction[0]});
     });
+};
+
+shared_1_0.getAccountAssets = function(params, cb) {
+    let accountId = params[0];
+    let isAddress = /^[B]+[A-Za-z|0-9]{33}$/;
+
+    if(!isAddress.test(accountId)) {
+        return cb('is not address address', 11000);
+    }
+
+    privated.getAccountAssets(accountId, function (err, data) {
+        if(err) {
+            cb(err, 11000);
+        } else {
+            cb(null, 200, JSON.stringify(data));
+        }
+    });
+};
+
+shared_1_0.getFee = function(params, cb) {
+    let fee = 100 * constants.fixedPoint;
+    return cb(null, fee);
 };
 
 module.exports = Assets;
