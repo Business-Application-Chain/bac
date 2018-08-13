@@ -26,7 +26,7 @@ AccountAssets.prototype.updateAssetBalance = function(transfer, address, cb) {
         }
         library.dbClient.query(`UPDATE accounts2asset_balance SET balance = balance + ${transfer.amount} WHERE master_address = "${address}" and assetsHash = "${transfer.assetsHash}"`, {
             type:Sequelize.QueryTypes.UPDATE
-        }).then(() => {
+        }).then((data) => {
             cb();
         }).catch((err) => {
             cb(err);
@@ -85,24 +85,17 @@ AccountAssets.prototype.getAssetsBalance = function(address, transfer, cb) {
     });
 };
 
-AccountAssets.prototype.burnAssetsBalance = function(address, assetsHash, amount, cb) {
-    self.getAssetsBalance(address, assetsHash, function (err, assetsAccount) {
-        if(assetsAccount.balance - amount >= 0) {
-            self.updateAssetBalance(assetsAccount.hash, -amount, assetsAccount.master_address, function (err) {
-                if(err) {
-                    return cb(err);
-                }
-                library.dbClient.query('UPDATE account2assets SET total = total - $amount, burn = $amount WHERE hash = $assetsHash',{
-                    type: Sequelize.QueryTypes.UPDATE,
-                    bind: {
-                        amount: amount,
-                        assetsHash: assetsHash
-                    }
-                });
-            });
-        } else {
-            return cb('balance is not enough');
+AccountAssets.prototype.burnAssetsBalance = function(address, burn, amount, cb) {
+    library.dbClient.query('UPDATE account2assets SET burn = burn + $amount WHERE hash = $assetsHash', {
+        type: Sequelize.QueryTypes.UPDATE,
+        bind: {
+            amount: amount,
+            assetsHash: burn.assetsHash
         }
+    }).then(() => {
+        cb();
+    }).catch((err) => {
+        cb(err);
     });
 };
 

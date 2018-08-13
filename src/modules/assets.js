@@ -185,6 +185,14 @@ Assets.prototype.onInit = function (scope) {
     modules_loaded = scope && scope != undefined ? true : false;
 };
 
+Assets.prototype.applyBurn = function(hash, amount, cb) {
+    library.dbClient.query('SELECT * FROM account2assets WHERE hash = $hash ')
+};
+
+Assets.prototype.undoBurn = function(hash, address, cb) {
+
+};
+
 Assets.prototype.getAssets = function(hash, cb) {
     library.dbClient.query(`SELECT * FROM account2assets WHERE hash = "${hash}"`, {
         type: Sequelize.QueryTypes.SELECT

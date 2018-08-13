@@ -12,5 +12,6 @@ module.exports = {
     OTHER: 10,
     PUBLISHER: 11,
     ASSETS: 12,
-    TRANSFERS: 13
+    TRANSFERS: 13,
+    BURN: 14
 };

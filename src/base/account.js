@@ -655,6 +655,15 @@ Account.prototype.removeTables = function (cb) {
     });
     sqles.push(sql.query);
 
+    var sql = jsonSql.build({
+        type: 'update',
+        table: 'account2assets',
+        modifier: {
+            burn: 0
+        }
+    });
+    sqles.push(sql.query);
+
     var self = this;
 
     async.eachSeries(sqles, function (sql, cb) {
