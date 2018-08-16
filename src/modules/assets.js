@@ -172,14 +172,6 @@ Assets.prototype.onInit = function (scope) {
     modules_loaded = scope && scope != undefined ? true : false;
 };
 
-Assets.prototype.applyBurn = function(hash, amount, cb) {
-    library.dbClient.query('SELECT * FROM account2assets WHERE hash = $hash ')
-};
-
-Assets.prototype.undoBurn = function(hash, address, cb) {
-
-};
-
 Assets.prototype.getAssets = function(hash, cb) {
     library.dbClient.query(`SELECT * FROM account2assets WHERE hash = "${hash}"`, {
         type: Sequelize.QueryTypes.SELECT
@@ -191,8 +183,6 @@ Assets.prototype.getAssets = function(hash, cb) {
         }
     });
 };
-
-
 
 privated.getAccountAssets = function(address, cb) {
     // WHERE master_address = "${address}"
@@ -284,7 +274,7 @@ shared_1_0.getAccountAssets = function(params, cb) {
 
 shared_1_0.getFee = function(params, cb) {
     let fee = 100 * constants.fixedPoint;
-    return cb(null, fee);
+    return cb(null, 200, fee);
 };
 
 module.exports = Assets;

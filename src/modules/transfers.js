@@ -472,7 +472,7 @@ shared_1_0.burnAssets = function(params, cb) {
 
 shared_1_0.getFee = function(req, cb) {
     let fee = 0.1 * constants.fixedPoint;
-    return cb(null, fee);
+    return cb(null, 200, fee);
 };
 
 module.exports = Transfers;
