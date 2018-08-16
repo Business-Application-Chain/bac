@@ -196,7 +196,7 @@ privated.getAccountAssets = function(address, cb) {
 };
 
 privated.getAssets = function(address, cb) {
-    library.dbClient.query(`SELECT * FROM account2assets WHERE master_address = "${address}"`, {
+    library.dbClient.query(`SELECT * FROM account2assets WHERE accountId = "${address}"`, {
         type: Sequelize.QueryTypes.SELECT,
     }).then((rows) => {
         cb(null, rows);
