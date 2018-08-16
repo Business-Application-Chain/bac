@@ -254,9 +254,8 @@ privated.getById = function (hash, cb) {
             'c.address as c_address, ' +
             'u.username as u_alias,' +
             'm.min as m_min, m.lifetime as m_lifetime, m.keysgroup as m_keysgroup, ' +
-            't.requesterPublicKey as t_requesterPublicKey, t.signatures as t_signatures ' +
-            'a.name as a_name, a.description as a_description, a.hash as a_hash, a.publisherHash as a_publisherHash, a.decimal as a_decimal, a.total as a_total, a.publisherName as a_publisherName' +
-            'p.name as p_name, p.description as p_description, p.hash as p_hash' +
+            't.requesterPublicKey as t_requesterPublicKey, t.signatures as t_signatures, ' +
+            'a.name as a_name, a.description as a_description, a.hash as a_hash, a.decimal as a_decimal, a.total as a_total, ' +
             'tr.amount as tr_amount, tr.assetsHash as tr_assetsHash' +
             "FROM blocks b " +
             "left outer join transactions as t on t.blockHash=b.hash " +
@@ -266,7 +265,6 @@ privated.getById = function (hash, cb) {
             "left outer join usernames as u on u.transactionHash=t.hash " +
             "left outer join multisignatures as m on m.transactionHash=t.hash " +
             "left outer join account2assets as a on a.transactionHash=t.hash " +
-            "left outer join account2publisher as p on p.transactionHash=t.hash " +
             "left outer join transfers as tr on tr.transactionHash=t.hash " +
             `where b.hash = "${hash}" or b.height = "${hash}" `, {
             type: Sequelize.QueryTypes.SELECT
@@ -577,8 +575,7 @@ Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
             'u.username as u_alias,' +
             'm.min as m_min, m.lifetime as m_lifetime, m.keysgroup as m_keysgroup, ' +
             't.requesterPublicKey as t_requesterPublicKey, t.signatures as t_signatures, ' +
-            'a.name as a_name, a.description as a_description, a.hash as a_hash, a.publisherHash as a_publisherHash, a.decimal as a_decimal, a.total as a_total, a.publisher_name as a_publisherName, ' +
-            'p.name as p_name, p.description as p_description, p.hash as p_hash, ' +
+            'a.name as a_name, a.description as a_description, a.hash as a_hash,  a.decimal as a_decimal, a.total as a_total, ' +
             'tr.amount as tr_amount, tr.assetsHash as tr_assetsHash, tr.assets_name as tr_assetsName ' +
             "FROM blocks b " +
             "left outer join transactions as t on t.blockHash=b.hash " +
@@ -588,7 +585,6 @@ Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
             "left outer join usernames as u on u.transactionHash=t.hash " +
             "left outer join multisignatures as m on m.transactionHash=t.hash " +
             "left outer join account2assets as a on a.transactionHash=t.hash " +
-            "left outer join account2publisher as p on p.transactionHash=t.hash " +
             "left outer join transfers as tr on tr.transactionHash=t.hash " +
             `where b.height >= ${params.offset} and b.height < ${params.limit} ` +
             "ORDER BY b.height, t.hash";

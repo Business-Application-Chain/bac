@@ -28,7 +28,6 @@ var system = require("../src/modules/system.js");
 var transactions = require("../src/modules/transactions.js");
 var contacts = require("../src/modules/contacts.js");
 var Sequence = require('../src/utils/sequence.js');
-var publisher = require('../src/modules/publisher');
 var assets = require('../src/modules/assets');
 var transfers = require('../src/modules/transfers');
 
@@ -55,7 +54,6 @@ var params = {
         "system": system,
         "transactions": transactions,
         "contacts": contacts,
-        "publisher": publisher,
         "assets": assets,
         "transfers": transfers,
     }

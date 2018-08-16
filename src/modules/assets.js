@@ -32,10 +32,8 @@ function Asset() {
             name: data.name,
             description: data.description,
             hash: hash,
-            publisherHash: data.publisherHash,
             decimal: data.decimal,
-            total: data.total,
-            publisherName: data.publisherName
+            total: data.total
         };
         return txObj;
     };
@@ -53,20 +51,14 @@ function Asset() {
                 hash: {
                     type: 'string'
                 },
-                publisherHash: {
-                    type: 'string'
-                },
                 decimal: {
                     type: 'number'
                 },
                 total: {
                     type: 'number'
-                },
-                publisherName: {
-                    type: 'string'
                 }
             },
-            required: ['name', 'description', 'hash', 'publisherHash', 'decimal', 'total', 'publisherName']
+            required: ['name', 'description', 'hash', 'decimal', 'total']
         });
 
         if (!report) {
@@ -82,7 +74,7 @@ function Asset() {
     this.apply = function (trs, block, sender, cb) {
         // setImmediate(cb);
         let assets = trs.asset.assets;
-        library.base.accountAssets.addAssetsBalance(trs.senderId, {assetsHash: assets.hash, assetsName: assets.name}, assets.total * Math.pow(10, assets.decimal), cb);
+        library.base.accountAssets.addAssetsBalance(trs.senderId, {assetsHash: assets.hash, assetsName: assets.name}, assets.total, cb);
     };
 
     this.undo = function (trs, block, sender, cb) {
@@ -104,18 +96,15 @@ function Asset() {
     };
 
     this.load = function (raw) {
-        if(!(raw.a_name || raw.a_description ||  raw.a_hash || raw.a_publisherHash
-            || raw.a_decimal || raw.a_total || raw.a_publisherName)) {
+        if(!(raw.a_name || raw.a_description ||  raw.a_hash || raw.a_decimal || raw.a_total)) {
             return null;
         }
         let assets = {
             name: raw.a_name,
             description: raw.a_description,
             hash: raw.a_hash,
-            publisherHash: raw.a_publisherHash,
             decimal: raw.a_decimal,
             total: raw.a_total,
-            publisherName: raw.a_publisherName,
         };
 
         return {assets: assets};
@@ -123,13 +112,11 @@ function Asset() {
 
     this.save = function (trs, cb) {
         let assets = trs.asset.assets;
-        library.dbClient.query("INSERT INTO account2assets(`hash`, `publisherHash`, `name`, `publisher_name`, `description`, `decimal`, `total`, `burn`, `transactionHash`, `time`, `accountId`) VALUES($hash, $publisherHash, $name, $publisherName, $description, $decimal, $total, $burn, $transactionHash, $time, $accountId)", {
+        library.dbClient.query("INSERT INTO account2assets(`hash`, `name`, `description`, `decimal`, `total`, `burn`, `transactionHash`, `time`, `accountId`) VALUES($hash,  $name, $description, $decimal, $total, $burn, $transactionHash, $time, $accountId)", {
             type: Sequelize.QueryTypes.INSERT,
             bind: {
                 hash: assets.hash,
-                publisherHash: assets.publisherHash,
                 name: assets.name,
-                publisherName: assets.publisherName,
                 description: assets.description,
                 decimal: assets.decimal,
                 total: assets.total,
@@ -205,16 +192,14 @@ Assets.prototype.getAssets = function(hash, cb) {
     });
 };
 
+
+
 privated.getAccountAssets = function(address, cb) {
     // WHERE master_address = "${address}"
     library.dbClient.query(`SELECT a.*, b.decimal FROM accounts2asset_balance a left outer join account2assets as b on a.assetsHash = b.hash where a.master_address = "${address}"`, {
         type: Sequelize.QueryTypes.SELECT
     }).then((rows) => {
-        if(rows[0]) {
-            cb(null, rows[0]);
-        } else {
-            cb('address not find');
-        }
+        cb(null, rows);
     }).catch((err) => {
         cb(err);
     });
@@ -225,13 +210,11 @@ shared_1_0.addAssets = function(params, cb) {
     let description = params[1] || '';
     let total = params[2] || 0;
     let decimal = params[3] || 0;
-    let publisherHash = params[4] || '';
-    let mnemonic = params[5] || '';
-    let secondSecret = params[6] || '';
-    let multisigAccountPublicKey = params[7] || '';
+    let mnemonic = params[4] || '';
+    let secondSecret = params[5] || '';
+    let multisigAccountPublicKey = params[6] || '';
 
-    if(name === '' || description === '' || mnemonic === '' || total === 0 ||
-        publisherHash === '') {
+    if(name === '' || description === '' || mnemonic === '' || total === 0) {
         return cb('miss must params', errorCode.server.MISSING_PARAMS);
     }
 
@@ -258,28 +241,21 @@ shared_1_0.addAssets = function(params, cb) {
                 secondKeypair = ed.MakeKeypair(secondHash);
             }
             
-            library.modules.publisher.getPublisher(publisherHash, account.master_address, function (err, publisher) {
-                if(err) {
-                    return cb(err, 11000);
-                }
-                try {
-                    var transaction = library.base.transaction.create({
-                        type: TransactionTypes.ASSETS,
-                        sender: account,
-                        keypair: keyPair,
-                        secondKeypair: secondKeypair,
-                        name: name,
-                        publisherName: publisher.name,
-                        publisherHash: publisher.hash,
-                        total: total,
-                        decimal: decimal,
-                        description: description
-                    });
-                } catch (e) {
-                    return cb(e.toString(), 14003);
-                }
-                library.modules.transactions.receiveTransactions([transaction], cb);
-            });
+            try {
+                var transaction = library.base.transaction.create({
+                    type: TransactionTypes.ASSETS,
+                    sender: account,
+                    keypair: keyPair,
+                    secondKeypair: secondKeypair,
+                    name: name,
+                    total: total,
+                    decimal: decimal,
+                    description: description
+                });
+            } catch (e) {
+                return cb(e.toString(), 14003);
+            }
+            library.modules.transactions.receiveTransactions([transaction], cb);
         });
     }, function (err, transaction) {
         if (err) {

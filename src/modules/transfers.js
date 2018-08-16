@@ -376,23 +376,26 @@ shared_1_0.sendTransfers = function(params, cb) {
                 library.modules.assets.getAssets(assetsHash, function (err, assets) {
                     if(err) {
                         return cb(err, 11000);
-                    } else {
-                        try {
-                            var transaction = library.base.transaction.create({
-                                type: TransactionTypes.TRANSFERS,
-                                amount: amount,
-                                sender: account,
-                                recipientId: recipientId,
-                                keypair: keyPair,
-                                secondKeypair: secondKeypair,
-                                message: msg,
-                                assets: assets
-                            });
-                        } catch (e) {
-                            return cb(e.toString(), 13009);
-                        }
-                        library.modules.transactions.receiveTransactions([transaction], cb);
                     }
+                    if(assets.amount < amount) {
+                        return cb('account assets is not enough!', 11000);
+                    }
+                    try {
+                        var transaction = library.base.transaction.create({
+                            type: TransactionTypes.TRANSFERS,
+                            amount: amount,
+                            sender: account,
+                            recipientId: recipientId,
+                            keypair: keyPair,
+                            secondKeypair: secondKeypair,
+                            message: msg,
+                            assets: assets
+                        });
+                    } catch (e) {
+                        return cb(e.toString(), 13009);
+                    }
+                    library.modules.transactions.receiveTransactions([transaction], cb);
+
                 });
             });
         });
@@ -437,23 +440,25 @@ shared_1_0.burnAssets = function(params, cb) {
             library.modules.assets.getAssets(assetsHash, function (err, assets) {
                 if(err) {
                     return cb(err, 11000);
-                } else {
-                    try {
-                        var transaction = library.base.transaction.create({
-                            type: TransactionTypes.BURN,
-                            amount: amount,
-                            sender: account,
-                            recipientId: null,
-                            keypair: keyPair,
-                            secondKeypair: secondKeypair,
-                            message: msg,
-                            assets: assets
-                        });
-                    } catch (e) {
-                        return cb(e.toString(), 13009);
-                    }
-                    library.modules.transactions.receiveTransactions([transaction], cb);
                 }
+                if(assets.amount < amount) {
+                    return cb('account assets is not enough!', 11000);
+                }
+                try {
+                    var transaction = library.base.transaction.create({
+                        type: TransactionTypes.BURN,
+                        amount: amount,
+                        sender: account,
+                        recipientId: null,
+                        keypair: keyPair,
+                        secondKeypair: secondKeypair,
+                        message: msg,
+                        assets: assets
+                    });
+                } catch (e) {
+                    return cb(e.toString(), 13009);
+                }
+                library.modules.transactions.receiveTransactions([transaction], cb);
             });
         })
     }, function (err, transaction) {
