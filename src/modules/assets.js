@@ -277,7 +277,7 @@ shared_1_0.getAccountAssets = function(params, cb) {
         if(err) {
             cb(err, 11000);
         } else {
-            cb(null, 200, JSON.stringify(data));
+            cb(null, 200, data);
         }
     });
 };
