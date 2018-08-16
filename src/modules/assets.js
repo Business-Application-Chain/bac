@@ -195,6 +195,16 @@ privated.getAccountAssets = function(address, cb) {
     });
 };
 
+privated.getAssets = function(address, cb) {
+    library.dbClient.query(`SELECT * FROM account2assets WHERE master_address = "${address}"`, {
+        type: Sequelize.QueryTypes.SELECT,
+    }).then((rows) => {
+        cb(null, rows);
+    }).catch((err) => {
+        cb(err, 11000);
+    })
+};
+
 shared_1_0.addAssets = function(params, cb) {
     let name = params[0] || '';
     let description = params[1] || '';
@@ -270,6 +280,17 @@ shared_1_0.getAccountAssets = function(params, cb) {
             cb(null, 200, data);
         }
     });
+};
+
+shared_1_0.getAssets = function(params, cb) {
+    let address = params[0];
+    privated.getAssets(address, function (err, data) {
+        if(err) {
+            cb(err, 11000);
+        } else {
+            cb(null, 200, data);
+        }
+    })
 };
 
 shared_1_0.getFee = function(params, cb) {
