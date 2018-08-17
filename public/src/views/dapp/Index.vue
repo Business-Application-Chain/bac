@@ -50,7 +50,7 @@
                     <div class="table-t2-2">{{item.description}}</div>
                     <div class="table-t2-3">{{item.total / Math.pow(10, item.decimal)}}</div>
                     <div class="table-t2-4">{{item.decimal}}</div>
-                    <div class="table-t2-5">{{item.burn}}</div>
+                    <div class="table-t2-5">{{item.burn  / Math.pow(10, item.decimal)}}</div>
                 </div>
             </div>
         </div>
