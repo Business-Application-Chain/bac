@@ -11,11 +11,28 @@
  Target Server Version : 50721
  File Encoding         : 65001
 
- Date: 06/08/2018 13:58:39
+ Date: 17/08/2018 15:39:40
 */
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
+
+-- ----------------------------
+-- Table structure for account2assets
+-- ----------------------------
+DROP TABLE IF EXISTS `account2assets`;
+CREATE TABLE `account2assets` (
+  `hash` varchar(64) CHARACTER SET latin1 NOT NULL,
+  `name` varchar(32) CHARACTER SET latin1 DEFAULT NULL,
+  `description` text,
+  `decimal` int(8) DEFAULT NULL,
+  `total` bigint(32) DEFAULT NULL,
+  `burn` bigint(32) DEFAULT NULL,
+  `transactionHash` varchar(64) DEFAULT NULL,
+  `time` bigint(13) DEFAULT NULL,
+  `accountId` varchar(64) DEFAULT NULL,
+  PRIMARY KEY (`hash`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for accounts
@@ -54,6 +71,17 @@ CREATE TABLE `accounts` (
   `rewards` bigint(20) DEFAULT '0',
   PRIMARY KEY (`master_address`),
   UNIQUE KEY `master_address` (`master_address`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Table structure for accounts2asset_balance
+-- ----------------------------
+DROP TABLE IF EXISTS `accounts2asset_balance`;
+CREATE TABLE `accounts2asset_balance` (
+  `assetsHash` varchar(64) CHARACTER SET latin1 DEFAULT NULL,
+  `assets_name` varchar(32) CHARACTER SET latin1 DEFAULT NULL,
+  `master_address` varchar(64) CHARACTER SET latin1 DEFAULT NULL,
+  `balance` bigint(20) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ----------------------------
@@ -199,7 +227,7 @@ CREATE TABLE `delegates` (
 DROP TABLE IF EXISTS `forks_stat`;
 CREATE TABLE `forks_stat` (
   `delegatePublicKey` varchar(128) NOT NULL,
-  `blockTimestamp` int(13) NOT NULL,
+  `blockTimestamp` bigint(13) NOT NULL,
   `blockHash` varchar(64) NOT NULL,
   `blockHeight` int(11) NOT NULL,
   `previousBlock` varchar(20) NOT NULL,
@@ -232,7 +260,7 @@ CREATE TABLE `peers` (
   `clock` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `ip_UNIQUE` (`ip`)
-) ENGINE=InnoDB AUTO_INCREMENT=6126330 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=6129072 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for peers_dapp
@@ -275,7 +303,21 @@ CREATE TABLE `transactions` (
   `signature` varchar(255) NOT NULL,
   `signSignature` varchar(128) DEFAULT NULL,
   `signatures` text,
+  `message` text,
   PRIMARY KEY (`hash`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Table structure for transfers
+-- ----------------------------
+DROP TABLE IF EXISTS `transfers`;
+CREATE TABLE `transfers` (
+  `assetsHash` varchar(64) CHARACTER SET latin1 DEFAULT NULL,
+  `amount` bigint(32) DEFAULT NULL,
+  `transactionHash` varchar(64) DEFAULT NULL,
+  `assets_name` varchar(32) DEFAULT NULL,
+  `accountId` varchar(64) DEFAULT NULL,
+  `recipientId` varchar(64) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ----------------------------

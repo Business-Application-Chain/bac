@@ -118,13 +118,15 @@ function Transfer() {
 
     this.save = function (trs, cb) {
         let transfer = trs.asset.transfer;
-        library.dbClient.query('INSERT INTO transfers(`assetsHash`, `assets_name`, `amount`, `transactionHash`) VALUES($assetsHash, $assetsName, $amount, $transactionHash)', {
+        library.dbClient.query('INSERT INTO transfers(`assetsHash`, `assets_name`, `amount`, `transactionHash`, `accountId`, `recipientId`) VALUES($assetsHash, $assetsName, $amount, $transactionHash, $accountId, $recipientId)', {
             type: Sequelize.QueryTypes.INSERT,
             bind: {
                 assetsHash: transfer.assetsHash,
                 assetsName: transfer.assetsName,
                 amount: transfer.amount,
-                transactionHash: trs.hash
+                transactionHash: trs.hash,
+                recipientId: trs.recipientId,
+                accountId: trs.senderId
             }
         }).then(() => {
             cb()
@@ -267,13 +269,15 @@ function Burn() {
 
     this.save = function (trs, cb) {
         let burn = trs.asset.burn;
-        library.dbClient.query('INSERT INTO transfers(`assetsHash`, `assets_name`, `amount`, `transactionHash`) VALUES($assetsHash, $assetsName, $amount, $transactionHash)', {
+        library.dbClient.query('INSERT INTO transfers(`assetsHash`, `assets_name`, `amount`, `transactionHash`, `accountId`, `recipientId`) VALUES($assetsHash, $assetsName, $amount, $transactionHash, $accountId, $recipientId)', {
             type: Sequelize.QueryTypes.INSERT,
             bind: {
                 assetsHash: burn.assetsHash,
                 assetsName: burn.assetsName,
                 amount: burn.amount,
-                transactionHash: trs.hash
+                transactionHash: trs.hash,
+                accountId: trs.senderId,
+                recipientId: trs.recipientId
             }
         }).then(() => {
             cb()
@@ -326,6 +330,36 @@ Transfers.prototype.callApi = function (call, rpcjson, args, cb) {
     } else {
         shared_1_0[call].apply(null, callArgs);
     }
+};
+
+privated.transfers = function(query, cb) {
+    let index = query.page - 1;
+    let limit = query.page * query.size;
+    library.dbClient.query(`SELECT * FROM transfers WHERE accountId = "${query.address}" OR recipientId = "${query.address}" LIMIT ${index}, ${limit}`, {
+        type: Sequelize.QueryTypes.SELECT
+    }).then((rows) => {
+        cb(null, rows);
+    }).catch((err) => {
+        cb(err);
+    });
+};
+
+shared_1_0.transfers = function(params, cb) {
+    let accountId = params[0];
+    let page = params[1] || 1;
+    let size = params[2] || 10;
+
+    let filter = {};
+    filter.page = page;
+    filter.address = accountId;
+    filter.size = size;
+    privated.transfers(filter, function (err, data) {
+        if(err) {
+            cb(err, 11000);
+        } else {
+            cb(null, 200, data);
+        }
+    });
 };
 
 shared_1_0.sendTransfers = function(params, cb) {
