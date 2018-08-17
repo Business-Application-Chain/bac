@@ -30,11 +30,17 @@ a{
 
 .sec-header{
     height: 50px;
-    line-height: 50px;
+    
     padding: 0 30px;
     font-size: 16px;
     color: #4A4A4A;
     border-bottom: 1px solid #F2F2F2;
+    display: flex;
+    align-items: center
+}
+
+.sec-header_hd{
+    flex:1
 }
 
 [v-cloak]{

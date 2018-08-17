@@ -24,11 +24,11 @@
                 <div class="comp-title_ft"></div>
             </div>
             <x-input v-model="amount" placeholder="请填写数量"></x-input>
-            <div v-if="account.second_pub" class="comp-title">
+            <div v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1" class="comp-title">
                 <div class="comp-title_hd"><b>密码</b></div>
                 <div class="comp-title_ft"></div>
             </div>
-            <x-input v-if="account.second_pub" v-model="password" type="password" placeholder="请输入支付密码"></x-input>
+            <x-input v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1" v-model="password" type="password" placeholder="请输入支付密码"></x-input>
         </div>
     </modal>
 </template>

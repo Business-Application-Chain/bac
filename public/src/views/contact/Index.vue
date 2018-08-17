@@ -1,12 +1,15 @@
 <template>
     <div class="contact-index-page">
-        <div class="page-header">
-            <div class="header-hd">
-                联系人({{list.length}})
+        <div class="sec">
+            <div class="sec-header">
+                <div class="sec-header_hd">
+                    联系人({{list.length}})
+                </div>
+                <div class="sec-header_ft">
+                    <x-btn @click="addVisible = true" icon="&#xe601;" height="36px" type="primary" width="90px">添加</x-btn>
+                </div>
             </div>
-            <div class="header-ft">
-                <x-btn @click="addVisible = true" icon="&#xe601;" height="36px" type="primary" width="90px">添加</x-btn>
-            </div>
+            
         </div>
 
         <div v-if="list.length > 0" class="contact-list">
@@ -104,6 +107,8 @@
         .header-hd{
             flex: 1
         }
+
+        .header-ft
         
         .contact-list{
             display: flex;

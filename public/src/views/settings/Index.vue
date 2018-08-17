@@ -1,15 +1,15 @@
 <template>
     <div class="settings-index-page sec">
         <div class="sec-header">
-            支付密码<span class="warn" v-if="account.second_pub">[已设置]</span>
+            支付密码<span class="warn" v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1">[已设置]</span>
         </div>
 
         <div class="settings-pw">
             <div class="pw-hd">
                 <div class="pw-hd_title">Password</div>
-                <x-input type="password" v-model.trim="password" :status="status" :disabeld="account.second_pub ? true : false"></x-input>
+                <x-input type="password" v-model.trim="password" :status="status" :disabeld="(account.secondsign == 1 || account.secondsign_unconfirmed == 1) ? true : false"></x-input>
                 <div class="pw-hd_title second-title">Confirm Password</div>
-                <x-input type="password" v-model.trim="secondPassword" :status="status"  :disabeld="account.second_pub ? true : false"></x-input>
+                <x-input type="password" v-model.trim="secondPassword" :status="status"  :disabeld="(account.secondsign == 1 || account.secondsign_unconfirmed == 1) ? true : false"></x-input>
                 <div class="hd-btn">
                     <x-btn type="primary" @click="submit" :disabled="disabled" :loading="loading" width="126px">Continue</x-btn>
                 </div>

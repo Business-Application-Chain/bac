@@ -7,8 +7,8 @@
             <beat-loader ></beat-loader>
         </template>
         <template v-if="!loading">
-            <i v-if="icon" class="iconfont" v-html="icon"></i>
-            <span class="comp-txt"><slot>确认</slot></span>
+            <i v-if="icon" class="iconfont" :style="{fontSize: iconSize}" v-html="icon"></i>
+            <span class="comp-txt" :style="{fontSize: fontSize}"><slot>确认</slot></span>
         </template>
     </div>
 </template>
@@ -23,6 +23,12 @@
             },
             icon: {
                 default: ''
+            },
+            iconSize:{
+                default: '20px'
+            },
+            fontSize: {
+                default: '16px'
             },
             loading: {
                 default: false
@@ -58,6 +64,8 @@
         cursor: pointer;
         transition: all .3s;
         box-sizing: border-box;
+        font-size: 0px;
+
 
         &:not(.disabled):hover{
             &.plain{
@@ -87,9 +95,8 @@
         }
 
         .iconfont{
-            font-size: 20px;
-            vertical-align: middle;
-            margin-right: 12px;
+            
+            margin-right: 10px;
         }
     }
 </style>
