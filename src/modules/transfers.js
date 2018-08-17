@@ -277,7 +277,7 @@ function Burn() {
                 amount: burn.amount,
                 transactionHash: trs.hash,
                 accountId: trs.senderId,
-                recipientId: trs.recipientId
+                recipientId: ''
             }
         }).then(() => {
             cb()
