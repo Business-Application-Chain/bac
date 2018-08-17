@@ -28,6 +28,8 @@ var system = require("../src/modules/system.js");
 var transactions = require("../src/modules/transactions.js");
 var contacts = require("../src/modules/contacts.js");
 var Sequence = require('../src/utils/sequence.js');
+var assets = require('../src/modules/assets');
+var transfers = require('../src/modules/transfers');
 
 process.stdin.resume();
 
@@ -52,7 +54,8 @@ var params = {
         "system": system,
         "transactions": transactions,
         "contacts": contacts,
-
+        "assets": assets,
+        "transfers": transfers,
     }
     /*"modules": {
         "accounts": "../src/modules/accounts.js",
@@ -306,7 +309,7 @@ d.run(function () {
             var Account = require('../src/base/account.js');
             var Block = require('../src/base/block.js');
             var Transaction = require('../src/base/transaction.js');
-
+            var AccountAssets = require('../src/base/account-assets.js');
             async.auto({
                 config: function (cb) {
                     cb(null, scope.config);
@@ -332,6 +335,9 @@ d.run(function () {
                 transaction: ['config', 'dbClient', 'notification_center', function (scope, cb) {
                     new Transaction(scope, cb);
                 }],
+                accountAssets: ['config', 'dbClient', 'notification_center', function (scope, cb) {
+                    new AccountAssets(scope, cb);
+                }],
             }, cb);
         }],
 
@@ -351,7 +357,7 @@ d.run(function () {
 
         }],
 
-        modules: ['network', 'notification_center','base', 'sequence', 'balancesSequence', 'dbSequence', 'socket',function (scope, cb) {
+        modules: ['network', 'notification_center','base', 'sequence', 'balancesSequence', 'dbSequence', 'socket',  function (scope, cb) {
             var __modules = {};
             Object.keys(params.modules).forEach(function (module_name) {
                 __modules[module_name] = function (cb) {

@@ -398,7 +398,7 @@ Transactions.prototype.removeUnconfirmTransactionById = function (id) {
 };
 
 Transactions.prototype.processUnconfirmedTransaction = function (txObj, broadcast, cb) {
-        library.modules.accounts.setAccountAndGet({master_pub: txObj.senderPublicKey}, function (err, sender) {
+    library.modules.accounts.setAccountAndGet({master_pub: txObj.senderPublicKey}, function (err, sender) {
         function done(err) {
             if (err) {
                 return cb(err);
@@ -678,7 +678,9 @@ shared_1_0.addTransaction = function (params, cb) {
     var recipientId = params[2] || '';
     var mnemonic = params[3] || '';
     var secondSecret = params[4] || '';
-    var multisigAccountPublicKey = params[5] || undefined;
+    var msg = params[5] || '';
+    var multisigAccountPublicKey = params[6] || undefined;
+
 
     if (!(amount && publicKey && recipientId && mnemonic)) {
         return cb("miss must params", 11000);
@@ -753,7 +755,8 @@ shared_1_0.addTransaction = function (params, cb) {
                                 recipientUsername: recipientUsername,
                                 keypair: keypair,
                                 requester: keypair,
-                                secondKeypair: secondKeypair
+                                secondKeypair: secondKeypair,
+                                message: msg
                             });
                         } catch (e) {
                             return cb(e.toString());
@@ -788,7 +791,8 @@ shared_1_0.addTransaction = function (params, cb) {
                             sender: account,
                             recipientId: recipientId,
                             keypair: keyPair,
-                            secondKeypair: secondKeypair
+                            secondKeypair: secondKeypair,
+                            message: msg
                         });
                     } catch (e) {
                         return cb(e.toString(), 13009);

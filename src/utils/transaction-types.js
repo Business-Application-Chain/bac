@@ -9,5 +9,8 @@ module.exports = {
     DAPP: 7,
     IN_TRANSFER: 8,
     OUT_TRANSFER: 9,
-    OTHER: 10
-}
+    ASSETS: 10,
+    TRANSFERS: 11,
+    BURN: 12,
+    OTHER: 13,
+};

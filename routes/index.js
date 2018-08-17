@@ -27,6 +27,12 @@ function selectModule(apiType, scope) {
         case 'contacts':
             return scope.modules.contacts;
 
+        case 'assets':
+            return scope.modules.assets;
+
+        case 'transfers' :
+            return scope.modules.transfers;
+
         default:
             return null;
     }
