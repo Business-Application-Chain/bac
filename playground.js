@@ -1,2 +1,3 @@
-let ip = require('ip');
-console.log(ip.fromLong(2892235204));
+let i = "5";
+i = parseInt(i);
+console.log(typeof i);
