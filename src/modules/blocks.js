@@ -256,7 +256,7 @@ privated.getById = function (hash, cb) {
             'm.min as m_min, m.lifetime as m_lifetime, m.keysgroup as m_keysgroup, ' +
             't.requesterPublicKey as t_requesterPublicKey, t.signatures as t_signatures, ' +
             'a.name as a_name, a.description as a_description, a.hash as a_hash, a.decimal as a_decimal, a.total as a_total, ' +
-            'tr.amount as tr_amount, tr.assetsHash as tr_assetsHash' +
+            'tr.amount as tr_amount, tr.assetsHash as tr_assetsHash ' +
             "FROM blocks b " +
             "left outer join transactions as t on t.blockHash=b.hash " +
             "left outer join delegates as d on d.transactionHash=t.hash " +
