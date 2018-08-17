@@ -21,6 +21,7 @@ Vue.filter('bac',  (value, decimal) => {
     return num
 })
 
+
 Vue.filter('date', value => {
     const date = new Date(value)
     const YYYY = padStart(date.getFullYear(), 2, '0')

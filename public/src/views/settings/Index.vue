@@ -107,7 +107,7 @@
         }
 
         .pw-hd_title{
-            font-size: 18px;
+            font-size: 16px;
             color: #9B9B9B;
             margin-bottom: 14px;
         }

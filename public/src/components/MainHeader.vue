@@ -115,7 +115,7 @@
 
     .main-header-comp{
         background: #121F3E;
-        height: 85px;
+        height: 70px;
         display: flex;
         align-items: center;
         padding: 0 30px;
@@ -131,8 +131,9 @@
 
         .send-btn{
             width: 108px;
-            height: 44px;
-            line-height: 44px;
+            height: 40px;
+            line-height: 40px;
+            font-size: 14px;
             text-align: center;
             background: #55A8FD;
             border-radius: 2px;
@@ -149,10 +150,10 @@
         .user-btn{
             background: rgba(255, 255, 255, .15);
             padding:0 20px;
-            height: 44px;
-            line-height: 44px;
+            height: 40px;
+            line-height: 40px;
             border-radius: 2px;
-            font-size: 16px;
+            font-size: 14px;
             color: #FFFFFF;
             text-align: center;
             margin-left: 10px;
@@ -169,8 +170,8 @@
 
         .icon-btn{
             width: 44px;
-            height: 44px;
-            line-height: 44px;
+            height: 40px;
+            line-height: 40px;
             text-align: center;
             background: rgba(255, 255, 255, .15);
             font-size: 0px;
@@ -200,12 +201,16 @@
         }
 
         .setting-icon{
-            font-size: 24px;
+            font-size: 20px;
             color: #fff;
         }
 
         .logout-btn{
             margin-right: 25px;
+
+            .setting-icon{
+                font-size: 18px
+            }
         }
 
         .message-btn{

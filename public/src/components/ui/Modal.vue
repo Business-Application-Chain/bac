@@ -175,11 +175,11 @@
         }
 
         .comp-hint{
-            height: 45px;
-            line-height: 45px;
+            height: 40px;
+            line-height: 40px;
             background: #e5efff;
             text-indent: 30px;
-            font-size: 14px;
+            font-size: 12px;
             color: #FF7E7E;
         }
 
@@ -196,7 +196,7 @@
         .comp-btns{
             margin: 0 30px;
             border-top: 1px solid #F2F2F2;
-            padding: 40px 55px;
+            padding: 25px 55px;
             display: flex;
             align-items: center
         }
@@ -207,7 +207,7 @@
 
         .wrap-main{
             color: #4A4A4A;
-            padding: 40px 30px;
+            padding: 30px 30px;
         }
     }
 </style>

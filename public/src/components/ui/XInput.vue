@@ -38,20 +38,21 @@
 <style lang="scss" scoped>
     .x-input-comp{
         position: relative;
-        height: 70px;
+        height: 65px;
 
         .x-input_input{
             background: #F8F9FC;
             border: 1px solid #EDEFF5;
             border-radius: 1px;
-            height: 43px;
-            line-height: 43px;
+            height: 40px;
+            line-height: 40px;
             width: 100%;
             text-indent: 20px;
             box-sizing: border-box;
+            font-size: 14px;
 
             &::placeholder{
-                font-size: 16px;
+                font-size: 14px;
                 color: #CBCBCB;
             }
 

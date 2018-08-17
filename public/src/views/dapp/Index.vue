@@ -15,13 +15,20 @@
                 <div class="table-t4">操作</div>
             </div>
             
-            <div class="tab-list" id="tabList" :style="{maxHeight: listCssHeight}">
+            <div class="tab-list" id="tabList">
                 <div v-for="item in assets" :key="item.assetsHash" class="table-cell">
                     <div class="table-t1">{{item.assets_name}}</div>
-                    <div class="table-t2">{{item.balance}}</div>
+                    <div class="table-t2">{{item.balance / Math.pow(10, item.decimal)}}</div>
                     <div class="table-t3">{{item.decimal}}</div>
                     <div class="table-t4">
-                        <x-btn height="30px" width="60px" font-size="14px">转账</x-btn>
+                        <div class="btn-list">
+                            <div class="btn-item">
+                                <x-btn height="30px" width="60px" @click="send(item)" font-size="14px">转账</x-btn>
+                            </div>
+                            <div class="btn-item">
+                                <x-btn height="30px" width="60px" @click="burn(item)" font-size="14px">燃烧</x-btn>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -33,27 +40,17 @@
                 <div class="table-t2-2">描述</div>
                 <div class="table-t2-3">发行量</div>
                 <div class="table-t2-4">小数位</div>
-                <div class="table-t2-4">已燃烧</div>
-                <div class="table-t2-4">操作</div>
+                <div class="table-t2-5">已燃烧</div>
+                
             </div>
             
-            <div class="tab-list" id="tabList" :style="{maxHeight: listCssHeight}">
+            <div class="tab-list" id="tabList">
                 <div v-for="item in publishedAssets" :key="item.hash" class="table-cell">
                     <div class="table-t2-1">{{item.name}}</div>
                     <div class="table-t2-2">{{item.description}}</div>
-                    <div class="table-t2-3">{{item.total}}</div>
+                    <div class="table-t2-3">{{item.total / Math.pow(10, item.decimal)}}</div>
                     <div class="table-t2-4">{{item.decimal}}</div>
                     <div class="table-t2-5">{{item.burn}}</div>
-                    <div class="table-t2-6">
-                        <div class="btn-list">
-                            <div class="btn-item">
-                                <x-btn height="30px" width="60px" font-size="14px">转账</x-btn>
-                            </div>
-                            <div class="btn-item">
-                                <x-btn height="30px" width="60px" font-size="14px">燃烧</x-btn>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -80,18 +77,13 @@
         <modal 
             v-if="sendVisible" 
             :visible.sync="sendVisible" 
-            :ok-loading="okLoading"
             @ok="sendSubmit" 
             title="发送" 
             hint="请确认您发送给给正确的接收人，因为该过程是无法撤消的.">
             <div class="send-comp">
                 <div class="comp-title">
                     <div class="comp-title_hd"><b>我的地址</b></div>
-                    <div class="comp-title_ft">{{account.balance | bac}} <span>BAC</span></div>
-                </div>
-                <div class="comp-title">
-                    <div class="comp-title_hd"><b>我的地址</b></div>
-                    <div class="comp-title_ft">{{account.balance | bac}} <span>BAC</span></div>
+                    <div class="comp-title_ft">{{editAssets.balance / Math.pow(10, editAssets.decimal)}} <span>{{editAssets.assets_name}}</span></div>
                 </div>
                 
                 <x-input :disabeld="true" v-model="account.address[0]"></x-input>
@@ -100,17 +92,46 @@
                     <div class="comp-title_hd"><b>对方账户</b></div>
                     <div class="comp-title_ft"></div>
                 </div>
-                <x-input v-model="send.recipientAddress" placeholder="请填写对方地址"></x-input>
+                <x-input v-model="sendForm.recipientAddress" placeholder="请填写对方地址"></x-input>
                 <div class="comp-title">
                     <div class="comp-title_hd"><b>数量</b></div>
                     <div class="comp-title_ft"></div>
                 </div>
-                <x-input v-model="amount" placeholder="请填写数量"></x-input>
+                <x-input v-model="sendForm.amount" placeholder="请填写数量"></x-input>
                 <div v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1" class="comp-title">
                     <div class="comp-title_hd"><b>密码</b></div>
                     <div class="comp-title_ft"></div>
                 </div>
-                <x-input v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1" v-model="send.password" type="password" placeholder="请输入支付密码"></x-input>
+                <x-input v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1" v-model="sendForm.password" type="password" placeholder="请输入支付密码"></x-input>
+                <div class="add-fee">费用： {{sendFee | bac}} BAC</div>
+            </div>
+        </modal>
+
+         <modal 
+            v-if="burnVisible" 
+            :visible.sync="burnVisible" 
+            @ok="burnSubmit" 
+            title="燃烧" 
+            hint="该过程是无法撤消！">
+            <div class="send-comp">
+                <div class="comp-title">
+                    <div class="comp-title_hd"><b>我的地址</b></div>
+                    <div class="comp-title_ft">{{editAssets.balance / Math.pow(10, editAssets.decimal)}} <span>{{editAssets.assets_name}}</span></div>
+                </div>
+                
+                <x-input :disabeld="true" v-model="account.address[0]"></x-input>
+                
+                <div class="comp-title">
+                    <div class="comp-title_hd"><b>燃烧数量</b></div>
+                    <div class="comp-title_ft"></div>
+                </div>
+                <x-input v-model="burnForm.amount" placeholder="请填写数量"></x-input>
+                <div v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1" class="comp-title">
+                    <div class="comp-title_hd"><b>密码</b></div>
+                    <div class="comp-title_ft"></div>
+                </div>
+                <x-input v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1" v-model="burnForm.password" type="password" placeholder="请输入支付密码"></x-input>
+                <div class="add-fee">费用： {{sendFee | bac}} BAC</div>
             </div>
         </modal>
     </div>
@@ -123,20 +144,27 @@
     import Modal from '~/components/ui/Modal.vue'
     import XInput from '~/components/ui/XInput.vue'
     import sha256 from 'crypto-js/sha256'
-
+    import Toast from '~/components/ui/toast'
     export default {
         data () {
             return {
                 active: 1,
                 assets: [],  //用户的资产
                 publishedAssets:[],  //用户发布的资产
-                
+                editAssets: {},  
                 sendVisible: false,
-                send: {
+                sendFee: '',
+                sendForm: {
                     recipientAddress:'',
                     amount: '',
                     password: ''
                 },
+                burnVisible: false,
+                burnForm: {
+                    amount: '',
+                    password: ''
+                },
+                
                 addVisible: false,
                 addFee: 0,
                 addForm: {
@@ -174,8 +202,12 @@
 
             api.dapp.getFee().then(res => {
                 if (res === null) return;
-
                 this.addFee = res
+            })
+
+            api.dapp.getSendFee().then(res => {
+                if (res === null) return;
+                this.sendFee = res
             })
         },
 
@@ -183,14 +215,39 @@
             addSubmit () {
                 const form = this.addForm
 
-                api.dapp.addAssets([form.name, form.desc, form.total, form.decimal, this.key.mnemonic, sha256(form.password).toString()]).then(res => {
+                api.dapp.addAssets([form.name, form.desc, form.total * Math.pow(10, form.decimal) , form.decimal, this.key.mnemonic, sha256(form.password).toString()]).then(res => {
                     if (res === null) return;
-
+                    Toast.success('创建资产成功')
+                    this.addVisible = false
+                    this.publishedAssets.unshift(res.asset.assets)
+                })
+            },
+            send (item) {
+                this.editAssets = item
+                this.sendVisible = true
+            },
+            burn (item) {
+                this.editAssets = item
+                this.burnVisible = true
+            },
+            sendSubmit () {
+                const sendForm = this.sendForm
+                api.dapp.send([sendForm.amount * Math.pow(10, this.editAssets.decimal), sendForm.recipientAddress, this.key.mnemonic, this.editAssets.assetsHash, '' ,sha256(sendForm.password).toString()]).then(res => {
+                    if (res === null) return;
+                    
+                    Toast.success('转账成功')
+                    this.sendVisible = false
                 })
             },
 
-            sendSubmit () {
+            burnSubmit () {
+                const burnForm = this.burnForm
+                api.dapp.burnAssets([burnForm.amount * Math.pow(10, this.editAssets.decimal), this.key.mnemonic, this.editAssets.assetsHash, '', sha256(burnForm.password).toString()]).then(res => {
+                    if (res === null) return;
 
+                    Toast.success('资产燃烧成功')
+                    this.burnVisible = false
+                })
             }
         }
     }
@@ -305,9 +362,9 @@
         }
 
         .add-name{
-            font-size: 18px;
+            font-size: 16px;
             color: #9B9B9B;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
 
         .add-fee{
@@ -324,7 +381,7 @@
             }
 
             .comp-title_hd{
-                font-size: 18px;
+                font-size: 16px;
                 color: #9B9B9B;
                 flex: 1
             }
