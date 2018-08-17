@@ -62,7 +62,7 @@
 
 <style lang="scss" scoped>
     .side-bar-comp{
-        width: 360px;
+        width: 240px;
         background: #293145;
         height: 100%;
         position: relative;
@@ -70,7 +70,8 @@
         .comp-item{
             display: flex;
             align-items: center;
-            height: 60px;
+            height: 52px;
+            margin-top: 8px;
 
             &.router-link-active{
                 background-image: linear-gradient(-269deg, #454C5D 0%, #293145 100%);
@@ -78,14 +79,14 @@
         }
 
         .comp-item_hd{
-            width: 30px;
-            height: 30px;
-            margin-left: 30px;
+            width: 26px;
+            height: 26px;
+            margin-left: 28px;
             color: #fff;
         }
 
         .comp-item_ft{
-            font-size: 18px;
+            font-size: 16px;
             color: #FFFFFF;
             line-height: 18px;
             margin-left: 24px;
@@ -121,12 +122,12 @@
         }
 
         .sec-title{
-            font-size: 14px;
+            font-size: 12px;
             color: #FFFFFF;
         }
 
         .sec-desc{
-            font-size: 16px;
+            font-size: 14px;
             color: rgba(255, 255, 255, .5);
             margin-top: 10px;
         }

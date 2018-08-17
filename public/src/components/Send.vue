@@ -18,7 +18,7 @@
                 <div class="comp-title_hd"><b>对方账户</b></div>
                 <div class="comp-title_ft"></div>
             </div>
-            <x-input v-model="recipientAddress" :disabeld="recipientAddress ? true : false" placeholder="请填写对方地址"></x-input>
+            <x-input v-model="recipientAddress" :disabeld="recipient ? true : false" placeholder="请填写对方地址"></x-input>
             <div class="comp-title">
                 <div class="comp-title_hd"><b>数量</b></div>
                 <div class="comp-title_ft"></div>
@@ -125,7 +125,7 @@
         }
 
         .comp-title_hd{
-            font-size: 18px;
+            font-size: 16px;
             color: #9B9B9B;
             flex: 1
         }

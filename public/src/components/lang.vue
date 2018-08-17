@@ -68,7 +68,7 @@
         }
 
         .comp-text{
-            font-size: 16px;
+            font-size: 14px;
             color: #FFFFFF;
             line-height: 16px;
             margin-left: 14px;
@@ -119,7 +119,7 @@
         }
 
         .hide-item_txt{
-            font-size: 16px;
+            font-size: 14px;
             color: #4A4A4A;
             line-height: 16px;
             margin-left: 14px;
