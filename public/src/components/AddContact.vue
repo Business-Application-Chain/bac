@@ -14,9 +14,9 @@
                 :errorMsg="addressError"
                 placeholder="请输入别名或者地址">
             </x-input>
-            <div v-if="account.second_pub" class="add-title">支付密码</div> 
+            <div v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1" class="add-title">支付密码</div> 
             <x-input 
-                v-if="account.second_pub" 
+                v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1" 
                 v-model.trim="password" 
                 type="password"
                 :status="passwordStatus"
@@ -98,7 +98,7 @@
                     return
                 }
 
-                if (this.account.second_pub &&  this.password == '') {
+                if ( (this.account.secondsign == 1 || this.account.secondsign_unconfirmed == 1) &&  this.password == '') {
                     this.passwordStatus = 'error'
                     this.passwordError = '请输入支付密码'
                     return

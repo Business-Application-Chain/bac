@@ -125,7 +125,7 @@
             position: fixed;
             width: 600px;
             z-index:1000;
-            top: 38.2%;
+            top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             background: #fff;
