@@ -22,7 +22,7 @@
             <div class="comp-item_ft">浏览器</div>
         </router-link>
         <router-link :to="{name: 'dapp'}" class="comp-item">
-            <img class="comp-item_hd" src="../assets/images/browser@3x.png" />
+            <img class="comp-item_hd" src="../assets/images/dapp@3x.png" />
             <div class="comp-item_ft">资产</div>
         </router-link>
 
