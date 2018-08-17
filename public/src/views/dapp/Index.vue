@@ -63,7 +63,7 @@
             <div class="add-name"><b>发行总量</b></div>
             <x-input placeholder="请输入发行总量"  v-model.trim="addForm.total"></x-input>
             <div class="add-name"><b>小数位</b></div>
-            <x-input placeholder="请输入小数位" v-model.trim="addForm.decimal"></x-input>
+            <x-input placeholder="请输入小数位" v-model.trim.number="addForm.decimal"></x-input>
             <div v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1" class="add-name">支付密码</div> 
             <x-input 
                 v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1" 
