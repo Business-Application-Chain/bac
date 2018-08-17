@@ -52,10 +52,10 @@ function Asset() {
                     type: 'string'
                 },
                 decimal: {
-                    type: 'number'
+                    type: 'integer'
                 },
                 total: {
-                    type: 'number'
+                    type: 'integer'
                 }
             },
             required: ['name', 'description', 'hash', 'decimal', 'total']
@@ -213,6 +213,8 @@ shared_1_0.addAssets = function(params, cb) {
     let mnemonic = params[4] || '';
     let secondSecret = params[5] || '';
     let multisigAccountPublicKey = params[6] || '';
+    total = parseInt(total);
+    decimal = parseInt(decimal);
 
     if(name === '' || description === '' || mnemonic === '' || total === 0) {
         return cb('miss must params', errorCode.server.MISSING_PARAMS);
