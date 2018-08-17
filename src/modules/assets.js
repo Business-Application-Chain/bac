@@ -213,8 +213,12 @@ shared_1_0.addAssets = function(params, cb) {
     let mnemonic = params[4] || '';
     let secondSecret = params[5] || '';
     let multisigAccountPublicKey = params[6] || '';
-    total = parseInt(total);
-    decimal = parseInt(decimal);
+    if(decimal > 16) {
+        return cb('decimal is too big', 11000);
+    }
+    if(total > 99999999999) {
+        return cb('total is too big', 11000);
+    }
 
     if(name === '' || description === '' || mnemonic === '' || total === 0) {
         return cb('miss must params', errorCode.server.MISSING_PARAMS);
