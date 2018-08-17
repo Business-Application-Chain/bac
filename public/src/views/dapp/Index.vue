@@ -215,11 +215,11 @@
             addSubmit () {
                 const form = this.addForm
 
-                api.dapp.addAssets([form.name, form.desc, form.total * Math.pow(10, form.decimal) , form.decimal, this.key.mnemonic, sha256(form.password).toString()]).then(res => {
+                api.dapp.addAssets([form.name, form.desc, form.total * Math.pow(10, form.decimal) , form.decimal, this.key.mnemonic, form.password ? sha256(form.password).toString() : '']).then(res => {
                     if (res === null) return;
-                    Toast.success('创建资产成功')
+                    Toast.success('创建成功，上链后可查看')
                     this.addVisible = false
-                    this.publishedAssets.unshift(res.asset.assets)
+                    // this.publishedAssets.unshift(res.asset.assets)
                 })
             },
             send (item) {
@@ -232,7 +232,7 @@
             },
             sendSubmit () {
                 const sendForm = this.sendForm
-                api.dapp.send([sendForm.amount * Math.pow(10, this.editAssets.decimal), sendForm.recipientAddress, this.key.mnemonic, this.editAssets.assetsHash, '' ,sha256(sendForm.password).toString()]).then(res => {
+                api.dapp.send([sendForm.amount * Math.pow(10, this.editAssets.decimal), sendForm.recipientAddress, this.key.mnemonic, this.editAssets.assetsHash, '' , sendForm.password ? sha256(sendForm.password).toString() : '']).then(res => {
                     if (res === null) return;
                     
                     Toast.success('转账成功')
@@ -242,7 +242,7 @@
 
             burnSubmit () {
                 const burnForm = this.burnForm
-                api.dapp.burnAssets([burnForm.amount * Math.pow(10, this.editAssets.decimal), this.key.mnemonic, this.editAssets.assetsHash, '', sha256(burnForm.password).toString()]).then(res => {
+                api.dapp.burnAssets([burnForm.amount * Math.pow(10, this.editAssets.decimal), this.key.mnemonic, this.editAssets.assetsHash, '', burnForm.password ? sha256(burnForm.password).toString() : '']).then(res => {
                     if (res === null) return;
 
                     Toast.success('资产燃烧成功')
