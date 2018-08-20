@@ -213,7 +213,7 @@ shared_1_0.addAssets = function(params, cb) {
     let mnemonic = params[4] || '';
     let secondSecret = params[5] || '';
     let multisigAccountPublicKey = params[6] || '';
-    if(decimal > 16) {
+    if(decimal > 18) {
         return cb('decimal is too big', 11000);
     }
 
