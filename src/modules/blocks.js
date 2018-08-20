@@ -17,10 +17,7 @@ var Json2csv = require('json2csv').Parser;
 
 var header = ['b_hash', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward', 'b_payloadLength', 'b_payloadHash','b_generatorPublicKey','b_blockSignature','t_hash',
     't_type','t_timestamp','t_senderPublicKey', 't_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature', 'd_username', 's_publicKey','c_address','u_alias',
-    'm_min','m_lifetime','m_keysgroup','t_requesterPublicKey','t_signatures'];
-/*var header = ['b_id', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward', 'b_payloadLength', 'b_payloadHash','b_generatorPublicKey','b_blockSignature','t_id',
-    't_type','t_timestamp','t_senderPublicKey', 't_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature','s_publicKey','d_username','v_votes','c_address','u_alias',
-    'm_min','m_lifetime','m_keysgroup','dapp_name','dapp_description','dapp_tags','dapp_type','dapp_siaAscii','dapp_siaIcon','dapp_git','dapp_category','dapp_icon','in_dappId','ot_dappId','ot_outTransactionId','t_requesterPublicKey','t_signatures'];*/
+    'm_min','m_lifetime','m_keysgroup','t_requesterPublicKey','t_signatures', 'a_name', 'a_description', 'a_hash', 'a_decimal', 'a_total', 'tr_amount', 'tr_assetsHash', 'tr_assetsName'];
 
 require('array.prototype.findindex'); // Old node fix
 
@@ -66,9 +63,16 @@ privated.blocksDataFields = {
     'm_lifetime': Number,
     'm_keysgroup': String,
     't_requesterPublicKey': String,
-    't_signatures': String
+    't_signatures': String,
+    'a_name': String,
+    'a_description': String,
+    'a_hash': String,
+    'a_decimal': Number,
+    'a_total': Number,
+    'tr_amount': Number,
+    'tr_assetsHash': String,
+    'tr_assetsName': String
 };
-
 
 // constructor
 function Blocks(cb, scope) {
@@ -977,6 +981,7 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
             if (!filter.hash && !filter.lastHash) {
                 limitPart = "where b.height < $limit ";
             }
+
             let sql = 'SELECT '+
                 'b.hash as b_hash, b.version , b.timestamp as b_timestamp , b.height , b.previousBlock , b.numberOfTransactions , b.totalAmount , b.totalFee , b.reward , b.payloadLength, lower(b.payloadHash) as payloadHash, lower(b.generatorPublicKey) as generatorPublicKey, lower(b.blockSignature) as blockSignature, ' +
                 "t.hash as t_hash, t.type, t.timestamp as t_timestamp , t.senderPublicKey , t.senderId , t.recipientId , t.senderUsername , t.recipientUsername , t.amount , t.fee , t.signature , t.signSignature , " +
@@ -985,7 +990,9 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
                 'c.address , ' +
                 'u.username as c_username ,' +
                 'm.min , m.lifetime , m.keysgroup , ' +
-                't.requesterPublicKey , t.signatures ' +
+                't.requesterPublicKey , t.signatures , ' +
+                'a.name as a_name, a.description as a_description, a.hash as a_hash,  a.decimal as a_decimal, a.total as a_total, ' +
+                'tr.amount as tr_amount, tr.assetsHash as tr_assetsHash, tr.assets_name as tr_assetsName ' +
                 "FROM blocks b " +
                 "left outer join transactions as t on t.blockHash=b.hash " +
                 "left outer join delegates as d on d.transactionHash=t.hash " +
@@ -993,6 +1000,8 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
                 "left outer join contacts as c on c.transactionHash=t.hash " +
                 "left outer join usernames as u on u.transactionHash=t.hash " +
                 "left outer join multisignatures as m on m.transactionHash=t.hash " +
+                "left outer join account2assets as a on a.transactionHash=t.hash " +
+                "left outer join transfers as tr on tr.transactionHash=t.hash " +
                 (filter.hash || filter.lastBlockHash ? " where " : " ") + " " +
                 (filter.hash ? " b.hash = $hash " : " ") + (filter.hash && filter.lastBlockHash ? " and " : " ") + (filter.lastBlockHash ? " b.height > $height and b.height < $limit " : " ") +
                 "ORDER BY b.height";
