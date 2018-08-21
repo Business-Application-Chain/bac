@@ -39,6 +39,7 @@ function Asset() {
     };
 
     this.objectNormalize = function (txObj) {
+
         var report = library.schema.validate(txObj.asset.assets, {
             object: true,
             properties: {
@@ -103,8 +104,8 @@ function Asset() {
             name: raw.a_name,
             description: raw.a_description,
             hash: raw.a_hash,
-            decimal: raw.a_decimal,
-            total: raw.a_total,
+            decimal: parseInt(raw.a_decimal),
+            total: parseInt(raw.a_total),
         };
 
         return {assets: assets};

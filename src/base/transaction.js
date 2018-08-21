@@ -830,7 +830,7 @@ Transaction.prototype.dbRead = function (raw) {
             signatures: raw.t_signatures ? raw.t_signatures.split(',') : null,
             confirmations: raw.confirmations,
             asset: {}
-        }
+        };
 
         if (!privated.types[tx.type]) {
             throw Error('Unknown transaction type ' + tx.type);

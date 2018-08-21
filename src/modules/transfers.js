@@ -108,7 +108,7 @@ function Transfer() {
             return null;
         }
         let transfer = {
-            amount: raw.tr_amount,
+            amount: parseInt(raw.tr_amount),
             assetsHash: raw.tr_assetsHash,
             assetsName: raw.tr_assetsName
         };
@@ -259,7 +259,7 @@ function Burn() {
             return null;
         }
         let burn = {
-            amount: raw.tr_amount,
+            amount: parseInt(raw.tr_amount),
             assetsHash: raw.tr_assetsHash,
             assetsName: raw.tr_assetsName
         };
@@ -335,24 +335,53 @@ Transfers.prototype.callApi = function (call, rpcjson, args, cb) {
 privated.transfers = function(query, cb) {
     let index = query.page - 1;
     let limit = query.page * query.size;
-    library.dbClient.query(`SELECT * FROM transfers WHERE accountId = "${query.address}" OR recipientId = "${query.address}" LIMIT ${index}, ${limit}`, {
+    let sql = 'SELECT * FROM transfers WHERE ';
+    let sqlCount = 'SELECT COUNT(*) AS number from transfers WHERE ';
+    if(!(query.address && query.assetsHash)) {
+        cb('miss address and assetsHash');
+    }
+    if(query.address) {
+        sql += `(accountId = "${query.address}" OR recipientId = "${query.address}") `;
+        sqlCount += `(accountId = "${query.address}" OR recipientId = "${query.address}") `;
+        if(query.assetsHash) {
+            sql += ` and assetsHash = "${query.assetsHash}"`;
+            sqlCount += ` and assetsHash = "${query.assetsHash}"`;
+        }
+    } else {
+        sql += `assetsHash = "${query.assetsHash}"`;
+        sqlCount += `assetsHash = "${query.assetsHash}"`;
+    }
+    sql += ` LIMIT ${index}, ${limit}`;
+    library.dbClient.query(sqlCount, {
         type: Sequelize.QueryTypes.SELECT
-    }).then((rows) => {
-        cb(null, rows);
+    }).then((data) => {
+        library.dbClient.query(sql, {
+            type: Sequelize.QueryTypes.SELECT
+        }).then((rows) => {
+            cb(null, {data: rows, count: data[0].number});
+        }).catch((err) => {
+            cb(err);
+        });
     }).catch((err) => {
         cb(err);
     });
 };
 
 shared_1_0.transfers = function(params, cb) {
-    let accountId = params[0];
-    let page = params[1] || 1;
-    let size = params[2] || 10;
+    let address = params[0] || '';
+    let assetsHash = params[1] || '';
+    let page = params[2] || 1;
+    let size = params[3] || 10;
+
+    if(address === '' && assetsHash === '') {
+        return cb(11000, 'miss address and assetsHash')
+    }
 
     let filter = {};
     filter.page = page;
-    filter.address = accountId;
+    filter.address = address;
     filter.size = size;
+    filter.assetsHash = assetsHash;
     privated.transfers(filter, function (err, data) {
         if(err) {
             cb(err, 11000);

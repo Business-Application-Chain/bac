@@ -379,7 +379,7 @@ shared_1_0.blocks = function (params, cb) {
     if (!lastBlockHash) {
         return cb('params is error', 11000);
     }
-    let blocksLimit = 1440;
+    let blocksLimit = 1000;
     library.modules.blocks.loadBlocksData({
         limit: blocksLimit,
         lastBlockHash: lastBlockHash
