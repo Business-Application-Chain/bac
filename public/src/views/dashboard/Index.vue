@@ -24,8 +24,9 @@
 
 <script>
     import { mapState } from 'vuex'
-    import api from '../../js/api/index'
-    import AccountOrders from '../../components/AccountOrders.vue'
+    import api from '~/js/api/index'
+    import AccountOrders from '~/components/AccountOrders.vue'
+    
 
     export default {
         data () {

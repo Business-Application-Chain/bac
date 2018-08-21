@@ -6,8 +6,10 @@
             <div class="tabs-nav_primary"></div>
             <x-btn @click="addVisible = true" type="primary" width="90px" height="36px" icon="&#xe613;" iconSize="14px">创建</x-btn>
         </div>
+    
 
         <div v-if="active == 1" class="assets-table">
+
             <div class="table-header">
                 <div class="table-t1">名称</div>
                 <div class="table-t2">余额</div>
@@ -63,7 +65,7 @@
             <div class="add-name"><b>发行总量</b></div>
             <x-input placeholder="请输入发行总量"  v-model.trim="addForm.total"></x-input>
             <div class="add-name"><b>小数位</b></div>
-            <x-input placeholder="请输入小数位" v-model.trim.number="addForm.decimal"></x-input>
+            <x-input placeholder="请输入8以内的小数位" v-model.trim.number="addForm.decimal"></x-input>
             <div v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1" class="add-name">支付密码</div> 
             <x-input 
                 v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1" 
@@ -145,6 +147,11 @@
     import XInput from '~/components/ui/XInput.vue'
     import sha256 from 'crypto-js/sha256'
     import Toast from '~/components/ui/toast'
+    import XTable from '~/components/ui/XTable.vue'
+    import XTableColumn from '~/components/ui/XTableColumn.vue'
+
+
+
     export default {
         data () {
             return {
@@ -179,7 +186,9 @@
         components: {
             XBtn,
             Modal,
-            XInput
+            XInput,
+            XTable,
+            XTableColumn
         },
         computed:{
             ...mapState({

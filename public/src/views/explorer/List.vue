@@ -13,7 +13,7 @@
             </div>
 
             <div class="tab-list" id="tabList" :style="{maxHeight: listCssHeight}">
-                <transition-group name="explorer-list" tag="div" mode="out-in">
+                <transition-group name="explorer-list" tag="div" >
                     <div v-for="item in transactionsList" :key="item.t_hash" class="table-cell">
                         <div class="tb-1">
                             <router-link :to="{name: 'explorerTransaction', params:{id: item.t_hash}}" class="link">{{item.t_hash}}</router-link>
@@ -39,7 +39,7 @@
             </div>
 
             <div class="tab-list" :style="{maxHeight: listCssHeight}">
-                <transition-group name="explorer-list" tag="div" mode="out-in">
+                <transition-group name="explorer-list" tag="div" >
                     <div v-for="item in blocksList" :key="item.hash" class="table-cell">
                         <div class="tb-2-1">
                             <router-link :to="{name: 'explorerResult', params: {query: item.height}}" class="link">{{item.height}}</router-link>

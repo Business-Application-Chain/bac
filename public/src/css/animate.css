@@ -52,12 +52,12 @@
 
 
 .explorer-list-enter-active, .explorer-list-leave-active {
-    transition: all .3s;
+    transition: all .2s;
 }
 .explorer-list-enter, .explorer-list-leave-to
 /* .list-leave-active for below version 2.1.8 */ {
-    opacity: 0;
-    transform: translateY(30px);
+    
+    transform: translateY(10px);
 }
 
 

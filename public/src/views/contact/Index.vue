@@ -85,7 +85,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
     .contact-index-page{
         background: #fff;
         border-radius: 4px;
@@ -108,14 +108,16 @@
             flex: 1
         }
 
-        .header-ft
         
         .contact-list{
             display: flex;
             flex-wrap: wrap;
-            padding-left: 1%;
+            padding: 0 30px;
             margin-top: 30px;
         }
+        
+
+       
 
         .contact-item{
             display: flex;
@@ -123,8 +125,7 @@
             background: #F5F7FC;
             border-radius: 1px;
             height: 74px;
-            width: 30%;
-            margin-left: 2%;
+            width: 100%;
             margin-bottom: 20px;
             
             
@@ -162,9 +163,27 @@
                 margin-right: 4px;
                 vertical-align: middle;
             }
-            
         }
 
+        @media (min-width: 1400px) {
+            .contact-list{
+                margin-left: -2%
+            }
+            .contact-item{
+                width: 48%;
+                margin-left: 2%;
+            }
+        }
+
+        @media (min-width: 1800px) {
+            .contact-list{
+                margin-left: -2%
+            }
+            .contact-item{
+                width: 31.33333%;
+                margin-left: 2%;
+            }
+        }
 
         .empty-sec{
             text-align: center;
