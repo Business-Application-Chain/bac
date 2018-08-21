@@ -8,6 +8,7 @@
         </div>
 
         <div v-if="active == 1" class="assets-table">
+
             <div class="table-header">
                 <div class="table-t1">名称</div>
                 <div class="table-t2">余额</div>
@@ -145,6 +146,11 @@
     import XInput from '~/components/ui/XInput.vue'
     import sha256 from 'crypto-js/sha256'
     import Toast from '~/components/ui/toast'
+    import XTable from '~/components/ui/XTable.vue'
+    import XTableColumn from '~/components/ui/XTableColumn.vue'
+
+
+
     export default {
         data () {
             return {
@@ -179,7 +185,9 @@
         components: {
             XBtn,
             Modal,
-            XInput
+            XInput,
+            XTable,
+            XTableColumn
         },
         computed:{
             ...mapState({

@@ -3,13 +3,15 @@
         <div class="sec">
             <div class="sec-header">联系人</div>
             <div class="contact-info">
-                <div class="info-item">
-                    <span class="info-item_desc">别名: </span> 
-                    <span class="info-item_primary">{{userAccount.username || '-'}}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-item_desc">地址: </span> 
-                    <span class="info-item_primary">{{userAccount.address[0]}}</span>
+                <div class="info-hd">
+                    <div class="info-item">
+                        <span class="info-item_desc">别名: </span> 
+                        <span class="info-item_primary">{{userAccount.username || '-'}}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-item_desc">地址: </span> 
+                        <span class="info-item_primary">{{userAccount.address[0]}}</span>
+                    </div>
                 </div>
                 <x-btn v-if="!userAccount.isFriend" @click="addVisible = true" icon="&#xe601;" width="90px">添加</x-btn>
                 <div class="info-ft">
@@ -101,8 +103,12 @@
             padding: 0 30px;
         }
 
-        .info-item{
+        .info-hd{
             flex: 1;
+        }
+
+        .info-item:not(:first-child){
+            margin-top: 15px;
         }
 
         .info-item_desc{
@@ -111,6 +117,7 @@
 
         .info-item_primary{
             color: #000;
+            margin-left: 3px;
         }
 
         .info-ft{
