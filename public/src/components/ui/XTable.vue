@@ -20,12 +20,12 @@
             list: Array
         },
 
-        created () {
-
-        },
-
         components: {
             XTableBody
+        },
+
+        created () {
+            console.log(this.$slots)
         },
 
         methods: {

@@ -130,26 +130,32 @@
         }
 
         .main-cell{
-            display: flex;
-            align-items: center;
-            height: 88px;
+            
+
             border-bottom: 1px solid #F2F2F2;
             margin-bottom: 20px;
+            padding: 30px 0
         }
 
         .main-title{
             font-size: 14px;
             color: #9B9B9B;
+            width: 70px;
+            text-align: right
         }
 
         .main-primary{
             font-size: 16px;
             color: #4A4A4A;
-            margin-top: 12px;
+            margin-left: 30px;
         }
 
         .main-cell_id{
-            flex: 1
+            display: flex;
+            align-items: center;
+            &:not(:first-child){
+                margin-top: 15px
+            }
         }
 
         .link{
@@ -166,13 +172,15 @@
         .main-item_hd{
             font-size: 16px;
             color: #4A4A4A;
-            width: 92px;
+            width: 70px;
+            text-align: right
         }
 
         .main-item_ft{
             font-size: 16px;
             color: #9B9B9B;
-            flex: 1
+            flex: 1;
+            margin-left: 30px;
         }
 
         .page-card{

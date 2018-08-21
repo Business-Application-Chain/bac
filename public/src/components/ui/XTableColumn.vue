@@ -18,10 +18,15 @@
         },
 
         created () {
-            console.log(this.$slots)
-            this.$parent.insertColumn(assign(this.$props, {
-                slot: this.$slots.default
-            }))
+            console.log(this.$scopedSlots)
+            const obj = assign(this.$props, {
+                slot: this.$slots.default,
+                // render (h, data) {
+                //     return this.scopedSlots.default ? this.scopedSlots.default(data) : <div>{data[this.prop]}</div>
+                // }
+            })
+            
+            this.$parent.insertColumn(obj)
         }
     }
 </script>
