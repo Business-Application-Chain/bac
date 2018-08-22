@@ -335,26 +335,31 @@ Transfers.prototype.callApi = function (call, rpcjson, args, cb) {
 privated.transfers = function(query, cb) {
     let index = query.page - 1;
     let limit = query.page * query.size;
-    let sql = 'SELECT * FROM transfers WHERE ';
+    let sql = 'SELECT a.*, t.fee FROM transfers as a  ';
+    sql += 'left outer join transactions as t on a.transactionHash = t.hash WHERE';
     let sqlCount = 'SELECT COUNT(*) AS number from transfers WHERE ';
     if(!(query.address && query.assetsHash)) {
         cb('miss address and assetsHash');
     }
     if(query.address) {
-        sql += `(accountId = "${query.address}" OR recipientId = "${query.address}") `;
+        sql += `(a.accountId = "${query.address}" OR a.recipientId = "${query.address}") `;
         sqlCount += `(accountId = "${query.address}" OR recipientId = "${query.address}") `;
         if(query.assetsHash) {
-            sql += ` and assetsHash = "${query.assetsHash}"`;
+            sql += ` and a.assetsHash = "${query.assetsHash}"`;
             sqlCount += ` and assetsHash = "${query.assetsHash}"`;
         }
     } else {
-        sql += `assetsHash = "${query.assetsHash}"`;
+        sql += `a.assetsHash = "${query.assetsHash}"`;
         sqlCount += `assetsHash = "${query.assetsHash}"`;
     }
+    // left outer join transactions as t on t.blockHash=b.hash
+
     sql += ` LIMIT ${index}, ${limit}`;
+
     library.dbClient.query(sqlCount, {
         type: Sequelize.QueryTypes.SELECT
     }).then((data) => {
+        console.log(sql);
         library.dbClient.query(sql, {
             type: Sequelize.QueryTypes.SELECT
         }).then((rows) => {
