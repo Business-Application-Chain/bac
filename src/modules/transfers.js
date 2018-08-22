@@ -335,7 +335,7 @@ Transfers.prototype.callApi = function (call, rpcjson, args, cb) {
 privated.transfers = function(query, cb) {
     let index = query.page - 1;
     let limit = query.page * query.size;
-    let sql = 'SELECT a.*, t.fee FROM transfers as a  ';
+    let sql = 'SELECT a.*, t.fee, t.timestamp FROM transfers as a ';
     sql += 'left outer join transactions as t on a.transactionHash = t.hash WHERE';
     let sqlCount = 'SELECT COUNT(*) AS number from transfers WHERE ';
     if(!(query.address && query.assetsHash)) {
@@ -359,7 +359,6 @@ privated.transfers = function(query, cb) {
     library.dbClient.query(sqlCount, {
         type: Sequelize.QueryTypes.SELECT
     }).then((data) => {
-        console.log(sql);
         library.dbClient.query(sql, {
             type: Sequelize.QueryTypes.SELECT
         }).then((rows) => {
@@ -391,6 +390,15 @@ shared_1_0.transfers = function(params, cb) {
         if(err) {
             cb(err, 11000);
         } else {
+            if(address) {
+                data.data.forEach(function(item) {
+                    if(item.accountId === address) {
+                        item.senderType = 'in';
+                    } else {
+                        item.senderType = 'out';
+                    }
+                })
+            }
             cb(null, 200, data);
         }
     });
@@ -463,7 +471,6 @@ shared_1_0.sendTransfers = function(params, cb) {
                         return cb(e.toString(), 13009);
                     }
                     library.modules.transactions.receiveTransactions([transaction], cb);
-
                 });
             });
         });
