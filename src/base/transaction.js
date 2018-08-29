@@ -47,6 +47,7 @@ Transaction.prototype.create = function (data) {
         senderPublicKey: data.sender.master_pub.toString('hex'),
         timestamp: Date.now(),
         asset: {},
+
     };
 
     txObj = privated.types[txObj.type].create.call(this, data, txObj);

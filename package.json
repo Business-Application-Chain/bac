@@ -38,6 +38,7 @@
     "ip": "^1.1.5",
     "json2csv": "^4.1.6",
     "knuth-shuffle": "^1.0.8",
+    "merkle": "^0.6.0",
     "method-override": "^2.3.10",
     "moment": "^2.22.0",
     "moment-timezone": "^0.5.14",

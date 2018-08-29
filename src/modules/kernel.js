@@ -332,7 +332,7 @@ Kernel.prototype.onNewBlock = function(block, broadcast) {
         library.socket.webSocket.send('201|kernel|status|' +  JSON.stringify({
             height: block.height,
             peerHeight: block.height,
-            count: peerCount
+            peerCount: peerCount
         }), null);
     }
 };
@@ -496,10 +496,6 @@ shared_1_0.transactions = function (req, cb) {
             return cb(null, 200, "SUCCESS");
         }
     });
-};
-
-shared_1_0.signatures = function(req, cb) {
-
 };
 
 shared_1_0.getUnconfirmedTransactions = function(req, cb) {

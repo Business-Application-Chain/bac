@@ -97,7 +97,7 @@ Block.prototype.objectNormalize = function (block) {
             version: {
                 type: "integer",
                 minimum: 0
-            }
+            },
         },
         required: ['blockSignature', 'generatorPublicKey', 'numberOfTransactions', 'payloadHash', 'payloadLength', 'timestamp', 'totalAmount', 'totalFee', 'reward', 'transactions', 'version']
     });

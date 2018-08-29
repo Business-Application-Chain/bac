@@ -371,6 +371,29 @@ privated.transfers = function(query, cb) {
     });
 };
 
+privated.getAllTransfers = function(page, size, cb) {
+    let index = page - 1;
+    let limit = page * size;
+    let sql = 'SELECT a.assetsHash, a.amount, a.transactionHash as hash, a.assets_name, a.accountId as senderId, a.recipientId, t.fee, t.timestamp FROM transfers as a ';
+    sql += 'left outer join transactions as t on a.transactionHash = t.hash';
+    sql += ` LIMIT ${index}, ${limit}`;
+    let countSql = 'SELECT COUNT(*) AS number FROM transfers as a ';
+    library.dbClient.query(countSql, {
+        type: Sequelize.QueryTypes.SELECT
+    }).then((count) => {
+        library.dbClient.query(sql, {
+            type: Sequelize.QueryTypes.SELECT
+        }).then((data) => {
+            cb(null, {data: data, count: count[0].number});
+        }).catch((err) => {
+            cb(err);
+        })
+    }).catch((err) => {
+        cb(err);
+    });
+
+};
+
 shared_1_0.transfers = function(params, cb) {
     let address = params[0] || '';
     let assetsHash = params[1] || '';
@@ -402,6 +425,19 @@ shared_1_0.transfers = function(params, cb) {
             cb(null, 200, data);
         }
     });
+};
+
+shared_1_0.getAllTransfers = function(params, cb) {
+    let page = params[0] || 1;
+    let size = params[1] || 10;
+    privated.getAllTransfers(page, size, function (err, data) {
+        if(err) {
+            cb(err, 11000);
+        } else {
+            cb(null, 200, data);
+        }
+    })
+
 };
 
 shared_1_0.sendTransfers = function(params, cb) {
