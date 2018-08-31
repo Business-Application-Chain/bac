@@ -9,6 +9,7 @@ var ed = require('ed25519');
 var ByteBuffer = require('bytebuffer');
 var blockStatus = require('../utils/blockStatus.js');
 var bacLib = require('bac-lib');
+var merkle = require('merkle');
 
 var self, privated = {}, library;
 
@@ -98,8 +99,11 @@ Block.prototype.objectNormalize = function (block) {
                 type: "integer",
                 minimum: 0
             },
+            merkleRoot: {
+                type: "string"
+            }
         },
-        required: ['blockSignature', 'generatorPublicKey', 'numberOfTransactions', 'payloadHash', 'payloadLength', 'timestamp', 'totalAmount', 'totalFee', 'reward', 'transactions', 'version']
+        required: ['blockSignature', 'generatorPublicKey', 'numberOfTransactions', 'payloadHash', 'payloadLength', 'timestamp', 'totalAmount', 'totalFee', 'reward', 'transactions', 'version', 'merkleRoot']
     });
 
     if (!report) {
@@ -121,6 +125,22 @@ Block.prototype.getBlockHash = function(blockObj) {
     let blockHash = this.getHash(blockObj).toString('hex');
     return blockHash;
 };
+
+Block.prototype.verifyMerkle = function(blockObj, cb) {
+    if(blockObj.numberOfTransactions === 0) {
+        return true;
+    }
+    let transHash = [];
+    blockObj.transactions.forEach(function (item) {
+        transHash.push(item.hash);
+    });
+    if(transHash.length % 2 !== 0) {
+        transHash.push(transHash[transHash.length - 1]);
+    }
+    var sha256tree = merkle('sha256').sync(transHash);
+    let result = sha256tree.root() === blockObj.merkleRoot;
+    return result;
+}
 
 Block.prototype.getHash = function (blockObj) {
     return crypto.createHash('sha256').update(this.getBytes(blockObj)).digest().toString('hex');
@@ -144,7 +164,7 @@ Block.prototype.dbRead = function (raw) {
             payloadHash: raw.b_payloadHash,
             generatorPublicKey: raw.b_generatorPublicKey,
             blockSignature: raw.b_blockSignature,
-            // confirmations: raw.b_confirmations
+            merkleRoot: raw.b_merkleRoot || ''
         }
         block.totalForged = (block.totalFee + block.reward);
         return block;
@@ -235,7 +255,8 @@ Block.prototype.verifySignature = function (blockObj) {
         numberOfTransactions: blockObj.numberOfTransactions,
         payloadLength: blockObj.payloadLength,
         previousBlock: blockObj.previousBlock,
-        generatorPublicKey: blockObj.generatorPublicKey
+        generatorPublicKey: blockObj.generatorPublicKey,
+        merkleRoot: blockObj.merkleRoot || ''
     };
     let blockSignature = new Buffer(blockObj.blockSignature, 'hex');
     let publicBuffer = Buffer.from(blockObj.generatorPublicKey, 'hex');
@@ -276,7 +297,7 @@ Block.prototype.save = function (blockObj, t, cb) {
         t = null;
     }
 
-    this.scope.dbClient.query("INSERT INTO blocks (hash, version, timestamp, height, previousBlock, numberOfTransactions, totalAmount, totalFee, reward, payloadLength, payloadHash, generatorPublicKey, blockSignature) VALUES ($hash, $version, $timestamp, $height, $previousBlock, $numberOfTransactions, $totalAmount, $totalFee, $reward, $payloadLength, $payloadHash, $generatorPublicKey, $blockSignature)", {
+    this.scope.dbClient.query("INSERT INTO blocks (hash, version, timestamp, height, previousBlock, numberOfTransactions, totalAmount, totalFee, reward, payloadLength, payloadHash, generatorPublicKey, blockSignature, merkleRoot) VALUES ($hash, $version, $timestamp, $height, $previousBlock, $numberOfTransactions, $totalAmount, $totalFee, $reward, $payloadLength, $payloadHash, $generatorPublicKey, $blockSignature, $merkleRoot)", {
         type: Sequelize.QueryTypes.INSERT,
         bind: {
             hash: blockObj.hash,
@@ -291,7 +312,8 @@ Block.prototype.save = function (blockObj, t, cb) {
             payloadLength: blockObj.payloadLength,
             payloadHash: blockObj.payloadHash,
             generatorPublicKey: blockObj.generatorPublicKey,
-            blockSignature: blockObj.blockSignature
+            blockSignature: blockObj.blockSignature,
+            merkleRoot: blockObj.merkleRoot
         },
         transaction: t
     }).then(function (rows) {

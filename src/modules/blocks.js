@@ -15,7 +15,7 @@ var csvtojson = require('csvtojson');
 var	ip = require('ip');
 var Json2csv = require('json2csv').Parser;
 
-var header = ['b_hash', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward', 'b_payloadLength', 'b_payloadHash','b_generatorPublicKey','b_blockSignature','t_hash',
+var header = ['b_hash', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward', 'b_payloadLength', 'b_payloadHash','b_generatorPublicKey','b_blockSignature', 'b_merkleRoot','t_hash',
     't_type','t_timestamp','t_senderPublicKey', 't_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature', 'd_username', 's_publicKey','c_address','u_alias',
     'm_min','m_lifetime','m_keysgroup','t_requesterPublicKey','t_signatures', 'a_name', 'a_description', 'a_hash', 'a_decimal', 'a_total', 'tr_amount', 'tr_assetsHash', 'tr_assetsName'];
 
@@ -43,6 +43,7 @@ privated.blocksDataFields = {
     'b_payloadHash': String,
     'b_generatorPublicKey': String,
     'b_blockSignature': String,
+    'b_merkleRoot': String,
     't_hash': String,
     't_type': Number,
     't_timestamp': Number,
@@ -316,7 +317,7 @@ privated.popLastBlock = function (oldLastBlock, cb) {
 };
 
 privated.getIdSequence = function (height, cb) {
-    library.dbClient.query('SELECT height AS firstHeight, hash AS ids FROM blocks ORDER BY height DESC LIMIT 1', {
+    library.dbClient.query('SELECT height AS firstHeight, hash AS ids FROM blocks ORDER BY height DESC LIMIT 5', {
         type: Sequelize.QueryTypes.SELECT
     }).then((rows) => {
         cb(null, rows[0]);
@@ -484,9 +485,63 @@ Blocks.prototype.getLastBlock = function() {
     return privated.lastBlock;
 };
 
-Blocks.prototype.onReceiveBlock = function (blockObj) {
+privated.popLastBlock = function(oldLastBlock, cb) {
+    library.balancesSequence.add(function (cb) {
+        self.loadBlocksPart({id: oldLastBlock.previousBlock}, function (err, previousBlock) {
+            if (err || !previousBlock.length) {
+                return cb(err || 'previousBlock is null');
+            }
+            previousBlock = previousBlock[0];
+            async.eachSeries(oldLastBlock.transactions.reverse(), function (transaction, cb) {
+                async.series([
+                    function (cb) {
+                        library.modules.accounts.getAccount({publicKey: transaction.senderPublicKey}, function (err, sender) {
+                            if (err) {
+                                return cb(err);
+                            }
+                            library.modules.transactions.undo(transaction, oldLastBlock, sender, cb);
+                        });
+                    }, function (cb) {
+                        library.modules.transactions.undoUnconfirmed(transaction, cb);
+                    }, function (cb) {
+                        library.modules.transactions.pushHiddenTransaction(transaction);
+                        setImmediate(cb);
+                    }
+                ], cb);
+            }, function (err) {
+                library.modules.round.backwardTick(oldLastBlock, previousBlock, function () {
+                    privated.deleteBlock(oldLastBlock.id, function (err) {
+                        if (err) {
+                            return cb(err);
+                        }
 
+                        cb(null, previousBlock);
+                    });
+                });
+            });
+        });
+    }, cb);
 };
+
+Blocks.prototype.loadBlocksPart = function (filter, cb) {
+    self.loadBlocksData(filter, function (err, rows) {
+        self.loadBlocksData(filter, function (err, rows) {
+            // Notes:
+            // If while loading we encounter an error, for example, an invalid signature on
+            // a block & transaction, then we need to stop loading and remove all blocks
+            // after the last good block. We also need to process all transactions within
+            // the block.
+
+            var blocks = [];
+
+            if (!err) {
+                blocks = privated.readDbRows(rows);
+            }
+
+            cb(err, blocks);
+        });
+    })
+}
 
 Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
     var loaded = false;
@@ -571,7 +626,7 @@ Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
 
     library.dbSequence.add(function (cb) {
         var sql = 'SELECT ' +
-            'b.hash as b_hash, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward, b.payloadLength as b_payloadLength, b.payloadHash as b_payloadHash, b.generatorPublicKey as b_generatorPublicKey, b.blockSignature as b_blockSignature, ' +
+            'b.hash as b_hash, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward, b.payloadLength as b_payloadLength, b.payloadHash as b_payloadHash, b.generatorPublicKey as b_generatorPublicKey, b.blockSignature as b_blockSignature, b.merkleRoot as b_merkleRoot, ' +
             't.hash as t_hash, t.type as t_type, t.timestamp as t_timestamp, t.senderPublicKey as t_senderPublicKey, t.senderId as t_senderId, t.recipientId as t_recipientId, t.senderUsername as t_senderUsername, t.recipientUsername as t_recipientUsername, t.amount as t_amount, t.fee as t_fee, t.signature as t_signature, t.signSignature as t_signSignature,  ' +
             's.publicKey as s_publicKey, ' +
             'd.username as d_username, ' +
@@ -739,11 +794,13 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
     library.balancesSequence.add(function (cb) {
         try {
             block.hash = library.base.block.getBlockHash(block);
+
         } catch (e) {
             privated.isActive = false;
             return setImmediate(cb, e.toString());
         }
         block.height = privated.lastBlock.height + 1;
+
 
         library.modules.transactions.undoUnconfirmedList(function (err, unconfirmedTransactions) {
             if (err) {
@@ -756,7 +813,6 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                     privated.isActive = false;
                     setImmediate(cb, err);
                 });
-
             }
 
             if (!block.previousBlock && block.height != 1) {
@@ -775,11 +831,15 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                 }
                 try {
                     var valid = library.base.block.verifySignature(block);
+                    var verifyMerkle = library.base.block.verifyMerkle(block);
                 } catch (e) {
                     return setImmediate(cb, e.toString());
                 }
                 if (!valid) {
                     return done("Can't verify signature: " + block.hash);
+                }
+                if(!verifyMerkle) {
+                    return done("Can't verify merkleRoot: " + block.hash);
                 }
                 if (block.previousBlock != privated.lastBlock.hash) {
                     // Fork same height and different previous block
@@ -808,6 +868,7 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                     return done("Invalid amount of block assets: " + block.hash);
                 }
                 var totalAmount = 0, totalFee = 0, payloadHash = crypto.createHash('sha256'), appliedTransactions = {}, acceptedRequests = {}, acceptedConfirmations = {};
+
                 async.eachSeries(block.transactions, function (transaction, cb) {
                     try {
                         transaction.hash = library.base.transaction.getTrsHash(transaction);
