@@ -116,9 +116,9 @@ function Transfer() {
         return {transfer: transfer};
     };
 
-    this.save = function (trs, cb) {
+    this.save = function (trs, t) {
         let transfer = trs.asset.transfer;
-        library.dbClient.query('INSERT INTO transfers(`assetsHash`, `assets_name`, `amount`, `transactionHash`, `accountId`, `recipientId`) VALUES($assetsHash, $assetsName, $amount, $transactionHash, $accountId, $recipientId)', {
+        return library.dbClient.query('INSERT INTO transfers(`assetsHash`, `assets_name`, `amount`, `transactionHash`, `accountId`, `recipientId`) VALUES($assetsHash, $assetsName, $amount, $transactionHash, $accountId, $recipientId)', {
             type: Sequelize.QueryTypes.INSERT,
             bind: {
                 assetsHash: transfer.assetsHash,
@@ -127,11 +127,8 @@ function Transfer() {
                 transactionHash: trs.hash,
                 recipientId: trs.recipientId,
                 accountId: trs.senderId
-            }
-        }).then(() => {
-            cb()
-        }).catch((err) => {
-            cb(err);
+            },
+            transaction: t
         });
     };
 
@@ -267,9 +264,9 @@ function Burn() {
         return {burn: burn};
     };
 
-    this.save = function (trs, cb) {
+    this.save = function (trs, t) {
         let burn = trs.asset.burn;
-        library.dbClient.query('INSERT INTO transfers(`assetsHash`, `assets_name`, `amount`, `transactionHash`, `accountId`, `recipientId`) VALUES($assetsHash, $assetsName, $amount, $transactionHash, $accountId, $recipientId)', {
+        return library.dbClient.query('INSERT INTO transfers(`assetsHash`, `assets_name`, `amount`, `transactionHash`, `accountId`, `recipientId`) VALUES($assetsHash, $assetsName, $amount, $transactionHash, $accountId, $recipientId)', {
             type: Sequelize.QueryTypes.INSERT,
             bind: {
                 assetsHash: burn.assetsHash,
@@ -278,11 +275,8 @@ function Burn() {
                 transactionHash: trs.hash,
                 accountId: trs.senderId,
                 recipientId: ''
-            }
-        }).then(() => {
-            cb()
-        }).catch((err) => {
-            cb(err);
+            },
+            transaction: t
         });
     };
 

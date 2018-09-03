@@ -1,13 +1,5 @@
-<template>
-    <div class="x-table-column-comp">
-        <slot>
-            {{label}}
-        </slot>
-    </div>
-</template>
-
 <script>
-    import {assign} from 'lodash'
+    import {assign, uniqueId} from 'lodash'
 
     export default {
         props:{
@@ -16,24 +8,35 @@
             width: String,
             minWidth: String
         },
-
+        data () {
+            return {
+                id: uniqueId('table-column-')
+            }
+        },
         created () {
-            console.log(this.$scopedSlots)
             const obj = assign(this.$props, {
-                slot: this.$slots.default,
-                // render (h, data) {
-                //     return this.scopedSlots.default ? this.scopedSlots.default(data) : <div>{data[this.prop]}</div>
-                // }
+                renderBody: data => {
+                    return this.$scopedSlots.default ?  this.$scopedSlots.default(data) :  data[this.prop]
+                }
             })
+
+            obj.realStyle = {
+                width: obj.width ? obj.width + 'px' : '',
+                minWidth: (obj.minWidth || obj.width) + 'px', 
+                flex: obj.minWidth
+            }
             
             this.$parent.insertColumn(obj)
+        },
+
+        render () {
+            return null
+        },
+
+        destroyed () {
+            this.$parent.removeColumn(this.id)
         }
     }
 </script>
 
-<style lang="scss" scoped>
-    .x-table-column-comp{
-
-    }
-</style>
 

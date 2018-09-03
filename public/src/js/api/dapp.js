@@ -60,5 +60,15 @@ export default {
             method: 'burnAssets',
             params
         })
-    }
+    },
+
+    //转账记录  params: [地址，资产hash，curPage，pageSize]
+    getTransfers (params) {
+        return io.post({
+            api: 'transfers',
+            method: 'transfers',
+            params
+        })
+    },
+    
 }

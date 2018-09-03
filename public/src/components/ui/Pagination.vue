@@ -66,6 +66,12 @@
                 let arr = [{
                     value: 1
                 }]
+                
+                if(this.pageCount < 2) {
+                    this.indexArr = arr
+                    return
+                }
+
                 const cur = this.currentPage
 
                 let min = cur - 2

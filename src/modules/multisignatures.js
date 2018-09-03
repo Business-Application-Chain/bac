@@ -83,8 +83,8 @@ function Multisignature() {
         }
     };
 
-    this.save = function (txObj, cb) {
-
+    this.save = function (txObj, t) {
+        return null;
     };
 }
 

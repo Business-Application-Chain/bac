@@ -19,7 +19,7 @@ import SettingsIndex from './views/settings/Index.vue'
 import MessageIndex from './views/message/Index.vue'
 import ContactDetail from './views/contact/Detail.vue'
 import DappIndex from './views/dapp/Index.vue'
-import DappAssets from './views/dapp/Assets.vue'
+import DappTransactions from './views/dapp/Transactions.vue'
 
 Vue.use(Router)
 
@@ -95,9 +95,9 @@ export default new Router({
                     component: DappIndex
                 },
                 {
-                    path: 'dapp/assets',
-                    name: 'dappAssets',
-                    component: DappAssets
+                    path: 'dapp/transactions',
+                    name: 'dappTransactions',
+                    component: DappTransactions
                 },
 				{
 					path: 'account',

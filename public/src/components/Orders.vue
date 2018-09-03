@@ -93,7 +93,7 @@
 
         .comp-t1{
             margin-left: 24px;
-            flex: 1;
+            flex: 2;
             @include text-overflow();
         }
 
@@ -145,7 +145,7 @@
             text-align: center;
             font-size: 12px;
             color: #FFFFFF;
-
+            margin-right: 5px;
 
             &.in{
                 background: #24D17E;

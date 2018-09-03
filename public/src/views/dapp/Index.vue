@@ -4,57 +4,64 @@
             <div class="tabs-nav_item" @click="active = 1 " :class="{active: active == 1}">我的资产</div>
             <div class="tabs-nav_item" @click="active = 2 " :class="{active: active == 2}">发布的资产</div>
             <div class="tabs-nav_primary"></div>
-            <x-btn @click="addVisible = true" type="primary" width="90px" height="36px" icon="&#xe613;" iconSize="14px">创建</x-btn>
+            <div class="btn-list">
+                <div class="btn-item">
+                    <x-btn @click="addVisible = true" type="primary" width="90px" height="36px" icon="&#xe613;" iconSize="14px">创建</x-btn>
+                </div>
+                <div class="btn-item">
+                    <x-btn width="120px" height="36px" icon="&#xe684;" iconSize="14px" @click="goTransactions('')">全部交易</x-btn>
+                </div>
+            </div>
+            
+            
         </div>
-    
 
         <div v-if="active == 1" class="assets-table">
 
-            <div class="table-header">
-                <div class="table-t1">名称</div>
-                <div class="table-t2">余额</div>
-                <div class="table-t3">小数位</div>
-                <div class="table-t4">操作</div>
-            </div>
-            
-            <div class="tab-list" id="tabList">
-                <div v-for="item in assets" :key="item.assetsHash" class="table-cell">
-                    <div class="table-t1">{{item.assets_name}}</div>
-                    <div class="table-t2">{{item.balance / Math.pow(10, item.decimal)}}</div>
-                    <div class="table-t3">{{item.decimal}}</div>
-                    <div class="table-t4">
+            <x-table :list="assets">
+                <x-table-column width="40"></x-table-column>
+                <x-table-column label="名称" min-width="1" prop="assets_name"></x-table-column>
+                <x-table-column label="余额" min-width="1">
+                    <template slot-scope="row">
+                        {{row.balance / Math.pow(10, row.decimal)}}
+                    </template>
+                </x-table-column>
+                <x-table-column label="小数位" min-width="1" prop="decimal"></x-table-column>
+                <x-table-column label="操作" width="270">
+                    <template slot-scope="row">
                         <div class="btn-list">
                             <div class="btn-item">
-                                <x-btn height="30px" width="60px" @click="send(item)" font-size="14px">转账</x-btn>
+                                <x-btn height="30px" width="60px" @click="send(row)" font-size="14px">转账</x-btn>
                             </div>
                             <div class="btn-item">
-                                <x-btn height="30px" width="60px" @click="burn(item)" font-size="14px">燃烧</x-btn>
+                                <x-btn height="30px" width="60px" @click="burn(row)" font-size="14px">燃烧</x-btn>
+                            </div>
+                            <div class="btn-item">
+                                <x-btn height="30px" width="90px" @click="goTransactions(row.assetsHash)" font-size="14px">交易记录</x-btn>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
+                    </template>
+                </x-table-column>
+            </x-table>
         </div>
 
         <div v-if="active == 2"  class="assets-table">
-            <div class="table-header">
-                <div class="table-t2-1">名称</div>
-                <div class="table-t2-2">描述</div>
-                <div class="table-t2-3">发行量</div>
-                <div class="table-t2-4">小数位</div>
-                <div class="table-t2-5">已燃烧</div>
-                
-            </div>
-            
-            <div class="tab-list" id="tabList">
-                <div v-for="item in publishedAssets" :key="item.hash" class="table-cell">
-                    <div class="table-t2-1">{{item.name}}</div>
-                    <div class="table-t2-2">{{item.description}}</div>
-                    <div class="table-t2-3">{{item.total / Math.pow(10, item.decimal)}}</div>
-                    <div class="table-t2-4">{{item.decimal}}</div>
-                    <div class="table-t2-5">{{item.burn  / Math.pow(10, item.decimal)}}</div>
-                </div>
-            </div>
+            <x-table :list="publishedAssets">
+                <x-table-column width="40"></x-table-column>
+                <x-table-column min-width="1" label="名称" prop="name"></x-table-column>
+                <x-table-column min-width="1" label="描述" prop="description"></x-table-column>
+                <x-table-column min-width="1" label="发行量">
+                    <template slot-scope="row">
+                        {{row.total / Math.pow(10, row.decimal)}}
+                    </template>
+                </x-table-column>
+                <x-table-column min-width="1" label="小数位" prop="decimal"></x-table-column>
+                <x-table-column min-width="1" label="已燃烧">
+                    <template slot-scope="row">
+                        {{row.burn  / Math.pow(10, row.decimal)}}
+                    </template>
+                </x-table-column>
+            </x-table>
         </div>
 
         <modal v-if="addVisible" :visible.sync="addVisible" title="创建资产" @ok="addSubmit">
@@ -256,6 +263,15 @@
 
                     Toast.success('资产燃烧成功')
                     this.burnVisible = false
+                })
+            },
+
+            goTransactions (hash) {
+                this.$router.push({
+                    name: 'dappTransactions',
+                    query:{
+                        hash: hash
+                    }
                 })
             }
         }
