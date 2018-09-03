@@ -142,23 +142,16 @@ function Signature() {
         }
     };
 
-    this.save = function (txObj, cb) {
-        try {
-            var publicKey = new Buffer(txObj.asset.signature.publicKey, 'hex')
-        } catch (e) {
-            return cb(e.toString())
-        }
+    this.save = function (txObj, t) {
+        var publicKey = new Buffer(txObj.asset.signature.publicKey, 'hex');
 
-        library.dbClient.query("INSERT INTO signatures(transactionHash, publicKey) VALUES($transactionHash, $publicKey)", {
+        return library.dbClient.query("INSERT INTO signatures(transactionHash, publicKey) VALUES($transactionHash, $publicKey)", {
             type: Sequelize.QueryTypes.INSERT,
             bind: {
                 transactionHash: txObj.hash,
                 publicKey: publicKey.toString('hex')
-            }
-        }).then(() => {
-            cb();
-        }).catch((err) => {
-            cb(err);
+            },
+            transaction: t
         });
 
     };

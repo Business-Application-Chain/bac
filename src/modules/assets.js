@@ -39,6 +39,7 @@ function Asset() {
     };
 
     this.objectNormalize = function (txObj) {
+
         var report = library.schema.validate(txObj.asset.assets, {
             object: true,
             properties: {
@@ -103,16 +104,16 @@ function Asset() {
             name: raw.a_name,
             description: raw.a_description,
             hash: raw.a_hash,
-            decimal: raw.a_decimal,
-            total: raw.a_total,
+            decimal: parseInt(raw.a_decimal),
+            total: parseInt(raw.a_total),
         };
 
         return {assets: assets};
     };
 
-    this.save = function (trs, cb) {
+    this.save = function (trs, t) {
         let assets = trs.asset.assets;
-        library.dbClient.query("INSERT INTO account2assets(`hash`, `name`, `description`, `decimal`, `total`, `burn`, `transactionHash`, `time`, `accountId`) VALUES($hash,  $name, $description, $decimal, $total, $burn, $transactionHash, $time, $accountId)", {
+        return library.dbClient.query("INSERT INTO account2assets(`hash`, `name`, `description`, `decimal`, `total`, `burn`, `transactionHash`, `time`, `accountId`) VALUES($hash,  $name, $description, $decimal, $total, $burn, $transactionHash, $time, $accountId)", {
             type: Sequelize.QueryTypes.INSERT,
             bind: {
                 hash: assets.hash,
@@ -124,11 +125,8 @@ function Asset() {
                 transactionHash: trs.hash,
                 time: trs.timestamp,
                 accountId: trs.senderId,
-            }
-        }).then(() => {
-            return cb();
-        }).catch((err) => {
-            return cb(err);
+            },
+            transaction: t
         });
     };
 

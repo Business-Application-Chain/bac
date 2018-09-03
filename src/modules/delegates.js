@@ -244,17 +244,14 @@ function Delegate() {
         }
     };
 
-    this.save = function (txObj, cb) {
-        library.dbClient.query("INSERT INTO delegates (transactionHash, username) VALUES ($transactionHash, $username)", {
+    this.save = function (txObj, t) {
+       return library.dbClient.query("INSERT INTO delegates (transactionHash, username) VALUES ($transactionHash, $username)", {
             type: Sequelize.QueryTypes.INSERT,
             bind: {
                 transactionHash: txObj.hash,
                 username: txObj.asset.delegate.username
-            }
-        }).then(function (rows) {
-            cb();
-        }, function (err) {
-            cb(err, undefined);
+            },
+            transaction: t
         });
     };
 }

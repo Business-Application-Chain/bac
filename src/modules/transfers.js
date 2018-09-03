@@ -108,7 +108,7 @@ function Transfer() {
             return null;
         }
         let transfer = {
-            amount: raw.tr_amount,
+            amount: parseInt(raw.tr_amount),
             assetsHash: raw.tr_assetsHash,
             assetsName: raw.tr_assetsName
         };
@@ -116,9 +116,9 @@ function Transfer() {
         return {transfer: transfer};
     };
 
-    this.save = function (trs, cb) {
+    this.save = function (trs, t) {
         let transfer = trs.asset.transfer;
-        library.dbClient.query('INSERT INTO transfers(`assetsHash`, `assets_name`, `amount`, `transactionHash`, `accountId`, `recipientId`) VALUES($assetsHash, $assetsName, $amount, $transactionHash, $accountId, $recipientId)', {
+        return library.dbClient.query('INSERT INTO transfers(`assetsHash`, `assets_name`, `amount`, `transactionHash`, `accountId`, `recipientId`) VALUES($assetsHash, $assetsName, $amount, $transactionHash, $accountId, $recipientId)', {
             type: Sequelize.QueryTypes.INSERT,
             bind: {
                 assetsHash: transfer.assetsHash,
@@ -127,11 +127,8 @@ function Transfer() {
                 transactionHash: trs.hash,
                 recipientId: trs.recipientId,
                 accountId: trs.senderId
-            }
-        }).then(() => {
-            cb()
-        }).catch((err) => {
-            cb(err);
+            },
+            transaction: t
         });
     };
 
@@ -259,7 +256,7 @@ function Burn() {
             return null;
         }
         let burn = {
-            amount: raw.tr_amount,
+            amount: parseInt(raw.tr_amount),
             assetsHash: raw.tr_assetsHash,
             assetsName: raw.tr_assetsName
         };
@@ -267,9 +264,9 @@ function Burn() {
         return {burn: burn};
     };
 
-    this.save = function (trs, cb) {
+    this.save = function (trs, t) {
         let burn = trs.asset.burn;
-        library.dbClient.query('INSERT INTO transfers(`assetsHash`, `assets_name`, `amount`, `transactionHash`, `accountId`, `recipientId`) VALUES($assetsHash, $assetsName, $amount, $transactionHash, $accountId, $recipientId)', {
+        return library.dbClient.query('INSERT INTO transfers(`assetsHash`, `assets_name`, `amount`, `transactionHash`, `accountId`, `recipientId`) VALUES($assetsHash, $assetsName, $amount, $transactionHash, $accountId, $recipientId)', {
             type: Sequelize.QueryTypes.INSERT,
             bind: {
                 assetsHash: burn.assetsHash,
@@ -278,11 +275,8 @@ function Burn() {
                 transactionHash: trs.hash,
                 accountId: trs.senderId,
                 recipientId: ''
-            }
-        }).then(() => {
-            cb()
-        }).catch((err) => {
-            cb(err);
+            },
+            transaction: t
         });
     };
 
@@ -335,31 +329,109 @@ Transfers.prototype.callApi = function (call, rpcjson, args, cb) {
 privated.transfers = function(query, cb) {
     let index = query.page - 1;
     let limit = query.page * query.size;
-    library.dbClient.query(`SELECT * FROM transfers WHERE accountId = "${query.address}" OR recipientId = "${query.address}" LIMIT ${index}, ${limit}`, {
+    let sql = 'SELECT a.assetsHash, a.amount, a.transactionHash as hash, a.assets_name, a.accountId as senderId, a.recipientId, t.fee, t.timestamp FROM transfers as a ';
+    sql += 'left outer join transactions as t on a.transactionHash = t.hash WHERE';
+    let sqlCount = 'SELECT COUNT(*) AS number from transfers WHERE ';
+    if(!(query.address && query.assetsHash)) {
+        cb('miss address and assetsHash');
+    }
+    if(query.address) {
+        sql += `(a.accountId = "${query.address}" OR a.recipientId = "${query.address}") `;
+        sqlCount += `(accountId = "${query.address}" OR recipientId = "${query.address}") `;
+        if(query.assetsHash) {
+            sql += ` and a.assetsHash = "${query.assetsHash}"`;
+            sqlCount += ` and assetsHash = "${query.assetsHash}"`;
+        }
+    } else {
+        sql += `a.assetsHash = "${query.assetsHash}"`;
+        sqlCount += `assetsHash = "${query.assetsHash}"`;
+    }
+    // left outer join transactions as t on t.blockHash=b.hash
+
+    sql += ` LIMIT ${index}, ${limit}`;
+
+    library.dbClient.query(sqlCount, {
         type: Sequelize.QueryTypes.SELECT
-    }).then((rows) => {
-        cb(null, rows);
+    }).then((data) => {
+        library.dbClient.query(sql, {
+            type: Sequelize.QueryTypes.SELECT
+        }).then((rows) => {
+            cb(null, {data: rows, count: data[0].number});
+        }).catch((err) => {
+            cb(err);
+        });
     }).catch((err) => {
         cb(err);
     });
 };
 
+privated.getAllTransfers = function(page, size, cb) {
+    let index = page - 1;
+    let limit = page * size;
+    let sql = 'SELECT a.assetsHash, a.amount, a.transactionHash as hash, a.assets_name, a.accountId as senderId, a.recipientId, t.fee, t.timestamp FROM transfers as a ';
+    sql += 'left outer join transactions as t on a.transactionHash = t.hash';
+    sql += ` LIMIT ${index}, ${limit}`;
+    let countSql = 'SELECT COUNT(*) AS number FROM transfers as a ';
+    library.dbClient.query(countSql, {
+        type: Sequelize.QueryTypes.SELECT
+    }).then((count) => {
+        library.dbClient.query(sql, {
+            type: Sequelize.QueryTypes.SELECT
+        }).then((data) => {
+            cb(null, {data: data, count: count[0].number});
+        }).catch((err) => {
+            cb(err);
+        })
+    }).catch((err) => {
+        cb(err);
+    });
+
+};
+
 shared_1_0.transfers = function(params, cb) {
-    let accountId = params[0];
-    let page = params[1] || 1;
-    let size = params[2] || 10;
+    let address = params[0] || '';
+    let assetsHash = params[1] || '';
+    let page = params[2] || 1;
+    let size = params[3] || 10;
+
+    if(address === '' && assetsHash === '') {
+        return cb(11000, 'miss address and assetsHash')
+    }
 
     let filter = {};
     filter.page = page;
-    filter.address = accountId;
+    filter.address = address;
     filter.size = size;
+    filter.assetsHash = assetsHash;
     privated.transfers(filter, function (err, data) {
+        if(err) {
+            cb(err, 11000);
+        } else {
+            if(address) {
+                data.data.forEach(function(item) {
+                    if(item.accountId === address) {
+                        item.senderType = 'in';
+                    } else {
+                        item.senderType = 'out';
+                    }
+                })
+            }
+            cb(null, 200, data);
+        }
+    });
+};
+
+shared_1_0.getAllTransfers = function(params, cb) {
+    let page = params[0] || 1;
+    let size = params[1] || 10;
+    privated.getAllTransfers(page, size, function (err, data) {
         if(err) {
             cb(err, 11000);
         } else {
             cb(null, 200, data);
         }
-    });
+    })
+
 };
 
 shared_1_0.sendTransfers = function(params, cb) {
@@ -429,7 +501,6 @@ shared_1_0.sendTransfers = function(params, cb) {
                         return cb(e.toString(), 13009);
                     }
                     library.modules.transactions.receiveTransactions([transaction], cb);
-
                 });
             });
         });
