@@ -1,15 +1,19 @@
 <template>
     <div class="x-table-comp">
         <div class="hidden-columns"><slot></slot></div>
+        
         <div class="comp-header">
-            <div v-for="item in columns" :key="item.prop" :style="{width: item.width + 'px'}">{{item.label}}</div>
+            <div class="comp-header_cell" v-for="item in columns" :key="item.prop" :style="item.realStyle">{{item.label}}</div>
         </div>
         <x-table-body :columns="columns" :list="list"></x-table-body>
+        
     </div>
 </template>
 
 <script>
-    import XTableBody from './XTableBody'
+    import XTableBody from './XTableBody.vue'
+    import {findIndex} from 'lodash'
+
     export default {
         data () {
             return {
@@ -25,12 +29,16 @@
         },
 
         created () {
-            console.log(this.$slots)
+            
         },
 
         methods: {
             insertColumn (item) {
                 this.columns.push(item)
+            },
+            removeColumn (id) {
+                const index = findIndex(this.columns, item => item.id == id)
+                this.columns.splice(index, 1)
             }
         }
     }
@@ -38,6 +46,8 @@
 
 <style lang="scss" scoped>
     .x-table-comp{
+        overflow: auto;
+
         .hidden-columns{
             display: none;
         }
@@ -45,11 +55,16 @@
         .comp-header{
             font-size: 12px;
             color: #9B9B9B;
-            height: 40px;
-            line-height: 40px;
-            border-bottom: 1px solid  #F2F2F2;
+            
+            
             display: flex;
             align-items: center;
+        }
+
+        .comp-header_cell{
+            border-bottom: 1px solid  #F2F2F2;
+            height: 40px;
+            line-height: 40px;
         }
 
         .comp-cell{
