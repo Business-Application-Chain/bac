@@ -117,8 +117,9 @@ function Transaction() {
         return null;
     };
 
-    this.save = function (txObj, cb) {
-        setImmediate(cb);
+    this.save = function (txObj, t) {
+        // setImmediate(cb);
+        return null;
     };
 }
 

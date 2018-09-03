@@ -153,19 +153,14 @@ function Vote() {
         }
     };
 
-    this.save = function (txObj, cb) {
-
-        library.dbClient.query("INSERT INTO votes (transactionHash, votes) VALUES ($transactionHash, $votes)", {
+    this.save = function (txObj, t) {
+        return library.dbClient.query("INSERT INTO votes (transactionHash, votes) VALUES ($transactionHash, $votes)", {
             type: Sequelize.QueryTypes.INSERT,
             bind: {
                 transactionHash: txObj.hash,
                 votes: util.isArray(txObj.asset.votes) ? txObj.asset.votes.join(',') : null
-            }
-        }).then(function (rows) {
-            console.log(txObj.hash+": "+rows);
-            cb();
-        }, function (err) {
-            console.log(err.toString());
+            },
+            transactions: t
         });
     };
 }
@@ -355,13 +350,10 @@ function Username() {
         }
     };
 
-    this.save = function (txObj, cb) {
-        library.dbClient.query(`INSERT INTO usernames (transactionHash, username) VALUES ("${txObj.hash}", "${txObj.asset.username.alias}")`, {
+    this.save = function (txObj, t) {
+        return library.dbClient.query(`INSERT INTO usernames (transactionHash, username) VALUES ("${txObj.hash}", "${txObj.asset.username.alias}")`, {
             type: Sequelize.QueryTypes.INSERT,
-        }).then(() => {
-            cb();
-        }).catch((err) => {
-            cb(err);
+            transaction: t
         });
     };
 }
