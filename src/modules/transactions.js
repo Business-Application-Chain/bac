@@ -12,6 +12,7 @@ var Sequelize = require('sequelize');
 var modules_loaded, library, self, privated = {}, shared = {}, genesisblock = null, shared_1_0 = {};
 var constants = require('../utils/constants');
 var bacLib = require('bac-lib');
+var ByteBuffer = require("bytebuffer");
 
 privated.hiddenTransactions = [];
 privated.unconfirmedTransactions = [];
@@ -332,9 +333,85 @@ privated.addUnconfirmedTransaction = function (txObj, sender, cb) {
     });
 };
 
+privated.transactionGetBytes = function(trs) {
+    try {
+        let assetBytes = null;
+        let assetSize = assetBytes ? assetBytes.length : 0;
+
+        var bb = new ByteBuffer(1 + 4 + 32 + 32 + 8 + 8 + 64 + 64 + assetSize, true);
+        bb.writeByte(trs.type);
+        bb.writeInt(trs.timestamp);
+
+        let senderPublicKeyBuffer = new Buffer(trs.senderPublicKey, 'hex');
+        for (let i = 0; i < senderPublicKeyBuffer.length; i++) {
+            bb.writeByte(senderPublicKeyBuffer[i]);
+        }
+
+        if (trs.requesterPublicKey) {
+            let requesterPublicKey = new Buffer(trs.requesterPublicKey, 'hex');
+            for (let i = 0; i < requesterPublicKey.length; i++) {
+                bb.writeByte(requesterPublicKey[i]);
+            }
+        }
+
+        bb.writeByte(0);
+
+        bb.writeLong(trs.amount);
+
+        if (assetSize > 0) {
+            for (let i = 0; i < assetSize; i++) {
+                bb.writeByte(assetBytes[i]);
+            }
+        }
+
+        if (trs.signature) {
+            let signatureBuffer = new Buffer(trs.signature, 'hex');
+            for (let i = 0; i < signatureBuffer.length; i++) {
+                bb.writeByte(signatureBuffer[i]);
+            }
+        }
+
+        if (trs.signSignature) {
+            let signSignatureBuffer = new Buffer(trs.signSignature, 'hex');
+            for (let i = 0; i < signSignatureBuffer.length; i++) {
+                bb.writeByte(signSignatureBuffer[i]);
+            }
+        }
+
+        bb.flip();
+    } catch (e) {
+        throw Error(e.toString());
+    }
+    return bb.toBuffer();
+}
+
 // public methods
 Transactions.prototype.sandboxApi = function (call, args, cb) {
     sandboxHelper.callMethod(shared, call, args, cb);
+};
+
+privated.getPackageTransactions = function() {
+    let unconfirmedTransactions = privated.unconfirmedTransactions;
+    let transactions = unconfirmedTransactions.sort(function compare(a, b) { // 把交易進行排序
+        if (a.type < b.type) return -1;
+        if (a.type > b.type) return 1;
+        if (a.amount < b.amount) return -1;
+        if (a.amount > b.amount) return 1;
+        return 0;
+    });
+    let blockTransactions = [];
+    let size = 0;
+    for (let i = 0; i < transactions.length; i++) {
+        let transaction = transactions[i];
+        let bytes = privated.transactionGetBytes(transaction);
+
+        if (size + bytes.length > 1024 * 1024) { // 如果超出包的最大体积则跳出
+            break;
+        }
+        size += bytes.length;
+        blockTransactions.push(transaction);
+    }
+    return blockTransactions;
 };
 
 Transactions.prototype.callApi = function (call, rpcjson, args, cb) {
@@ -815,6 +892,11 @@ shared_1_0.addTransaction = function (params, cb) {
         cb(null, 200, {transactionHash: transaction[0].hash});
     });
 };
+
+shared_1_0.getPackageTransactions = function(params, cb) {
+    let blockTransactions = privated.getPackageTransactions();
+    return cb(null, 200, blockTransactions);
+}
 
 // export
 module.exports = Transactions;
