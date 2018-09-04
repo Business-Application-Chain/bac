@@ -5,11 +5,11 @@
 
             <div class="page-desc">
                 <div class="desc-item">
-                    <div class="desc-item_hd">哈希</div>
-                    <div class="desc-item_ft">{{result.payloadHash}}</div>
+                    <div class="desc-item_hd">区块哈希</div>
+                    <div class="desc-item_ft">{{result.hash}}</div>
                 </div>
                 <div class="desc-item">
-                    <div class="desc-item_hd">区块</div>
+                    <div class="desc-item_hd">区块高度</div>
                     <div class="desc-item_ft">{{result.height}}</div>
                 </div>
                 
