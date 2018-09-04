@@ -726,10 +726,9 @@ shared_1_0.addTransaction = function (params, cb) {
                     }
 
                     let lastHeight = library.modules.blocks.getLastBlock().height;
-                    if(account.lockHeight < lastHeight) {
+                    if(account.lockHeight > lastHeight) {
                         return cb("Account is locked", 11000);
                     }
-
                     if (account.multisignatures.indexOf(keypair.publicKey.toString('hex')) < 0) {
                         return cb("Account does not belong to multisignature group");
                     }
@@ -788,8 +787,8 @@ shared_1_0.addTransaction = function (params, cb) {
                         var secondHash = crypto.createHash('sha256').update(secondSecret, 'utf8').digest();
                         secondKeypair = ed.MakeKeypair(secondHash);
                     }
-                    let lastHeight = library.modules.blocks.getLastBlock().height;
-                    if(account.lockHeight < lastHeight) {
+                    let lastBlockHeight = library.modules.blocks.getLastBlock().height;
+                    if(account.lockHeight > lastBlockHeight) {
                         return cb("Account is locked", 11000);
                     }
                     try {

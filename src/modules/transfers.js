@@ -480,7 +480,7 @@ shared_1_0.sendTransfers = function(params, cb) {
                     secondKeypair = ed.MakeKeypair(secondHash);
                 }
                 let lastHeight = library.modules.blocks.getLastBlock().height;
-                if(account.lockHeight < lastHeight) {
+                if(account.lockHeight > lastHeight) {
                     return cb("Account is locked", 11000);
                 }
                 library.modules.assets.getAssets(assetsHash, function (err, assets) {
@@ -547,7 +547,7 @@ shared_1_0.burnAssets = function(params, cb) {
                 secondKeypair = ed.MakeKeypair(secondHash);
             }
             let lastHeight = library.modules.blocks.getLastBlock().height;
-            if(account.lockHeight < lastHeight) {
+            if(account.lockHeight > lastHeight) {
                 return cb("Account is locked", 11000);
             }
 

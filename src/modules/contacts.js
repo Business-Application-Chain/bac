@@ -451,7 +451,7 @@ shared_1_0.addContact = function(params, cb) {
                     var secondKeypair = ed.MakeKeypair(secondHash);
                 }
                 let lastHeight = library.modules.blocks.getLastBlock().height;
-                if(account.lockHeight < lastHeight) {
+                if(account.lockHeight > lastHeight) {
                     return cb("Account is locked", 11000);
                 }
                 try {
