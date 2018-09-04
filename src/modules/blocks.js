@@ -635,7 +635,8 @@ Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
             'm.min as m_min, m.lifetime as m_lifetime, m.keysgroup as m_keysgroup, ' +
             't.requesterPublicKey as t_requesterPublicKey, t.signatures as t_signatures, ' +
             'a.name as a_name, a.description as a_description, a.hash as a_hash,  a.decimal as a_decimal, a.total as a_total, ' +
-            'tr.amount as tr_amount, tr.assetsHash as tr_assetsHash, tr.assets_name as tr_assetsName ' +
+            'tr.amount as tr_amount, tr.assetsHash as tr_assetsHash, tr.assets_name as tr_assetsName, ' +
+            'l.lockHeight as l_lockHeight ' +
             "FROM blocks b " +
             "left outer join transactions as t on t.blockHash=b.hash " +
             "left outer join delegates as d on d.transactionHash=t.hash " +
@@ -645,6 +646,7 @@ Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
             "left outer join multisignatures as m on m.transactionHash=t.hash " +
             "left outer join account2assets as a on a.transactionHash=t.hash " +
             "left outer join transfers as tr on tr.transactionHash=t.hash " +
+            "left outer join lock_height as l on l.transactionHash=t.hash " +
             `where b.height >= ${params.offset} and b.height < ${params.limit} ` +
             "ORDER BY b.height, t.hash";
         library.dbClient.query(sql, {

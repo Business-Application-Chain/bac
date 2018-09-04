@@ -358,6 +358,139 @@ function Username() {
     };
 }
 
+function LockHeight() {
+    this.calculateFee = function (txObj, sender) {
+        return 0 * constants.fixedPoint;
+    };
+
+    this.create = function (data, txObj) {
+        txObj.recipientId = null;
+        txObj.amount = 0;
+        txObj.asset.lock = {
+            height: data.height
+        };
+        return txObj;
+    };
+
+    this.objectNormalize = function (txObj) {
+        var report = library.schema.validate(txObj.asset.lock, {
+            type: 'object',
+            properties: {
+                height: {
+                    type: 'number',
+                    minLength: 1,
+                    maxLength: 32
+                },
+            },
+            required: ['height']
+        });
+
+        if (!report) {
+            throw new Error(library.schema.getLastError());
+        }
+
+        return txObj;
+    };
+
+    this.getBytes = function (txObj) {
+        return null;
+    };
+
+    this.ready = function (txObj, sender) {
+        if (sender.multisignatures) {
+            if (!txObj.signatures) {
+                return false;
+            }
+            return txObj.signatures.length >= sender.multisign_min - 1;
+        } else {
+            return true;
+        }
+    };
+
+    this.process = function (txObj, sender, cb) {
+        setImmediate(cb, null, txObj);
+    };
+
+    this.verify = function (txObj, sender, cb) {
+        if (txObj.recipientId) {
+            return setImmediate(cb, "Invalid recipient");
+        }
+
+        if (txObj.amount !== 0) {
+            return setImmediate(cb, "Invalid transaction amount");
+        }
+
+        if (!txObj.asset.lock.height) {
+            return setImmediate(cb, "Invalid transaction asset");
+        }
+
+        cb(null, txObj);
+    };
+
+    this.apply = function (txObj, blockObj, sender, cb) {
+        self.setAccountAndGet({
+            master_address: sender.master_address,
+            lockHeight: txObj.asset.lock.height,
+            lockHeight_unconfirmed: 0,
+        }, cb);
+    };
+
+    this.undo = function (txObj, blockObj, sender, cb) {
+        self.setAccountAndGet({
+            master_address: sender.master_address,
+            lockHeight: 0,
+            lockHeight_unconfirmed: txObj.asset.lock.height,
+        }, cb);
+    };
+
+    this.applyUnconfirmed = function (txObj, sender, cb) {
+
+        var address = library.modules.accounts.generateAddressByPubKey(txObj.senderPublicKey);
+        let lockHeight = txObj.asset.lock.height;
+        self.getAccount({
+            master_address: address
+        }, function (err, account) {
+            if (err) {
+                return cb(err);
+            }
+            if (account.lockHeight > lockHeight) {
+                return cb("user locked block " + lockHeight);
+            }
+
+            self.setAccountAndGet({
+                master_address: sender.master_address,
+                lockHeight_unconfirmed: lockHeight
+            }, cb);
+        })
+    };
+
+    this.undoUnconfirmed = function (txObj, sender, cb) {
+        self.setAccountAndGet({
+            master_address: sender.master_address,
+            lockHeight_unconfirmed: 0,
+        }, cb);
+    };
+
+    this.load = function (raw) {
+        if (!raw.l_lockHeight) {
+            return null;
+        } else {
+            let lock = {
+                height: raw.l_lockHeight,
+            };
+
+            return {lock: lock};
+        }
+    };
+
+    this.save = function (txObj, t) {
+        return library.dbClient.query(`INSERT INTO lock_height (transactionHash, lockHeight) VALUES ("${txObj.hash}", "${txObj.asset.lock.height}")`, {
+            type: Sequelize.QueryTypes.INSERT,
+            transaction: t
+        });
+    };
+}
+
 // constructor
 function Accounts(cb, scope) {
     library = scope;
@@ -366,6 +499,7 @@ function Accounts(cb, scope) {
 
     library.base.transaction.attachAssetType(TransactionTypes.VOTE, new Vote());
     library.base.transaction.attachAssetType(TransactionTypes.USERNAME, new Username());
+    library.base.transaction.attachAssetType(TransactionTypes.LOCK_HEIGHT, new LockHeight());
 
     setImmediate(cb, null, self);
 }
@@ -382,6 +516,16 @@ privated.openAccount = function (secret, cb) {
     let keypair = library.base.account.getKeypair(secret);
 
     self.setAccountAndGet({master_pub: keypair.getPublicKeyBuffer().toString('hex')}, cb);
+};
+
+Accounts.prototype.getAccountLock = function(address, cb) {
+    library.dbClient.query(`SELECT lockHeight FROM accounts WHERE master_address = "${address}"`, {
+        type: Sequelize.QueryTypes.SELECT
+    }).then((data) => {
+        cb(null, data[0].lockHeight);
+    }).catch((err) => {
+        cb(err);
+    })
 };
 
 // public methods
@@ -601,6 +745,10 @@ shared_1_0.addUsername = function(params, cb) {
                 var secondHash = crypto.createHash('sha256').update(query.secondSecret, 'utf8').digest();
                 secondKeypair = ed.MakeKeypair(secondHash);
             }
+            let lastHeight = library.modules.blocks.getLastBlock().height;
+            if(account.lockHeight < lastHeight) {
+                return cb("Account is locked", 11000);
+            }
 
             try {
                 var transaction = library.base.transaction.create({
@@ -667,6 +815,83 @@ shared_1_0.getMnemonic = function(params, cb) {
     return cb(null, 200, {
         mnemonic: mnemonic,
         privateKey: privateKey.toString('hex')
+    });
+};
+
+shared_1_0.lockHeight = function(params, cb) {
+    let mnemonic = params[0] || undefined;
+    let lockHeight = params[1] || 0;
+    let secondSecret = params[2] || '';
+    if(!(mnemonic && lockHeight)) {
+        return cb('miss must params', 11000);
+    }
+    let keyPair = library.base.account.getKeypair(mnemonic);
+    let publicKey = keyPair.getPublicKeyBuffer().toString('hex');
+    console.log(publicKey);
+    let query = {};
+    let lastHeight = library.modules.blocks.getLastBlock().height;
+    if(lastHeight > lockHeight) {
+        return cb('lockHeight should > ', lastHeight);
+    }
+    query.master_pub = publicKey;
+    library.balancesSequence.add(function (cb) {
+        library.modules.accounts.getAccount(query, function (err, account) {
+            if (err) {
+                return cb(err.toString(), 11003);
+            }
+            if (!account || !account.master_pub) {
+                return cb("Invalid account", 13007);
+            }
+
+            if (account.secondsign && !secondSecret) {
+                return cb("Invalid second passphrase", 13008);
+            }
+
+            var secondKeypair = null;
+
+            if (account.secondsign) {
+                var secondHash = crypto.createHash('sha256').update(secondSecret, 'utf8').digest();
+                secondKeypair = ed.MakeKeypair(secondHash);
+            }
+            let lastHeight = library.modules.blocks.getLastBlock().height;
+            if(account.lockHeight < lastHeight) {
+                return cb("Account is locked", 11000);
+            }
+            try {
+                var transaction = library.base.transaction.create({
+                    type: TransactionTypes.LOCK_HEIGHT,
+                    height: lockHeight,
+                    sender: account,
+                    keypair: keyPair,
+                    secondKeypair: secondKeypair
+                });
+            } catch (e) {
+                return cb(e.toString(), 15001);
+            }
+            library.modules.transactions.receiveTransactions([transaction], cb);
+        })
+    }, function (err, transaction) {
+        if (err) {
+            return cb(err.toString(), 15001);
+        }
+        cb(null, 200, {transaction: transaction[0]});
+    });
+};
+
+shared_1_0.lockBlockHeight = function(params, cb) {
+    let lockHeight = params[0];
+    let lastBlock = library.modules.blocks.getLastBlock().height;
+    return cb(null, 200, lastBlock - lockHeight);
+};
+
+shared_1_0.getAccountLock = function(params, cb) {
+    let address = params[0];
+    self.getAccountLock(address, function (err, height) {
+        if(err) {
+            cb(err);
+        } else {
+            cb(null, 200, height);
+        }
     });
 };
 

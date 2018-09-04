@@ -213,6 +213,10 @@ shared_1_0.addSignature = function(params, cb) {
             if (account.secondsign || account.secondsign_unconfirmed) {
                 return cb("Invalid second passphrase", 13008);
             }
+            let lastHeight = library.modules.blocks.getLastBlock().height;
+            if(account.lockHeight < lastHeight) {
+                return cb("Account is locked", 11000);
+            }
             var secondHash = crypto.createHash('sha256').update(query.secondSecret, 'utf8').digest();
             var secondKeypair = ed.MakeKeypair(secondHash);
             try {

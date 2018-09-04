@@ -1,6 +1,6 @@
 {
     "address": "127.0.0.1",
-    "port": 8000,
+    "port": 7259,
     "echoLogLevel": "Debug",
     "outputLogLevel": "Info",
     "sharePort": true,
@@ -14,7 +14,7 @@
     },
     "peers": {
         "list": [
-            {"ip": "127.0.0.1", "port": 8000}
+            {"ip": "127.0.0.1", "port": 7259}
         ],
         "blackList": [],
         "optional": {
