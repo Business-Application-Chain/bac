@@ -17,7 +17,7 @@ var Json2csv = require('json2csv').Parser;
 
 var header = ['b_hash', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward', 'b_payloadLength', 'b_payloadHash','b_generatorPublicKey','b_blockSignature', 'b_merkleRoot','t_hash',
     't_type','t_timestamp','t_senderPublicKey', 't_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature', 'd_username', 's_publicKey','c_address','u_alias',
-    'm_min','m_lifetime','m_keysgroup','t_requesterPublicKey','t_signatures', 'a_name', 'a_description', 'a_hash', 'a_decimal', 'a_total', 'tr_amount', 'tr_assetsHash', 'tr_assetsName'];
+    'm_min','m_lifetime','m_keysgroup','t_requesterPublicKey','t_signatures', 'a_name', 'a_description', 'a_hash', 'a_decimal', 'a_total', 'tr_amount', 'tr_assetsHash', 'tr_assetsName', 'l_lockHeight'];
 
 require('array.prototype.findindex'); // Old node fix
 
@@ -72,7 +72,8 @@ privated.blocksDataFields = {
     'a_total': Number,
     'tr_amount': Number,
     'tr_assetsHash': String,
-    'tr_assetsName': String
+    'tr_assetsName': String,
+    'l_lockHeight': Number
 };
 
 // constructor
@@ -261,7 +262,8 @@ privated.getById = function (hash, cb) {
             'm.min as m_min, m.lifetime as m_lifetime, m.keysgroup as m_keysgroup, ' +
             't.requesterPublicKey as t_requesterPublicKey, t.signatures as t_signatures, ' +
             'a.name as a_name, a.description as a_description, a.hash as a_hash, a.decimal as a_decimal, a.total as a_total, ' +
-            'tr.amount as tr_amount, tr.assetsHash as tr_assetsHash ' +
+            'tr.amount as tr_amount, tr.assetsHash as tr_assetsHash, ' +
+            'l.lockHeight as l_lockHeight ' +
             "FROM blocks b " +
             "left outer join transactions as t on t.blockHash=b.hash " +
             "left outer join delegates as d on d.transactionHash=t.hash " +
@@ -271,6 +273,7 @@ privated.getById = function (hash, cb) {
             "left outer join multisignatures as m on m.transactionHash=t.hash " +
             "left outer join account2assets as a on a.transactionHash=t.hash " +
             "left outer join transfers as tr on tr.transactionHash=t.hash " +
+            "left outer join lock_height as l on l.transactionHash=t.hash " +
             `where b.hash = "${hash}" or b.height = "${hash}" `, {
             type: Sequelize.QueryTypes.SELECT
         }).then((rows) => {
@@ -1055,7 +1058,8 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
                 'm.min , m.lifetime , m.keysgroup , ' +
                 't.requesterPublicKey , t.signatures , ' +
                 'a.name as a_name, a.description as a_description, a.hash as a_hash,  a.decimal as a_decimal, a.total as a_total, ' +
-                'tr.amount as tr_amount, tr.assetsHash as tr_assetsHash, tr.assets_name as tr_assetsName ' +
+                'tr.amount as tr_amount, tr.assetsHash as tr_assetsHash, tr.assets_name as tr_assetsName, ' +
+                'l.lock_height as l_lockHeight ' +
                 "FROM blocks b " +
                 "left outer join transactions as t on t.blockHash=b.hash " +
                 "left outer join delegates as d on d.transactionHash=t.hash " +
@@ -1065,6 +1069,7 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
                 "left outer join multisignatures as m on m.transactionHash=t.hash " +
                 "left outer join account2assets as a on a.transactionHash=t.hash " +
                 "left outer join transfers as tr on tr.transactionHash=t.hash " +
+                "left outer join lock_height as l on l.transactionHash=t.hash "
                 (filter.hash || filter.lastBlockHash ? " where " : " ") + " " +
                 (filter.hash ? " b.hash = $hash " : " ") + (filter.hash && filter.lastBlockHash ? " and " : " ") + (filter.lastBlockHash ? " b.height > $height and b.height < $limit " : " ") +
                 "ORDER BY b.height";
