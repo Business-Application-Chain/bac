@@ -241,7 +241,7 @@ privated.getById = function (hash, cb) {
                 type: Sequelize.QueryTypes.SELECT
             }).then((rows) => {
                 if(rows[0]) {
-                    cb(null, rows[0].hash);
+                    cb(null, rows[0].blockHash);
                 } else {
                     cb(null, hash);
                 }
@@ -776,7 +776,6 @@ Blocks.prototype.simpleDeleteAfterBlock = function (blockHash, cb) {
         cb(err);
     });
 };
-
 
 Blocks.prototype.count = function(cb) {
     library.dbClient.query('SELECT count(hash) as Number from blocks', {
