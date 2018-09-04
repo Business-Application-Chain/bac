@@ -682,7 +682,6 @@ shared_1_0.addTransaction = function (params, cb) {
     var msg = params[5] || '';
     var multisigAccountPublicKey = params[6] || undefined;
 
-
     if (!(amount && publicKey && recipientId && mnemonic)) {
         return cb("miss must params", 11000);
     }
@@ -726,6 +725,10 @@ shared_1_0.addTransaction = function (params, cb) {
                         return cb("Account does not have multisignatures enabled");
                     }
 
+                    let lastHeight = library.modules.blocks.getLastBlock().height;
+                    if(account.lockHeight > lastHeight) {
+                        return cb("Account is locked", 11000);
+                    }
                     if (account.multisignatures.indexOf(keypair.publicKey.toString('hex')) < 0) {
                         return cb("Account does not belong to multisignature group");
                     }
@@ -784,7 +787,10 @@ shared_1_0.addTransaction = function (params, cb) {
                         var secondHash = crypto.createHash('sha256').update(secondSecret, 'utf8').digest();
                         secondKeypair = ed.MakeKeypair(secondHash);
                     }
-
+                    let lastBlockHeight = library.modules.blocks.getLastBlock().height;
+                    if(account.lockHeight > lastBlockHeight) {
+                        return cb("Account is locked", 11000);
+                    }
                     try {
                         var transaction = library.base.transaction.create({
                             type: TransactionTypes.SEND,

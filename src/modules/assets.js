@@ -241,7 +241,10 @@ shared_1_0.addAssets = function(params, cb) {
                 var secondHash = crypto.createHash('sha256').update(secondSecret, 'utf8').digest();
                 secondKeypair = ed.MakeKeypair(secondHash);
             }
-            
+            let lastHeight = library.modules.blocks.getLastBlock().height;
+            if(account.lockHeight > lastHeight) {
+                return cb("Account is locked", 11000);
+            }
             try {
                 var transaction = library.base.transaction.create({
                     type: TransactionTypes.ASSETS,

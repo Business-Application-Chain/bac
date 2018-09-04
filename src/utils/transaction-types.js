@@ -13,4 +13,5 @@ module.exports = {
     TRANSFERS: 11,
     BURN: 12,
     OTHER: 13,
+    LOCK_HEIGHT: 14
 };

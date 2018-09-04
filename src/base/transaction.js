@@ -60,7 +60,7 @@ Transaction.prototype.create = function (data) {
 
     txObj.hash = this.getTrsHash(txObj);
 
-    txObj.fee = privated.types[txObj.type].calculateFee.call(this, txObj, data.sender) || false;
+    txObj.fee = privated.types[txObj.type].calculateFee.call(this, txObj, data.sender);
     txObj.message = data.message || '';
 
     return txObj;
@@ -452,9 +452,9 @@ Transaction.prototype.verify = function (txObj, sender, requester, cb) {
     }
 
     // Calculate fee
-    var fee = privated.types[txObj.type].calculateFee.call(this, txObj, sender) || false;
+    var fee = privated.types[txObj.type].calculateFee.call(this, txObj, sender);
     // var fee = privated.types[txObj.type].calculateFee(txObj, sender) || false;
-    if (!fee || txObj.fee !== fee) {
+    if (txObj.fee !== fee) {
         return setImmediate(cb, "Invalid transaction type/fee: " + txObj.hash);
     }
 

@@ -479,6 +479,10 @@ shared_1_0.sendTransfers = function(params, cb) {
                     var secondHash = crypto.createHash('sha256').update(secondSecret, 'utf8').digest();
                     secondKeypair = ed.MakeKeypair(secondHash);
                 }
+                let lastHeight = library.modules.blocks.getLastBlock().height;
+                if(account.lockHeight > lastHeight) {
+                    return cb("Account is locked", 11000);
+                }
                 library.modules.assets.getAssets(assetsHash, function (err, assets) {
                     if(err) {
                         return cb(err, 11000);
@@ -542,6 +546,11 @@ shared_1_0.burnAssets = function(params, cb) {
                 var secondHash = crypto.createHash('sha256').update(secondSecret, 'utf8').digest();
                 secondKeypair = ed.MakeKeypair(secondHash);
             }
+            let lastHeight = library.modules.blocks.getLastBlock().height;
+            if(account.lockHeight > lastHeight) {
+                return cb("Account is locked", 11000);
+            }
+
             library.modules.assets.getAssets(assetsHash, function (err, assets) {
                 if(err) {
                     return cb(err, 11000);
