@@ -4,7 +4,7 @@ var extend = require('extend');
 function WorkQueue(config) {
     var __default = {
         onWarning: null,
-        warningLimit: 50
+        warningLimit: 100
     }
     __default = extend(__default, config);
     var self = this;

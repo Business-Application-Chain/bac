@@ -329,8 +329,9 @@ Transfers.prototype.callApi = function (call, rpcjson, args, cb) {
 privated.transfers = function(query, cb) {
     let index = query.page - 1;
     let limit = query.page * query.size;
-    let sql = 'SELECT a.assetsHash, a.amount, a.transactionHash as hash, a.assets_name, a.accountId as senderId, a.recipientId, t.fee, t.timestamp FROM transfers as a ';
-    sql += 'left outer join transactions as t on a.transactionHash = t.hash WHERE';
+    let sql = 'SELECT a.assetsHash, a.amount, a.transactionHash as hash, a.assets_name, a.accountId as senderId, a.recipientId, t.fee, t.timestamp, b.decimal FROM transfers as a ';
+    sql += 'left outer join transactions as t on a.transactionHash = t.hash ';
+    sql += 'left outer join accounts2assets as b on a.assetsHash = b.hash WHERE';
     let sqlCount = 'SELECT COUNT(*) AS number from transfers WHERE ';
     if(!(query.address && query.assetsHash)) {
         cb('miss address and assetsHash');

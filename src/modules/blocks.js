@@ -97,13 +97,11 @@ privated.saveGenesisBlock = function (cb) {
         }
     }).then(function (rows) {
         var blockHash = rows.length && rows[0].hash;
-
         if (!blockHash) {
             privated.saveBlock(genesisblock.block, function (err) {
                 if (err) {
                     library.log.Error("saveBlock", "Error", err.toString());
                 }
-
                 return cb(err);
             });
         } else {
@@ -115,7 +113,6 @@ privated.saveGenesisBlock = function (cb) {
 };
 
 privated.saveBlock = function (blockObj, cb) {
-
     library.dbClient.transaction(function (t1) {
         var save_records = [];
         save_records.push(library.base.block.save(blockObj, t1, function (err) {
@@ -489,7 +486,7 @@ Blocks.prototype.getLastBlock = function() {
 };
 
 privated.popLastBlock = function(oldLastBlock, cb) {
-    library.balancesSequence.add(function (cb) {
+    library.dbWorkQueue.add(function (cb) {
         self.loadBlocksPart({id: oldLastBlock.previousBlock}, function (err, previousBlock) {
             if (err || !previousBlock.length) {
                 return cb(err || 'previousBlock is null');
@@ -804,8 +801,6 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
             return setImmediate(cb, e.toString());
         }
         block.height = privated.lastBlock.height + 1;
-
-
         library.modules.transactions.undoUnconfirmedList(function (err, unconfirmedTransactions) {
             if (err) {
                 privated.isActive = false;
@@ -853,22 +848,11 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                 if (block.version > 0) {
                     return done("Invalid block version: " + block.hash);
                 }
-                // var blockSlotNumber = slots.getSlotNumber(block.timestamp);
-                // var lastBlockSlotNumber = slots.getSlotNumber(privated.lastBlock.timestamp);
-                // if (blockSlotNumber > slots.getSlotNumber() || blockSlotNumber <= lastBlockSlotNumber) {
-                //     return done("Can't verify block timestamp: " + block.id);
-                // }
-                //用户信息，需要添加回去。暂时注释
-                // library.modules.delegates.validateBlockSlot(block, function (err) {
-                //     if (err) {
-                //         // Fork another delegate's slot
-                //         library.modules.delegates.fork(block, 3);
-                //         return done("Can't verify slot: " + block.id);
-                //     }
                 if (block.payloadLength > constants.maxPayloadLength) {
                     return done("Can't verify payload length of block: " + block.hash);
                 }
-                if (block.transactions.length != block.numberOfTransactions || block.transactions.length > 100) {
+                // if (block.transactions.length != block.numberOfTransactions || block.transactions.length > 100) {
+                if (block.transactions.length != block.numberOfTransactions) {
                     return done("Invalid amount of block assets: " + block.hash);
                 }
                 var totalAmount = 0, totalFee = 0, payloadHash = crypto.createHash('sha256'), appliedTransactions = {}, acceptedRequests = {}, acceptedConfirmations = {};
@@ -901,30 +885,22 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                     if (err) {
                                         return setImmediate(cb, err);
                                     }
-
                                     library.modules.transactions.applyUnconfirmed(transaction, sender, function (err) {
                                         if (err) {
                                             return setImmediate(cb, "Failed to apply transaction: " + transaction.hash);
                                         }
-
                                         try {
                                             var bytes = library.base.transaction.getBytes(transaction);
                                         } catch (e) {
                                             return setImmediate(cb, e.toString());
                                         }
-
                                         appliedTransactions[transaction.hash] = transaction;
-
                                         var index = unconfirmedTransactions.indexOf(transaction.hash);
                                         if (index >= 0) {
                                             unconfirmedTransactions.splice(index, 1);
                                         }
-
-                                        // payloadHash.update(bytes);
-
                                         totalAmount += transaction.amount;
                                         totalFee += transaction.fee;
-
                                         setImmediate(cb);
                                     });
                                 });
@@ -935,23 +911,15 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                     });
                 }, function (err) {
                     var errors = [];
-
                     if (err) {
                         errors.push(err);
                     }
-
-                    // if (payloadHash.digest().toString('hex') !== block.payloadHash) {
-                    //     errors.push("Invalid payload hash: " + block.id);
-                    // }
-
                     if (totalAmount != block.totalAmount) {
                         errors.push("Invalid total amount: " + block.hash);
                     }
-
                     if (totalFee != block.totalFee) {
                         errors.push("Invalid total fee: " + block.hash);
                     }
-
                     if (errors.length > 0) {
                         async.eachSeries(block.transactions, function (transaction, cb) {
                             if (appliedTransactions[transaction.hash]) {
@@ -968,7 +936,6 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                         } catch (e) {
                             return setImmediate(done, e);
                         }
-
                         async.eachSeries(block.transactions, function (transaction, cb) {
                             // setImmediate(cb);
                             library.modules.accounts.setAccountAndGet({master_pub: transaction.senderPublicKey}, function (err, sender) {
@@ -1068,7 +1035,7 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
                 "left outer join multisignatures as m on m.transactionHash=t.hash " +
                 "left outer join account2assets as a on a.transactionHash=t.hash " +
                 "left outer join transfers as tr on tr.transactionHash=t.hash " +
-                "left outer join lock_height as l on l.transactionHash=t.hash "
+                "left outer join lock_height as l on l.transactionHash=t.hash " +
                 (filter.hash || filter.lastBlockHash ? " where " : " ") + " " +
                 (filter.hash ? " b.hash = $hash " : " ") + (filter.hash && filter.lastBlockHash ? " and " : " ") + (filter.lastBlockHash ? " b.height > $height and b.height < $limit " : " ") +
                 "ORDER BY b.height";
@@ -1139,6 +1106,10 @@ shared_1_0.block = function(params, cb) {
             return cb('can not find transaction', 13004);
         }
     })
+};
+
+shared_1_0.getLastBlock = function(params, cb) {
+    return cb(null, 200, privated.lastBlock);
 };
 
 scoket_1_0.height = function(cb) {

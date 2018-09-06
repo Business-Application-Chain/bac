@@ -44,9 +44,9 @@ privated.loadBlocks = function(lastBlock, cb) {
         }
         library.log.Info("Check blockchain on " + peerStr);
 
-        let height = data.result;
+        let height = data.result || 0;
         if (height <= 0) {
-            library.log.Info("Failed to parse blockchain height: " + peerStr + "\n" + library.scheme.getLastError());
+            // library.log.Info("Failed to parse blockchain height: " + peerStr + "\n" + library.scheme.getLastError());
             return cb();
         }
 
@@ -68,7 +68,6 @@ privated.loadBlocks = function(lastBlock, cb) {
         }
     });
 };
-
 
 privated.loadBlockChain = function () {
     var offset = 0, limit = library.config.loading.loadPerIteration;
@@ -238,7 +237,7 @@ privated.findUpdate = function(lastBlock, peer, cb) {
             return cb(err);
         }
         if(commonBlock)
-        library.log.Info("Found common block " + commonBlock.hash + " (at " + commonBlock.height + ")" + " with peer " + peerStr);
+            library.log.Info("Found common block " + commonBlock.hash + " (at " + commonBlock.height + ")" + " with peer " + peerStr);
         var toRemove = lastBlock.height - commonBlock.height;
         if (toRemove > 1010) {
             library.log.log("long fork, ban 60 min", peerStr);
@@ -409,28 +408,9 @@ Loader.prototype.onPeerReady = function() {
             privated.isActive = false;
             if (!privated.loaded)
                 return;
-            setTimeout(nextLoadBlock, 9 * 1000);
+            // setTimeout(nextLoadBlock, 60 * 1000);
         });
     });
-
-    // setImmediate(function nextLoadUnconfirmedTransactions() {
-    //     if (!privated.loaded)
-    //         return;
-    //     privated.loadUnconfirmedTransactions(function (err) {
-    //         err && library.log.Error('loadUnconfirmedTransactions timer', err);
-    //         setTimeout(nextLoadUnconfirmedTransactions, 14 * 1000);
-    //     });
-    // });
-
-    // setImmediate(function nextLoadSignatures() {
-    //     if (!privated.loaded)
-    //         return;
-    //     privated.loadSignatures(function (err) {
-    //         err && library.log.Error('loadSignatures timer', err);
-    //
-    //         setTimeout(nextLoadSignatures, 14 * 1000);
-    //     });
-    // });
 };
 
 Loader.prototype.onEnd = function (cb) {

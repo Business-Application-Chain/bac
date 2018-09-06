@@ -200,7 +200,7 @@ privated.getAssets = function(address, cb) {
         cb(null, rows);
     }).catch((err) => {
         cb(err, 11000);
-    })
+    });
 };
 
 shared_1_0.addAssets = function(params, cb) {
@@ -294,7 +294,7 @@ shared_1_0.getAssets = function(params, cb) {
         } else {
             cb(null, 200, data);
         }
-    })
+    });
 };
 
 shared_1_0.getFee = function(params, cb) {

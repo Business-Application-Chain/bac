@@ -11,7 +11,6 @@ var root = require('app-root-path');
 function getTimestamp(){
     return '['+strftime('%m-%d|%H:%M:%S', new Date())+']';
 }
-
 module.exports = function (config) {
     config = config || {};
 
@@ -79,6 +78,7 @@ module.exports = function (config) {
 
             if (config.echo && config.levels[config.echo] <= config.levels[level]) {
                 try {
+
                     console.log(config.colors[level](params.level) + ' ' + params.timestamp + ' ' + messages.join(' '));
                 } catch (e) {
                     console.log(e.toString());
