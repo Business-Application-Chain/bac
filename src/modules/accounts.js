@@ -789,7 +789,8 @@ shared_1_0.open = function(params, cb) {
                 second_pub: account.second_pub,
                 multisignatures: account.multisignatures,
                 multisignatures_unconfirmed: account.multisignatures_unconfirmed,
-                username: account.username
+                username: account.username,
+                lockHeight: account.lockHeight
             };
             return cb(null, 200, {account: accountData});
         } else {

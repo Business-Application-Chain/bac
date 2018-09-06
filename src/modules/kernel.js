@@ -143,7 +143,7 @@ Kernel.prototype.getFromPeerNews = function (peer, options, cb) {
     };
     request(req, function (err, response, body) {
         if (err || response.statusCode !== 200) {
-            library.log.Debug("Request", "Error", err);
+            // library.log.Debug("Request", "Error", err);
 
             if (peer) {
                 if (err && (err.code == 'ETIMEOUT' || err.code == 'ESOCKETTIMEOUT' || err.code == 'ECONNREFUSED')) {
