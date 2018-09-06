@@ -242,6 +242,7 @@ d.run(function () {
                     idle: 30000
                 }
             });
+
             cb(null, sequelize);
         }],
 
