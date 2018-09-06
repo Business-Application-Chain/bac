@@ -1,34 +1,52 @@
 <template>
     <div class="account-index-page">
-        <div class="page-main">
-            <div class="main-cell">
-                <div class="main-cell_id">
-                    <div class="main-title">账户ID</div>
-                    <div class="main-primary">{{account.address[0]}}</div>
-                </div>
+        <tabs v-model="tabsVal">
+            <tabs-pane label="账户信息" value="1">
+                 <div class="page-main">
+                    <div class="main-cell">
+                        <div class="main-cell_id">
+                            <div class="main-title">账户ID</div>
+                            <div class="main-primary">{{account.address[0]}}</div>
+                        </div>
 
-                <div class="main-cell_id">
-                    <div class="main-title">别名</div>
-                    <div class="main-primary">
-                        <span v-if="account.username">{{account.username}}</span>
-                        <span v-else @click="setVisible = true" class="link">未设置</span>
+                        <div class="main-cell_id">
+                            <div class="main-title">别名</div>
+                            <div class="main-primary">
+                                <span v-if="account.username">{{account.username}}</span>
+                                <span v-else @click="setVisible = true" class="link">未设置</span>
+                            </div>
+                        </div>
+
+                        <div class="main-cell_id">
+                            <div class="main-title">总余额</div>
+                            <div class="main-primary">{{account.balance | bac}}</div>
+                        </div>
+
+                        <div class="main-cell_id">
+                            <div class="main-title">锁仓状态</div>
+                            <div class="main-primary">{{account.balance | bac}}</div>
+                        </div>
+
+                        <!-- <x-btn type="primary" icon="&#xe611;">新建地址</x-btn> -->
+                    </div>
+
+                    <div class="main-item">
+                        <div class="main-item_hd">账户公钥</div>
+                        <div class="main-item_ft">{{account.publicKey}}</div>
                     </div>
                 </div>
-
-                <div class="main-cell_id">
-                    <div class="main-title">总余额</div>
-                    <div class="main-primary">{{account.balance | bac}}</div>
+            </tabs-pane>
+            <tabs-pane label="锁仓" value="2">
+                <div class="page-main">
+                    <div class="lock-title">设置锁仓信息</div>
+                    <div><x-input placeholder="请输入区块高度"></x-input></div>
+                    <div class="lock-hint">到达此高度后解锁，大约需要<span class="lock-primary">33天21时58分</span></div>
+                    <div><x-btn type="primary"></x-btn></div>
                 </div>
+            </tabs-pane>
+        </tabs>
 
-                <!-- <x-btn type="primary" icon="&#xe611;">新建地址</x-btn> -->
-            </div>
-
-            <div class="main-item">
-                <div class="main-item_hd">账户公钥</div>
-                <div class="main-item_ft">{{account.publicKey}}</div>
-            </div>
-            
-        </div>
+       
 
         <div style="display:none" class="page-card">
 
@@ -77,6 +95,8 @@
     import {mapState} from 'vuex'
     import Toast from '~/components/ui/toast/index'
     import sha256 from 'crypto-js/sha256'
+    import Tabs from '~/components/ui/Tabs.vue'
+    import TabsPane from '~/components/ui/TabsPane.vue'
 
     export default {
         data () {
@@ -85,7 +105,8 @@
                 username: '',
                 password: '',
                 fee: '',
-                okLoading: false
+                okLoading: false,
+                tabsVal:'1'
             }
         },
         created () {
@@ -103,7 +124,9 @@
         components: {
             XBtn,
             Modal,
-            XInput
+            XInput,
+            Tabs,
+            TabsPane
         },
 
         methods: {
