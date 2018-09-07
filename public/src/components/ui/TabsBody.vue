@@ -10,7 +10,7 @@
                     {
                         this.tabs.map(item => {
                             if (item.value == this.value){
-                                return <div>{item.slots}</div>
+                                return <div>{item.$slots.default}</div>
                             }
                         })
                     }

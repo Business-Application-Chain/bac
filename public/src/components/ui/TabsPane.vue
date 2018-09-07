@@ -16,10 +16,6 @@
         },
 
         mounted () {
-            
-            // this.$parent.insertChild(assign({
-            //     slots:this.$slots.default
-            // }, this.$props))
             this.$parent.insertChild(this)
         },
 
