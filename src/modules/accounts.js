@@ -879,12 +879,6 @@ shared_1_0.lockHeight = function(params, cb) {
     });
 };
 
-shared_1_0.lockBlockHeight = function(params, cb) {
-    let lockHeight = params[0];
-    let lastBlock = library.modules.blocks.getLastBlock().height;
-    return cb(null, 200, lastBlock - lockHeight);
-};
-
 shared_1_0.getAccountLock = function(params, cb) {
     let address = params[0];
     self.getAccountLock(address, function (err, height) {
