@@ -1,34 +1,56 @@
 <template>
     <div class="account-index-page">
-        <div class="page-main">
-            <div class="main-cell">
-                <div class="main-cell_id">
-                    <div class="main-title">账户ID</div>
-                    <div class="main-primary">{{account.address[0]}}</div>
-                </div>
+        <tabs v-model="tabsVal">
+            <tabs-pane label="账户信息" value="1">
+                 <div class="page-main">
+                    <div class="main-cell">
+                        <div class="main-cell_id">
+                            <div class="main-title">账户ID</div>
+                            <div class="main-primary">{{account.address[0]}}</div>
+                        </div>
 
-                <div class="main-cell_id">
-                    <div class="main-title">别名</div>
-                    <div class="main-primary">
-                        <span v-if="account.username">{{account.username}}</span>
-                        <span v-else @click="setVisible = true" class="link">未设置</span>
+                        <div class="main-cell_id">
+                            <div class="main-title">别名</div>
+                            <div class="main-primary">
+                                <span v-if="account.username">{{account.username}}</span>
+                                <span v-else @click="setVisible = true" class="link">未设置</span>
+                            </div>
+                        </div>
+
+                        <div class="main-cell_id">
+                            <div class="main-title">总余额</div>
+                            <div class="main-primary">{{account.balance | bac}}</div>
+                        </div>
+
+                        <div class="main-cell_id">
+                            <div class="main-title">锁仓状态</div>
+                            <div class="main-primary">{{account.balance | bac}}</div>
+                        </div>
+
+                        <!-- <x-btn type="primary" icon="&#xe611;">新建地址</x-btn> -->
+                    </div>
+
+                    <div class="main-item">
+                        <div class="main-item_hd">账户公钥</div>
+                        <div class="main-item_ft">{{account.publicKey}}</div>
                     </div>
                 </div>
-
-                <div class="main-cell_id">
-                    <div class="main-title">总余额</div>
-                    <div class="main-primary">{{account.balance | bac}}</div>
+            </tabs-pane>
+            <tabs-pane label="锁仓" value="2">
+                <div class="page-main">
+                    <div class="lock-wrapper">
+                        <div class="lock-title">设置锁仓信息</div>
+                        <div class="lock-input"><x-input v-model="lockHeight" placeholder="请输入区块高度"></x-input></div>
+                        <div class="lock-hint">大约在 <span class="lock-primary">33天21时58分</span> 后解锁</div>
+                        <div class="lock-input" v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1"><x-input v-model="lockPassword" type="password" placeholder="请输入支付密码"></x-input></div>
+                        <div class="lock-btn"><x-btn @click="lock"  width="150px" type="primary"></x-btn></div>
+                    </div>
+                        
                 </div>
+            </tabs-pane>
+        </tabs>
 
-                <!-- <x-btn type="primary" icon="&#xe611;">新建地址</x-btn> -->
-            </div>
-
-            <div class="main-item">
-                <div class="main-item_hd">账户公钥</div>
-                <div class="main-item_ft">{{account.publicKey}}</div>
-            </div>
-            
-        </div>
+       
 
         <div style="display:none" class="page-card">
 
@@ -66,6 +88,14 @@
                 费用: {{fee | bac}} bac
             </div>
         </modal>
+
+        <modal 
+            v-if="confirmVisible" 
+            :visible.sync="confirmVisible" 
+            title="锁仓提醒"
+            @ok="lockSubmit">
+            <div>设置后，在区块到底此高度前将无法转账，确定要锁仓吗？</div>
+        </modal>
     </div>
 </template>
 
@@ -77,15 +107,21 @@
     import {mapState} from 'vuex'
     import Toast from '~/components/ui/toast/index'
     import sha256 from 'crypto-js/sha256'
+    import Tabs from '~/components/ui/Tabs.vue'
+    import TabsPane from '~/components/ui/TabsPane.vue'
 
     export default {
         data () {
             return {
                 setVisible: false,
+                confirmVisible: false,
                 username: '',
                 password: '',
                 fee: '',
-                okLoading: false
+                okLoading: false,
+                tabsVal:'1',
+                lockHeight: '',
+                lockPassword: ''
             }
         },
         created () {
@@ -103,7 +139,9 @@
         components: {
             XBtn,
             Modal,
-            XInput
+            XInput,
+            Tabs,
+            TabsPane
         },
 
         methods: {
@@ -114,6 +152,17 @@
                     this.$store.dispatch('setAccount', {username: this.username})
                     this.setVisible = false
                     Toast.success('设置成功')
+                })
+            },
+
+            lock () {
+                this.confirmVisible = true
+            },
+
+            lockSubmit () {
+                api.account.lockHeight([this.key.mnemonic, this.lockHeight, this.lockPassword]).then(res => {
+                    if (res === null) return
+                    
                 })
             }
         }
@@ -252,7 +301,33 @@
             color: #FF7E7E
         }
         
+        .lock-wrapper{
+            width: 500px;
+        }
+
+        .lock-title{
+            font-size: 18px;
+            color: #4A4A4A;
+            margin-top: 22px;
+        }
+
+        .lock-input{
+            margin-top: 20px;
+        }
+
+        .lock-hint{
+            font-size: 12px;
+            color: #9B9B9B;
+        }
+
+        .lock-primary{
+            color: #FF7E7E   
+        }
         
+        .lock-btn{
+            margin-top: 30px;
+            text-align: right
+        }
     }
 </style>
 

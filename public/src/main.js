@@ -12,12 +12,18 @@ Vue.config.productionTip = false
 Vue.use(VueI18n)
 
 //decimal: 要保留的小数位数
-Vue.filter('bac',  (value, decimal) => {
+Vue.filter('bac',  (value, decimal ) => {
     var num = value / Math.pow(10, 8)
     if (decimal) {
         const n = Math.pow(10, decimal)
         num = Math.floor(num * n) / n
     }
+    return num
+})
+
+Vue.filter('coin', (val, decimal) => {
+    var num = val / Math.pow(10, decimal)
+    
     return num
 })
 

@@ -68,5 +68,14 @@ export default {
             api: 'accounts',
             method: 'getMnemonic'
         })
+    },
+
+    //锁仓  params: [mnemonic,lockHeight,secondSecret]
+    lockHeight (params) {
+        return io.post({
+            api: 'accounts',
+            method: 'lockHeight',
+            params
+        })
     }
 }
