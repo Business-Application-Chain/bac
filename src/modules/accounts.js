@@ -888,7 +888,11 @@ shared_1_0.getAccountLock = function(params, cb) {
         if(err) {
             cb(err);
         } else {
-            cb(null, 200, {height: height, d_value: blockHeight - height});
+            let d_value = 0;
+            if(height) {
+                d_value = blockHeight - height;
+            }
+            cb(null, 200, {height: height, d_value: d_value < 0 ? 0:d_value });
         }
     });
 };
