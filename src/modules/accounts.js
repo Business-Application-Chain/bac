@@ -821,7 +821,7 @@ shared_1_0.getMnemonic = function(params, cb) {
 
 shared_1_0.lockHeight = function(params, cb) {
     let mnemonic = params[0] || undefined;
-    let lockHeight = params[1] || 0;
+    var lockHeight = params[1] || 0;
     let secondSecret = params[2] || '';
     if(!(mnemonic && lockHeight)) {
         return cb('miss must params', 11000);
@@ -877,7 +877,7 @@ shared_1_0.lockHeight = function(params, cb) {
         }
         let blockHeight = library.modules.blocks.getLastBlock().height;
         // cb(null, 200, {transaction: transaction[0]});
-        cb(null, 200, {height: lockHeight, d_value: blockHeight - height});
+        cb(null, 200, {height: lockHeight, d_value: blockHeight - lockHeight});
     });
 };
 
