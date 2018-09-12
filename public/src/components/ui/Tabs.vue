@@ -1,15 +1,14 @@
 <template>
     <div class="tabs-comp">
-        <div style="display:none"><slot></slot></div>
         <div class="comp-header">
-            <div v-for="(item, index) in tabs" :key="index" @click="$emit('input', item.value)" class="comp-header_item" :class="{active: item.value == value}">{{item.label}}</div>
+            <div v-for="(item, index) in tabs" :key="index" @click="$emit('input', item.name)" class="comp-header_item" :class="{active: item.name == value}">{{item.label}}</div>
         </div>
-        <tabs-body :tabs="tabs" :value="value"></tabs-body>
+        <div><slot></slot></div>
     </div>
 </template>
 
 <script>
-    import TabsBody from './TabsBody.vue'
+    
 
     export default {
         
@@ -28,7 +27,6 @@
         },
 
         components: {
-            TabsBody
         },
 
         methods: {

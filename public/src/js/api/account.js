@@ -77,5 +77,14 @@ export default {
             method: 'lockHeight',
             params
         })
+    },
+
+    //获取锁仓信息 [address]
+    getLock (params) {
+        return io.post({
+            api: 'accounts',
+            method: 'getAccountLock',
+            params
+        })
     }
 }
