@@ -111,9 +111,9 @@ function Asset() {
         return {assets: assets};
     };
 
-    this.save = function (trs, t) {
+    this.save = function (trs, cb) {
         let assets = trs.asset.assets;
-        return library.dbClient.query("INSERT INTO account2assets(`hash`, `name`, `description`, `decimal`, `total`, `burn`, `transactionHash`, `time`, `accountId`) VALUES($hash,  $name, $description, $decimal, $total, $burn, $transactionHash, $time, $accountId)", {
+        library.dbClient.query("INSERT INTO account2assets(`hash`, `name`, `description`, `decimal`, `total`, `burn`, `transactionHash`, `time`, `accountId`) VALUES($hash,  $name, $description, $decimal, $total, $burn, $transactionHash, $time, $accountId)", {
             type: Sequelize.QueryTypes.INSERT,
             bind: {
                 hash: assets.hash,
@@ -126,7 +126,10 @@ function Asset() {
                 time: trs.timestamp,
                 accountId: trs.senderId,
             },
-            transaction: t
+        }).then(() => {
+            cb();
+        }).catch((err) => {
+            cb(err);
         });
     };
 

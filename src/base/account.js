@@ -1080,37 +1080,31 @@ Account.prototype.merge = function (master_address, fields, cb) {
 
     async.series([
         function (cb) {
-            self.scope.dbClient.transaction(function (t) {
-                var promiseList = [];
-                sqles.forEach(function (sql) {
-                    promiseList.push(
-                        self.scope.dbClient.query(sql.query, {
-                            bind: sql.values,
-                            transaction: t
-                        })
-                    );
-                });
-                return Promise.all(promiseList);
-            }).then(() => {
+            var promiseList = [];
+            sqles.forEach(function (sql) {
+                promiseList.push(
+                    self.scope.dbClient.query(sql.query, {
+                        bind: sql.values,
+                    })
+                );
+            });
+            Promise.all(promiseList).then(() => {
                 cb();
             }).catch((err) => {
                 cb(err);
             });
         },
         function (cb) {
-            self.scope.dbClient.transaction(function (t) {
-                let promiseList = [];
-                round.forEach(function (sql) {
-                    promiseList.push(
-                        self.scope.dbClient.query(sql.query, {
-                            bind: sql.values,
-                            transaction: t
-                        })
-                    );
-                });
-                return Promise.all(promiseList);
-            }).then(() => {
-                    cb();
+            let promiseList = [];
+            round.forEach(function (sql) {
+                promiseList.push(
+                    self.scope.dbClient.query(sql.query, {
+                        bind: sql.values,
+                    })
+                );
+            });
+            Promise.all(promiseList).then(() => {
+                cb();
             }).catch((err) => {
                 console.log(err);
                 cb(err);

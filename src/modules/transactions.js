@@ -118,9 +118,9 @@ function Transaction() {
         return null;
     };
 
-    this.save = function (txObj, t) {
-        // setImmediate(cb);
-        return null;
+    this.save = function (txObj, cb) {
+        setImmediate(cb);
+        // return null;
     };
 }
 
@@ -779,7 +779,11 @@ shared_1_0.addTransaction = function (params, cb) {
         query.username = recipientId;
     }
     library.balancesSequence.add(function (cb) {
+        console.log("start deal add transactions");
+        console.log(Date.now());
         library.modules.accounts.getAccount(query, function (err, recipient) {
+            console.log('get recipient accounts time');
+            console.log(Date.now());
             if (err) {
                 return cb(err.toString());
             }
@@ -847,6 +851,8 @@ shared_1_0.addTransaction = function (params, cb) {
                 });
             } else {
                 library.modules.accounts.getAccount({master_pub: keyPair.getPublicKeyBuffer().toString('hex')}, function (err, account) {
+                    console.log('get sender account time');
+                    console.log(Date.now());
                     if (err) {
                         return cb(err.toString());
                     }
@@ -881,11 +887,16 @@ shared_1_0.addTransaction = function (params, cb) {
                     } catch (e) {
                         return cb(e.toString(), 13009);
                     }
+                    console.log('create transaction time');
+                    console.log(Date.now());
                     library.modules.transactions.receiveTransactions([transaction], cb);
                 });
             }
         });
     }, function (err, transaction) {
+        console.log("complete deal add transactions");
+        console.log(Date.now());
+        console.log('=========================================');
         if (err) {
             return cb(err.toString(), 13009);
         }

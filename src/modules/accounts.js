@@ -153,14 +153,17 @@ function Vote() {
         }
     };
 
-    this.save = function (txObj, t) {
-        return library.dbClient.query("INSERT INTO votes (transactionHash, votes) VALUES ($transactionHash, $votes)", {
+    this.save = function (txObj, cb) {
+        library.dbClient.query("INSERT INTO votes (transactionHash, votes) VALUES ($transactionHash, $votes)", {
             type: Sequelize.QueryTypes.INSERT,
             bind: {
                 transactionHash: txObj.hash,
                 votes: util.isArray(txObj.asset.votes) ? txObj.asset.votes.join(',') : null
             },
-            transactions: t
+        }).then(() => {
+            cb();
+        }).catch((err) => {
+            cb(err);
         });
     };
 }
@@ -350,10 +353,13 @@ function Username() {
         }
     };
 
-    this.save = function (txObj, t) {
-        return library.dbClient.query(`INSERT INTO usernames (transactionHash, username) VALUES ("${txObj.hash}", "${txObj.asset.username.alias}")`, {
+    this.save = function (txObj, cb) {
+        library.dbClient.query(`INSERT INTO usernames (transactionHash, username) VALUES ("${txObj.hash}", "${txObj.asset.username.alias}")`, {
             type: Sequelize.QueryTypes.INSERT,
-            transaction: t
+        }).then(() => {
+            cb();
+        }).catch((err) => {
+            cb(err);
         });
     };
 }
@@ -483,10 +489,13 @@ function LockHeight() {
         }
     };
 
-    this.save = function (txObj, t) {
+    this.save = function (txObj, cb) {
         return library.dbClient.query(`INSERT INTO lock_height (transactionHash, lockHeight) VALUES ("${txObj.hash}", "${txObj.asset.lock.height}")`, {
             type: Sequelize.QueryTypes.INSERT,
-            transaction: t
+        }).then(() => {
+            cb()
+        }).catch((err) => {
+            cb(err);
         });
     };
 }
