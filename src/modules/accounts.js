@@ -877,7 +877,7 @@ shared_1_0.lockHeight = function(params, cb) {
         }
         let blockHeight = library.modules.blocks.getLastBlock().height;
         // cb(null, 200, {transaction: transaction[0]});
-        cb(null, 200, {height: lockHeight, d_value: blockHeight - lockHeight});
+        cb(null, 200, {height: lockHeight, d_value: lockHeight - blockHeight});
     });
 };
 
@@ -890,7 +890,7 @@ shared_1_0.getAccountLock = function(params, cb) {
         } else {
             let d_value = 0;
             if(height) {
-                d_value = blockHeight - height;
+                d_value = height - blockHeight;
             }
             cb(null, 200, {height: height, d_value: d_value < 0 ? 0:d_value });
         }
