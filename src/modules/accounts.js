@@ -877,7 +877,7 @@ shared_1_0.lockHeight = function(params, cb) {
         }
         let blockHeight = library.modules.blocks.getLastBlock().height;
         // cb(null, 200, {transaction: transaction[0]});
-        cb(null, 200, {height: height, d_value: blockHeight - height});
+        cb(null, 200, {height: lockHeight, d_value: blockHeight - height});
     });
 };
 
