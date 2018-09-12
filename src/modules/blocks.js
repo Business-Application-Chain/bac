@@ -113,28 +113,26 @@ privated.saveGenesisBlock = function (cb) {
 };
 
 privated.saveBlock = function (blockObj, cb) {
-    library.dbClient.transaction(function (t1) {
-        var save_records = [];
-        save_records.push(library.base.block.save(blockObj, t1, function (err) {
+    var save_records = [];
+    save_records.push(library.base.block.save(blockObj, function (err) {
+        if (err) {
+            library.log.Error("saveBlock", "Error", err.toString());
+        }
+    }));
+    blockObj.transactions.forEach(function (txObj) {
+        txObj.blockHash = blockObj.hash;
+        save_records.push(library.base.transaction.save(txObj, function (err) {
             if (err) {
                 library.log.Error("saveBlock", "Error", err.toString());
             }
         }));
-        blockObj.transactions.forEach(function (txObj) {
-            txObj.blockHash = blockObj.hash;
-            save_records.push(library.base.transaction.save(txObj, t1, function (err) {
-                if (err) {
-                    library.log.Error("saveBlock", "Error", err.toString());
-                }
-            }));
-        });
-        return Promise.all(save_records).then(() => {
-            library.log.Debug("saveBlock successed");
-            cb();
-        }).catch((err) => {
-            library.log.Error("saveBlock failed", "Error", err);
-            cb(err);
-        });
+    });
+    Promise.all(save_records).then(() => {
+        library.log.Debug("saveBlock successed");
+        cb();
+    }).catch((err) => {
+        library.log.Error("saveBlock failed", "Error", err);
+        cb(err);
     });
 };
 
@@ -801,6 +799,8 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
             return setImmediate(cb, e.toString());
         }
         block.height = privated.lastBlock.height + 1;
+        console.log('start deal undoUnconfirmedList ');
+        console.log(Date.now());
         library.modules.transactions.undoUnconfirmedList(function (err, unconfirmedTransactions) {
             if (err) {
                 privated.isActive = false;
@@ -810,7 +810,12 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                 // setImmediate(cb, err);
                 library.modules.transactions.applyUnconfirmedList(unconfirmedTransactions, function () {
                     privated.isActive = false;
-                    setImmediate(cb, err);
+
+                    setImmediate(() => {
+                        console.log('end deal undoUnconfirmedList ');
+                        console.log(Date.now());
+                        cb();
+                    }, err);
                 });
             }
 
@@ -840,7 +845,9 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                 if(!verifyMerkle) {
                     return done("Can't verify merkleRoot: " + block.hash);
                 }
-                if (block.previousBlock != privated.lastBlock.hash) {
+                if (block.previousBlock !== privated.lastBlock.hash) {
+                    console.log('block.previousBlock:', block.previousBlock);
+                    console.log('privated.lastBlock.hash', privated.lastBlock.hash);
                     // Fork same height and different previous block
                     library.modules.delegates.fork(block, 1);
                     return done("Can't verify previous block: " + block.hash);

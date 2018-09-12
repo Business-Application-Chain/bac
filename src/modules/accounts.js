@@ -153,14 +153,17 @@ function Vote() {
         }
     };
 
-    this.save = function (txObj, t) {
-        return library.dbClient.query("INSERT INTO votes (transactionHash, votes) VALUES ($transactionHash, $votes)", {
+    this.save = function (txObj, cb) {
+        library.dbClient.query("INSERT INTO votes (transactionHash, votes) VALUES ($transactionHash, $votes)", {
             type: Sequelize.QueryTypes.INSERT,
             bind: {
                 transactionHash: txObj.hash,
                 votes: util.isArray(txObj.asset.votes) ? txObj.asset.votes.join(',') : null
             },
-            transactions: t
+        }).then(() => {
+            cb();
+        }).catch((err) => {
+            cb(err);
         });
     };
 }
@@ -350,10 +353,13 @@ function Username() {
         }
     };
 
-    this.save = function (txObj, t) {
-        return library.dbClient.query(`INSERT INTO usernames (transactionHash, username) VALUES ("${txObj.hash}", "${txObj.asset.username.alias}")`, {
+    this.save = function (txObj, cb) {
+        library.dbClient.query(`INSERT INTO usernames (transactionHash, username) VALUES ("${txObj.hash}", "${txObj.asset.username.alias}")`, {
             type: Sequelize.QueryTypes.INSERT,
-            transaction: t
+        }).then(() => {
+            cb();
+        }).catch((err) => {
+            cb(err);
         });
     };
 }
@@ -483,10 +489,13 @@ function LockHeight() {
         }
     };
 
-    this.save = function (txObj, t) {
+    this.save = function (txObj, cb) {
         return library.dbClient.query(`INSERT INTO lock_height (transactionHash, lockHeight) VALUES ("${txObj.hash}", "${txObj.asset.lock.height}")`, {
             type: Sequelize.QueryTypes.INSERT,
-            transaction: t
+        }).then(() => {
+            cb()
+        }).catch((err) => {
+            cb(err);
         });
     };
 }
@@ -821,7 +830,7 @@ shared_1_0.getMnemonic = function(params, cb) {
 
 shared_1_0.lockHeight = function(params, cb) {
     let mnemonic = params[0] || undefined;
-    let lockHeight = params[1] || 0;
+    var lockHeight = params[1] || 0;
     let secondSecret = params[2] || '';
     if(!(mnemonic && lockHeight)) {
         return cb('miss must params', 11000);
@@ -875,23 +884,24 @@ shared_1_0.lockHeight = function(params, cb) {
         if (err) {
             return cb(err.toString(), 15001);
         }
-        cb(null, 200, {transaction: transaction[0]});
+        let blockHeight = library.modules.blocks.getLastBlock().height;
+        // cb(null, 200, {transaction: transaction[0]});
+        cb(null, 200, {height: lockHeight, d_value: lockHeight - blockHeight});
     });
-};
-
-shared_1_0.lockBlockHeight = function(params, cb) {
-    let lockHeight = params[0];
-    let lastBlock = library.modules.blocks.getLastBlock().height;
-    return cb(null, 200, lastBlock - lockHeight);
 };
 
 shared_1_0.getAccountLock = function(params, cb) {
     let address = params[0];
+    let blockHeight = library.modules.blocks.getLastBlock().height;
     self.getAccountLock(address, function (err, height) {
         if(err) {
             cb(err);
         } else {
-            cb(null, 200, height);
+            let d_value = 0;
+            if(height) {
+                d_value = height - blockHeight;
+            }
+            cb(null, 200, {height: height, d_value: d_value < 0 ? 0:d_value });
         }
     });
 };

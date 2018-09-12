@@ -158,10 +158,13 @@ function Contact() {
         }
     };
 
-    this.save = function (trs, t) {
+    this.save = function (trs, cb) {
         return library.dbClient.query(`INSERT INTO contacts(address, transactionHash) VALUES("${trs.asset.contact.address}", "${trs.hash}")`, {
             type: Sequelize.QueryTypes.INSERT,
-            transaction: t
+        }).then((data) => {
+            cb();
+        }).catch((err) => {
+            cb(err);
         });
     };
 

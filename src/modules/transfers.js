@@ -116,9 +116,9 @@ function Transfer() {
         return {transfer: transfer};
     };
 
-    this.save = function (trs, t) {
+    this.save = function (trs, cb) {
         let transfer = trs.asset.transfer;
-        return library.dbClient.query('INSERT INTO transfers(`assetsHash`, `assets_name`, `amount`, `transactionHash`, `accountId`, `recipientId`) VALUES($assetsHash, $assetsName, $amount, $transactionHash, $accountId, $recipientId)', {
+        library.dbClient.query('INSERT INTO transfers(`assetsHash`, `assets_name`, `amount`, `transactionHash`, `accountId`, `recipientId`) VALUES($assetsHash, $assetsName, $amount, $transactionHash, $accountId, $recipientId)', {
             type: Sequelize.QueryTypes.INSERT,
             bind: {
                 assetsHash: transfer.assetsHash,
@@ -128,7 +128,10 @@ function Transfer() {
                 recipientId: trs.recipientId,
                 accountId: trs.senderId
             },
-            transaction: t
+        }).then(() => {
+            cb();
+        }).catch((err) => {
+            cb(err);
         });
     };
 
@@ -264,9 +267,9 @@ function Burn() {
         return {burn: burn};
     };
 
-    this.save = function (trs, t) {
+    this.save = function (trs, cb) {
         let burn = trs.asset.burn;
-        return library.dbClient.query('INSERT INTO transfers(`assetsHash`, `assets_name`, `amount`, `transactionHash`, `accountId`, `recipientId`) VALUES($assetsHash, $assetsName, $amount, $transactionHash, $accountId, $recipientId)', {
+        library.dbClient.query('INSERT INTO transfers(`assetsHash`, `assets_name`, `amount`, `transactionHash`, `accountId`, `recipientId`) VALUES($assetsHash, $assetsName, $amount, $transactionHash, $accountId, $recipientId)', {
             type: Sequelize.QueryTypes.INSERT,
             bind: {
                 assetsHash: burn.assetsHash,
@@ -276,7 +279,10 @@ function Burn() {
                 accountId: trs.senderId,
                 recipientId: ''
             },
-            transaction: t
+        }).then(() => {
+            cb();
+        }).catch((err) => {
+            cb(err);
         });
     };
 

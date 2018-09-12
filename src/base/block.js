@@ -291,32 +291,25 @@ Block.prototype.load = function (raw) {
     }
 };
 
-Block.prototype.save = function (blockObj, t, cb) {
-    if (typeof t == 'function') {
-        cb = t;
-        t = null;
-    }
-    library.dbClient.transaction(function (t) {
-        return library.dbClient.query("INSERT INTO blocks (hash, version, timestamp, height, previousBlock, numberOfTransactions, totalAmount, totalFee, reward, payloadLength, payloadHash, generatorPublicKey, blockSignature, merkleRoot) VALUES ($hash, $version, $timestamp, $height, $previousBlock, $numberOfTransactions, $totalAmount, $totalFee, $reward, $payloadLength, $payloadHash, $generatorPublicKey, $blockSignature, $merkleRoot)", {
-            type: Sequelize.QueryTypes.INSERT,
-            bind: {
-                hash: blockObj.hash,
-                version: blockObj.version,
-                timestamp: blockObj.timestamp,
-                height: blockObj.height,
-                previousBlock: blockObj.previousBlock,
-                numberOfTransactions: blockObj.numberOfTransactions,
-                totalAmount: blockObj.totalAmount,
-                totalFee: blockObj.totalFee,
-                reward: blockObj.reward || 0,
-                payloadLength: blockObj.payloadLength,
-                payloadHash: blockObj.payloadHash,
-                generatorPublicKey: blockObj.generatorPublicKey,
-                blockSignature: blockObj.blockSignature,
-                merkleRoot: blockObj.merkleRoot
-            },
-            transaction: t
-        })
+Block.prototype.save = function (blockObj, cb) {
+    return library.dbClient.query("INSERT INTO blocks (hash, version, timestamp, height, previousBlock, numberOfTransactions, totalAmount, totalFee, reward, payloadLength, payloadHash, generatorPublicKey, blockSignature, merkleRoot) VALUES ($hash, $version, $timestamp, $height, $previousBlock, $numberOfTransactions, $totalAmount, $totalFee, $reward, $payloadLength, $payloadHash, $generatorPublicKey, $blockSignature, $merkleRoot)", {
+        type: Sequelize.QueryTypes.INSERT,
+        bind: {
+            hash: blockObj.hash,
+            version: blockObj.version,
+            timestamp: blockObj.timestamp,
+            height: blockObj.height,
+            previousBlock: blockObj.previousBlock,
+            numberOfTransactions: blockObj.numberOfTransactions,
+            totalAmount: blockObj.totalAmount,
+            totalFee: blockObj.totalFee,
+            reward: blockObj.reward || 0,
+            payloadLength: blockObj.payloadLength,
+            payloadHash: blockObj.payloadHash,
+            generatorPublicKey: blockObj.generatorPublicKey,
+            blockSignature: blockObj.blockSignature,
+            merkleRoot: blockObj.merkleRoot
+        },
     }).then(() => {
         cb();
     }).catch((err) => {
