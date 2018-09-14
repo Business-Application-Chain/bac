@@ -71,11 +71,11 @@ function Transaction() {
     };
 
     this.apply = function (txObj, blockObj, sender, cb) {
+
         library.modules.accounts.setAccountAndGet({master_address: txObj.recipientId}, function (err, recipient) {
             if (err) {
                 return cb(err);
             }
-
             library.modules.accounts.mergeAccountAndGet({
                 master_address: txObj.recipientId,
                 balance: txObj.amount,
@@ -89,11 +89,11 @@ function Transaction() {
     };
 
     this.undo = function (txObj, blockObj, sender, cb) {
+
         library.modules.accounts.setAccountAndGet({master_address: txObj.recipientId}, function (err, recipient) {
             if (err) {
                 return cb(err);
             }
-
             library.modules.accounts.mergeAccountAndGet({
                 master_address: txObj.recipientId,
                 balance: -txObj.amount,
@@ -103,6 +103,7 @@ function Transaction() {
             }, function (err) {
                 cb(err);
             });
+
         });
     };
 
@@ -546,7 +547,7 @@ Transactions.prototype.undo = function (txObj, blockObj, sender, cb) {
 };
 
 Transactions.prototype.applyUnconfirmed = function (txObj, sender, cb) {
-    if (!sender && txObj.blockHash != genesisblock.block.hash) {
+    if (!sender && txObj.blockHash !== genesisblock.block.hash) {
         return cb("Invalid account");
     } else {
         if (txObj.requesterPublicKey) {

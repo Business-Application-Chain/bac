@@ -1,14 +1,14 @@
 'use strict';
 
 module.exports = {
-    maxAmount: 100000000,
-    maxPayloadLength: 1024 * 1024,
+    maxAmount: 10000000000,
+    maxPayloadLength: 4 * 1024 * 1024,
     blockHeaderLength: 248,
     addressLength: 208,
     maxAddressLength: 208 * 128,
     maxClientConnections: 100,
-    numberLength: 100000000,
-    feeStartVolume: 10000 * 100000000,
+    numberLength: 100000000000,
+    feeStartVolume: 1000000 * 100000000,
     feeStart: 1,
     maxRequest: 10000 * 12,
     requestLength: 104,

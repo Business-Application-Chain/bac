@@ -379,18 +379,9 @@ Transaction.prototype.verify = function (txObj, sender, requester, cb) {
     }
 
     // Verify second signature
-    if (!txObj.requesterPublicKey && sender.secondsign) {
+    if (sender.secondsign) {
         try {
             var valid = this.verifySecondSignature(txObj, sender.second_pub, txObj.signSignature);
-        } catch (err) {
-            return setImmediate(cb, err.toString());
-        }
-        if (!valid) {
-            return setImmediate(cb, "Failed to verify second signature: " + txObj.hash);
-        }
-    } else if (txObj.requesterPublicKey && requester.secondsign) {
-        try {
-            var valid = this.verifySecondSignature(txObj, requester.second_pub, txObj.signSignature);
         } catch (err) {
             return setImmediate(cb, err.toString());
         }
@@ -413,7 +404,7 @@ Transaction.prototype.verify = function (txObj, sender, requester, cb) {
      //多重签名的验证的
     var multisignatures = sender.multisignatures || sender.multisignatures_unconfirmed;
 
-    if (multisignatures == 0) {
+    if (multisignatures === 0) {
         if (txObj.asset && txObj.asset.multisignature && txObj.asset.multisignature.keysgroup) {
 
             multisignatures = txObj.asset.multisignature.keysgroup.map(function (key) {
@@ -431,7 +422,7 @@ Transaction.prototype.verify = function (txObj, sender, requester, cb) {
             valid = false;
 
             for (var s = 0; s < multisignatures.length; s++) {
-                if (txObj.requesterPublicKey && multisignatures[s] == txObj.requesterPublicKey) {
+                if (txObj.requesterPublicKey && multisignatures[s] === txObj.requesterPublicKey) {
                     continue;
                 }
 
@@ -677,7 +668,7 @@ Transaction.prototype.applyUnconfirmed = function (txObj, sender, requester, cb)
         return setImmediate(cb, "Account [applyUnconfirmed-sender] does not have a second public key");
     }
 
-    if (txObj.requesterPublicKey && requester.second_pub && !txObj.signSignature) {
+    if (txObj.requesterPublicKey && requesterverify.second_pub && !txObj.signSignature) {
         return setImmediate(cb, "Failed second signature: " + txObj.hash);
     }
 
