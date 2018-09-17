@@ -1,15 +1,4 @@
-var Array = require('node-array');
+let a = [11,12,13,14,15];
 
-var a = [ 3, 2, 1, 4, 6 ];
-
-a.forEachAsync(function(element, index, arr) {
-    console.log(element);
-    console.log('index -> ', index);
-    console.log(arr);
-
-    if (element === 3)
-        return false;
-
-}, function(err) {
-    console.log('complete');
-});
+a.push(1,2,3,4,5,6,7,8,9);
+console.log(a);

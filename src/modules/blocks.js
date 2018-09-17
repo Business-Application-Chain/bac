@@ -99,51 +99,12 @@ privated.saveGenesisBlock = function (cb) {
     }).then(function (rows) {
         var blockHash = rows.length && rows[0].hash;
         if (!blockHash) {
-            let genBlock = genesisblock.block;
-            let save_records = [];
-            save_records.push(new Promise((resolve, reject) => {
-                library.base.block.save(genBlock, function (err) {
-                    if (err) {
-                        library.log.Error("saveBlock", "Error", err.toString());
-                        reject("saveBlock", "Error", err.toString());
-                    }
-                    else {
-                        resolve();
-                    }
-                })
-            }));
-            async.each(genBlock.transactions, function (txObj, cb) {
-                txObj.blockHash = genBlock.hash;
-                save_records.push(new Promise((resolve, reject) => {
-                    library.base.transaction.save(txObj, function (err) {
-                        if (err) {
-                            library.log.Error("saveBlock", "Error", err.toString());
-                            reject("saveBlock", "Error", err.toString());
-                        } else {
-                            resolve();
-                        }
-                    });
-                }));
-                setImmediate(cb);
-            }, function (err) {
-                if(err) {
-                    cb(err);
+            privated.saveBlock(genesisblock.block, function (err) {
+                if (err) {
+                    library.log.Error("saveBlock", "Error", err.toString());
                 }
-                Promise.all(save_records).then(() => {
-                    console.log(Date.now());
-                    library.log.Debug("saveBlock successed");
-                    cb();
-                }).catch((err) => {
-                    library.log.Error("saveBlock failed", "Error", err);
-                    cb(err);
-                });
+                return cb(err);
             });
-            // privated.saveBlock(genesisblock.block, function (err) {
-            //     if (err) {
-            //         library.log.Error("saveBlock", "Error", err.toString());
-            //     }
-            //     return cb(err);
-            // });
         } else {
             return cb();
         }
@@ -850,8 +811,6 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
 
     privated.isActive = true;
     library.balancesSequence.add(function (cb) {
-        console.log('start time -> ', Date.now());
-        console.log('count numb ->', block.numberOfTransactions);
         try {
             block.hash = library.base.block.getBlockHash(block);
         } catch (e) {
@@ -867,11 +826,15 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
             }
             function done(err) {
                 // setImmediate(cb, err);
-                library.modules.transactions.applyUnconfirmedList(unconfirmedTransactions, function () {
-                    privated.isActive = false;
-
-                    setImmediate(cb, err);
-                });
+                if(err) {
+                    console.log('undoUnconfirmedList done is err', err);
+                    return cb(err);
+                } else {
+                    library.modules.transactions.applyUnconfirmedList(unconfirmedTransactions, function () {
+                        privated.isActive = false;
+                        setImmediate(cb, err);
+                    });
+                }
             }
 
             if (!block.previousBlock && block.height !== 1) {
@@ -901,8 +864,6 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                     return done("Can't verify merkleRoot: " + block.hash);
                 }
                 if (block.previousBlock !== privated.lastBlock.hash) {
-                    console.log('block.previousBlock:', block.previousBlock);
-                    console.log('privated.lastBlock.hash', privated.lastBlock.hash);
                     // Fork same height and different previous block
                     library.modules.delegates.fork(block, 1);
                     return done("Can't verify previous block: " + block.hash);
@@ -965,6 +926,7 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                         if (err) {
                                             reject("Failed to apply transaction: " + transaction.hash);
                                         }
+                                        console.log('p2 remove');
                                         library.modules.transactions.removeUnconfirmedTransaction(transaction.hash);
                                         resolve();
                                     });
@@ -1029,7 +991,6 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                 done(errors[0]);
                             });
                         } else {
-                            console.log('padding time 2 ->', Date.now());
                             try {
                                 block = library.base.block.objectNormalize(block);
                             } catch (e) {
@@ -1039,15 +1000,13 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                 return task
                             }, {concurrency: 20000}).then(() => {
                                 library.log.Debug("saveBlock successed");
-                                console.log(Date.now());
                                 privated.lastBlock = block;
-                                console.log('save  time -> ', Date.now());
                                 library.notification_center.notify('newBlock', block, broadcast);
                                 library.modules.round.tick(block, done);
-                                cb();
+                                setImmediate(cb);
                             }).catch((err) => {
                                 library.log.Error("saveBlock failed", "Error", err);
-                                cb(err);
+                                setImmediate(cb, err);
                             });
                         }
                     }).catch((err) => {
