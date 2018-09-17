@@ -1,7 +1,7 @@
 <template>
     <div class="account-index-page">
         <tabs v-model="tabsVal">
-            <tabs-pane label="账户信息" value="1">
+            <tabs-pane label="账户信息" name="1">
                  <div class="page-main">
                     <div class="main-cell">
                         <div class="main-cell_id">
@@ -24,7 +24,14 @@
 
                         <div class="main-cell_id">
                             <div class="main-title">锁仓状态</div>
-                            <div class="main-primary">{{account.balance | bac}}</div>
+                            <div class="main-primary">
+                                <div v-if="lockDuration > 0">
+                                    大约在 <span class="lock-primary">{{lockDuration | duration}}</span> 后解锁
+                                </div>
+                                <div v-if="lockDuration <= 0">
+                                    未锁仓
+                                </div>
+                            </div>
                         </div>
 
                         <!-- <x-btn type="primary" icon="&#xe611;">新建地址</x-btn> -->
@@ -36,16 +43,23 @@
                     </div>
                 </div>
             </tabs-pane>
-            <tabs-pane label="锁仓" value="2">
+            <tabs-pane label="锁仓" name="2">
                 <div class="page-main">
                     <div class="lock-wrapper">
                         <div class="lock-title">设置锁仓信息</div>
-                        <div class="lock-input"><x-input v-model="lockHeight" placeholder="请输入区块高度"></x-input></div>
-                        <div class="lock-hint">大约在 <span class="lock-primary">33天21时58分</span> 后解锁</div>
-                        <div class="lock-input" v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1"><x-input v-model="lockPassword" type="password" placeholder="请输入支付密码"></x-input></div>
-                        <div class="lock-btn"><x-btn @click="lock"  width="150px" type="primary"></x-btn></div>
-                    </div>
+                        <template v-if="lockDuration <= 0">
+                            <div class="lock-input"><x-input v-model="lockHeight" placeholder="请输入锁仓的区块高度"></x-input></div>
+                            <div class="lock-hint">大约在 <span class="lock-primary">{{(lockHeight - curHeight) * 10 * 1000 | duration}}</span> 后解锁</div>
+                            <div class="lock-input" v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1"><x-input v-model="lockPassword" type="password" placeholder="请输入支付密码"></x-input></div>
+                            <div class="lock-btn"><x-btn @click="lock" :disabled="lockBtnDisabled"  width="150px" type="primary"></x-btn></div>
+                        </template>
+                            
+                       <template v-else>
+                           <div class="locked-height">锁仓至 <span class="lock-primary">{{lockedHeight}}</span></div>
+                           <div class="locked-hint">大约在 <span class="lock-primary">{{lockDuration | duration}}</span> 后解锁</div>
+                       </template>
                         
+                    </div>
                 </div>
             </tabs-pane>
         </tabs>
@@ -94,7 +108,7 @@
             :visible.sync="confirmVisible" 
             title="锁仓提醒"
             @ok="lockSubmit">
-            <div>设置后，在区块到底此高度前将无法转账，确定要锁仓吗？</div>
+            <div>设置后，在区块到达此高度前将 <b class="lock-primary"> 无法转账 </b>  ，确定要锁仓吗？</div>
         </modal>
     </div>
 </template>
@@ -109,6 +123,7 @@
     import sha256 from 'crypto-js/sha256'
     import Tabs from '~/components/ui/Tabs.vue'
     import TabsPane from '~/components/ui/TabsPane.vue'
+    import {padStart} from 'lodash'
 
     export default {
         data () {
@@ -120,21 +135,47 @@
                 fee: '',
                 okLoading: false,
                 tabsVal:'1',
+                curHeight: '',
                 lockHeight: '',
-                lockPassword: ''
+                lockPassword: '',
+                lockDuration:'', 
+                lockedHeight: '',
+            
             }
         },
         created () {
+            this.initLock()
             api.account.getFee().then(res => {
                 if (res === null) return;
                 this.fee = res.fee
             })
+
+            api.blocks.height().then(res => {
+                if (res === null) return;
+                this.curHeight = res
+            })
+        },
+
+        filters : {
+            duration (time) {
+                if(time > 0){
+                    const dd = padStart(Math.floor(time / (1000 * 60 * 60 * 24)), 2, '0')
+                    const hh = padStart(Math.floor(time / (1000 * 60 * 60)) % 24, 2, '0')
+                    const mm = padStart(Math.floor(time / (1000 * 60)) % 60, 2, '0')
+                    const ss = padStart(Math.floor(time / 1000) % 60, 2, '0')
+
+                    return `${dd}天${hh}时${mm}分${ss}秒`
+                }
+            }
         },
         computed :{
             ...mapState({
                 account: state => state.account,
                 key: state =>  state.key
-            })
+            }),
+            lockBtnDisabled () {
+                return !this.lockHeight ||  !this.lockPassword
+            }
         },
         components: {
             XBtn,
@@ -155,14 +196,34 @@
                 })
             },
 
+            initLock () {
+                let timer
+                api.account.getLock([this.account.address[0]]).then(res => {
+                    if (res === null) return;
+                    this.lockDuration = res.d_value * 10 * 1000
+                    this.lockedHeight = res.height
+
+                    if (this.lockDuration > 0) {
+                        timer = setInterval(() => {
+                            this.lockDuration -= 1000
+                            if (this.lockDuration <= 0) {
+                                clearInterval(timer)
+                                this.initLock()
+                            }
+                        }, 1000)
+                    }
+                })
+            },
+
             lock () {
                 this.confirmVisible = true
             },
 
             lockSubmit () {
-                api.account.lockHeight([this.key.mnemonic, this.lockHeight, this.lockPassword]).then(res => {
+                this.confirmVisible = false
+                api.account.lockHeight([this.key.mnemonic, Number(this.lockHeight), sha256(this.lockPassword).toString()]).then(res => {
                     if (res === null) return
-                    
+                    Toast.success('锁仓成功')
                 })
             }
         }
@@ -175,7 +236,7 @@
             background: #fff;
             border-radius: 4px;
             padding: 8px 30px 14px;
-            
+            min-height: 300px;
         }
 
         .main-cell{
@@ -327,6 +388,12 @@
         .lock-btn{
             margin-top: 30px;
             text-align: right
+        }
+        .locked-height{
+            margin-top: 30px;
+        }
+        .locked-hint{
+            margin-top: 10px;
         }
     }
 </style>

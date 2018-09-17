@@ -8,7 +8,7 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
-    "vue": "^2.5.16",
+    "vue": "^2.5.17",
     "vue-router": "^3.0.1",
     "vuex": "^3.0.1"
   },
@@ -31,7 +31,7 @@
     "vue-i18n": "^8.0.0",
     "vue-infinite-loading": "^2.3.1",
     "vue-spinner": "^1.0.3",
-    "vue-template-compiler": "^2.5.16"
+    "vue-template-compiler": "^2.5.17"
   },
   "browserslist": [
     "> 1%",

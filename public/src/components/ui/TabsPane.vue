@@ -1,5 +1,5 @@
 <template>
-    <div class="tabs-pane-comp">
+    <div v-show="name == $parent.value" class="tabs-pane-comp">
         <slot></slot>
     </div>
 </template>
@@ -8,11 +8,16 @@
     import {assign} from 'lodash'
 
     export default {
+        data () {
+            return {
+                active: 0
+            }
+        },
         props: {
             label: {
                 default: '选项卡'
             },
-            value: String
+            name: String
         },
 
         mounted () {
@@ -28,8 +33,5 @@
 </script>
 
 <style lang="scss" scoped>
-    .tabs-pane-comp{
-        display: none
-    }
 </style>
 

@@ -10,6 +10,7 @@ import {padStart} from 'lodash'
 Vue.config.productionTip = false
 
 Vue.use(VueI18n)
+console.log(Vue.version)
 
 //decimal: 要保留的小数位数
 Vue.filter('bac',  (value, decimal ) => {
