@@ -647,7 +647,7 @@ Account.prototype.createTables = function (cb) {
 
     var self = this;
 
-    async.eachSeries(sqles, function (sql, cb) {
+    async.each(sqles, function (sql, cb) {
         self.scope.dbClient.query(sql).then(function (data) {
             cb(null, data);
         }, function (err) {
@@ -817,9 +817,11 @@ Account.prototype.insertOrUpdate = function (master_address, fields, cb) {
 
     var self = this;
 
-    async.eachSeries(sqles, function (sql, cb) {
+    async.each(sqles, function (sql, cb) {
+        let type = sql.type === 'update' ? Sequelize.QueryTypes.UPDATE : sql.type === 'insert' ? Sequelize.QueryTypes.INSERT : Sequelize.QueryTypes.IGNORE;
         self.scope.dbClient.query(sql.query.replace('or', ''), {
-            bind: sql.values
+            bind: sql.values,
+            type: type
         }).then(function (data) {
             cb(null, data);
         }, function (err) {

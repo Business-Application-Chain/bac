@@ -14,7 +14,6 @@ var blockStatus = require('../utils/blockStatus.js');
 var csvtojson = require('csvtojson');
 var	ip = require('ip');
 var Json2csv = require('json2csv').Parser;
-
 var BluePromise = require("bluebird");
 
 var header = ['b_hash', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward', 'b_payloadLength', 'b_payloadHash','b_generatorPublicKey','b_blockSignature', 'b_merkleRoot','t_hash',
@@ -100,12 +99,51 @@ privated.saveGenesisBlock = function (cb) {
     }).then(function (rows) {
         var blockHash = rows.length && rows[0].hash;
         if (!blockHash) {
-            privated.saveBlock(genesisblock.block, function (err) {
-                if (err) {
-                    library.log.Error("saveBlock", "Error", err.toString());
+            let genBlock = genesisblock.block;
+            let save_records = [];
+            save_records.push(new Promise((resolve, reject) => {
+                library.base.block.save(genBlock, function (err) {
+                    if (err) {
+                        library.log.Error("saveBlock", "Error", err.toString());
+                        reject("saveBlock", "Error", err.toString());
+                    }
+                    else {
+                        resolve();
+                    }
+                })
+            }));
+            async.each(genBlock.transactions, function (txObj, cb) {
+                txObj.blockHash = genBlock.hash;
+                save_records.push(new Promise((resolve, reject) => {
+                    library.base.transaction.save(txObj, function (err) {
+                        if (err) {
+                            library.log.Error("saveBlock", "Error", err.toString());
+                            reject("saveBlock", "Error", err.toString());
+                        } else {
+                            resolve();
+                        }
+                    });
+                }));
+                setImmediate(cb);
+            }, function (err) {
+                if(err) {
+                    cb(err);
                 }
-                return cb(err);
+                Promise.all(save_records).then(() => {
+                    console.log(Date.now());
+                    library.log.Debug("saveBlock successed");
+                    cb();
+                }).catch((err) => {
+                    library.log.Error("saveBlock failed", "Error", err);
+                    cb(err);
+                });
             });
+            // privated.saveBlock(genesisblock.block, function (err) {
+            //     if (err) {
+            //         library.log.Error("saveBlock", "Error", err.toString());
+            //     }
+            //     return cb(err);
+            // });
         } else {
             return cb();
         }
@@ -114,14 +152,10 @@ privated.saveGenesisBlock = function (cb) {
     });
 };
 
+
 privated.saveBlock = function (blockObj, cb) {
     var save_records = [];
 
-    // save_records.push(library.base.block.save(blockObj, function (err) {
-    //     if (err) {
-    //         library.log.Error("saveBlock", "Error", err.toString());
-    //     }
-    // }));
     save_records.push(new Promise((resolve, reject) => {
         library.base.block.save(blockObj, function (err) {
             if (err) {
@@ -133,7 +167,7 @@ privated.saveBlock = function (blockObj, cb) {
             }
         })
     }));
-    blockObj.transactions.forEach(function (txObj) {
+    async.each(blockObj.transactions, function (txObj, cb) {
         txObj.blockHash = blockObj.hash;
         save_records.push(new Promise((resolve, reject) => {
             library.base.transaction.save(txObj, function (err) {
@@ -145,18 +179,18 @@ privated.saveBlock = function (blockObj, cb) {
                 }
             });
         }));
-        // save_records.push(library.base.transaction.save(txObj, function (err) {
-        //     if (err) {
-        //         library.log.Error("saveBlock", "Error", err.toString());
-        //     }
-        // }));
-    });
-    Promise.all(save_records).then(() => {
-        library.log.Debug("saveBlock successed");
-        cb();
-    }).catch((err) => {
-        library.log.Error("saveBlock failed", "Error", err);
-        cb(err);
+        setImmediate(cb);
+    }, function (err) {
+        if(err) {
+            cb(err);
+        }
+        Promise.all(save_records).then(() => {
+            library.log.Debug("saveBlock successed");
+            cb();
+        }).catch((err) => {
+            library.log.Error("saveBlock failed", "Error", err);
+            cb(err);
+        });
     });
 };
 
@@ -825,6 +859,7 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
             return setImmediate(cb, e.toString());
         }
         block.height = privated.lastBlock.height + 1;
+
         library.modules.transactions.undoUnconfirmedList(function (err, unconfirmedTransactions) {
             if (err) {
                 privated.isActive = false;
@@ -835,9 +870,7 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                 library.modules.transactions.applyUnconfirmedList(unconfirmedTransactions, function () {
                     privated.isActive = false;
 
-                    setImmediate(() => {
-                        cb();
-                    }, err);
+                    setImmediate(cb, err);
                 });
             }
 
@@ -867,13 +900,13 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                 if(!verifyMerkle) {
                     return done("Can't verify merkleRoot: " + block.hash);
                 }
-                // if (block.previousBlock !== privated.lastBlock.hash) {
-                //     console.log('block.previousBlock:', block.previousBlock);
-                //     console.log('privated.lastBlock.hash', privated.lastBlock.hash);
-                //     // Fork same height and different previous block
-                //     library.modules.delegates.fork(block, 1);
-                //     return done("Can't verify previous block: " + block.hash);
-                // }
+                if (block.previousBlock !== privated.lastBlock.hash) {
+                    console.log('block.previousBlock:', block.previousBlock);
+                    console.log('privated.lastBlock.hash', privated.lastBlock.hash);
+                    // Fork same height and different previous block
+                    library.modules.delegates.fork(block, 1);
+                    return done("Can't verify previous block: " + block.hash);
+                }
                 if (block.version > 0) {
                     return done("Invalid block version: " + block.hash);
                 }
@@ -885,13 +918,25 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                     return done("Invalid amount of block assets: " + block.hash);
                 }
                 var totalAmount = 0, totalFee = 0, appliedTransactions = {};
-                var dealTask = [];
-                async.eachSeries(block.transactions, function (transaction, cb) {
+                var dealTask = [], saveTask = [];
+                saveTask.push(new Promise((resolve, reject) => {
+                    library.base.block.save(block, function (err) {
+                        if (err) {
+                            library.log.Error("saveBlock", "Error", err.toString());
+                            reject("saveBlock", "Error", err.toString());
+                        }
+                        else {
+                            resolve();
+                        }
+                    });
+                }));
+                async.each(block.transactions, function (transaction, cb) {
                     // try {
                     //     transaction.hash = library.base.transaction.getTrsHash(transaction);
                     // } catch (e) {
                     //     return setImmediate(cb, e.toString());
                     // }
+
                     transaction.blockHash = block.hash;
                     library.dbClient.query(`SELECT hash FROM transactions WHERE hash="${transaction.hash}"`,{
                         type: Sequelize.QueryTypes.SELECT
@@ -942,6 +987,17 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                     });
                                 });
                                 dealTask.push(p3);
+                                let saveTrsPromise = new Promise((resolve, reject) => {
+                                    library.base.transaction.save(transaction, function (err) {
+                                        if (err) {
+                                            library.log.Error("saveBlock", "Error", err.toString());
+                                            reject("saveBlock", "Error", err.toString());
+                                        } else {
+                                            resolve();
+                                        }
+                                    });
+                                });
+                                saveTask.push(saveTrsPromise);
                                 setImmediate(cb);
                             });
                         }
@@ -955,7 +1011,7 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                     }
                     BluePromise.map(dealTask, function (task) {
                         return task;
-                    }, {concurrency: 1000}).then(() => {
+                    }, {concurrency: 20000}).then(() => {
                         if (totalAmount !== block.totalAmount) {
                             errors.push("Invalid total amount: " + block.hash);
                         }
@@ -963,7 +1019,7 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                             errors.push("Invalid total fee: " + block.hash);
                         }
                         if (errors.length > 0) {
-                            async.eachSeries(block.transactions, function (transaction, cb) {
+                            async.each(block.transactions, function (transaction, cb) {
                                 if (appliedTransactions[transaction.hash]) {
                                     library.modules.transactions.undoUnconfirmed(transaction, cb);
                                 } else {
@@ -979,16 +1035,19 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                             } catch (e) {
                                 return setImmediate(done, e);
                             }
-                            privated.saveBlock(block, function (err) {
-                                if (err) {
-                                    library.log.Error("Failed to save block...");
-                                    library.log.Error(err);
-                                    process.exit(0);
-                                }
+                            BluePromise.map(saveTask, function (task) {
+                                return task
+                            }, {concurrency: 20000}).then(() => {
+                                library.log.Debug("saveBlock successed");
+                                console.log(Date.now());
                                 privated.lastBlock = block;
                                 console.log('save  time -> ', Date.now());
                                 library.notification_center.notify('newBlock', block, broadcast);
                                 library.modules.round.tick(block, done);
+                                cb();
+                            }).catch((err) => {
+                                library.log.Error("saveBlock failed", "Error", err);
+                                cb(err);
                             });
                         }
                     }).catch((err) => {

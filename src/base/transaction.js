@@ -390,18 +390,7 @@ Transaction.prototype.verify = function (txObj, sender, requester, cb) {
         }
     }
 
-    // Check that signatures unique
-    // if (txObj.signatures && txObj.signatures.length) {
-    //     var signatures = txObj.signatures.reduce(function (p, c) {
-    //         if (p.indexOf(c) < 0) p.push(c);
-    //         return p;
-    //     }, []);
-    //
-    //     if (signatures.length != txObj.signatures.length) {
-    //         return setImmediate(cb, "Encountered duplicate signatures");
-    //     }
-    // }
-     //多重签名的验证的
+    //多重签名的验证的
     var multisignatures = sender.multisignatures || sender.multisignatures_unconfirmed;
 
     if (multisignatures === 0) {

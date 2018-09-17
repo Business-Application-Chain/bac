@@ -433,7 +433,7 @@ Transactions.prototype.getUnconfirmedTransactionById = function (id) {
 
 Transactions.prototype.undoUnconfirmedList = function (cb) {
     var ids = [];
-    async.eachSeries(privated.unconfirmedTransactions, function (transaction, cb) {
+    async.each(privated.unconfirmedTransactions, function (transaction, cb) {
         if (transaction !== false) {
             ids.push(transaction.hash);
             self.undoUnconfirmed(transaction, cb);
@@ -603,9 +603,10 @@ Transactions.prototype.onSendUnconfirmedTrs = function() {
 };
 
 Transactions.prototype.applyUnconfirmedList = function (ids, cb) {
-    async.eachSeries(ids, function (id, cb) {
+    async.each(ids, function (id, cb) {
         var transaction = self.getUnconfirmedTransaction(id);
-        library.modules.accounts.setAccountAndGet({publicKey: transaction.senderPublicKey}, function (err, sender) {
+        // library.modules.accounts.setAccountAndGet({publicKey: transaction.senderPublicKey}, function (err, sender) {
+        library.modules.accounts.getAccount({publicKey:transaction.senderPublicKey}, function (err, sender) {
             if (err) {
                 self.removeUnconfirmedTransaction(id);
                 self.addDoubleSpending(transaction);
@@ -623,7 +624,7 @@ Transactions.prototype.applyUnconfirmedList = function (ids, cb) {
 };
 
 Transactions.prototype.receiveTransactions = function (transactions, cb) {
-    async.eachSeries(transactions, function (txObj, cb) {
+    async.each(transactions, function (txObj, cb) {
         self.processUnconfirmedTransaction(txObj, true, cb);
     }, function (err) {
         cb(err, transactions);
@@ -897,7 +898,7 @@ shared_1_0.addTransaction = function (params, cb) {
 shared_1_0.getPackageTransactions = function(params, cb) {
     let blockTransactions = privated.getPackageTransactions();
     return cb(null, 200, blockTransactions);
-}
+};
 
 // export
 module.exports = Transactions;

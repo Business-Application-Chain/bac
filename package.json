@@ -44,6 +44,7 @@
     "moment": "^2.22.0",
     "moment-timezone": "^0.5.14",
     "mysql": "^2.13.0",
+    "node-array": "0.0.7",
     "request": "^2.85.0",
     "sequelize": "^3.24.1",
     "serve-favicon": "~2.4.5",
