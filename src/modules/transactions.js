@@ -433,6 +433,7 @@ Transactions.prototype.getUnconfirmedTransactionById = function (id) {
 
 Transactions.prototype.undoUnconfirmedList = function (cb) {
     var ids = [];
+    console.log('unconfirmedTransactionsIdIndex  -> ', privated.unconfirmedTransactionsIdIndex);
     async.each(privated.unconfirmedTransactions, function (transaction, cb) {
         if (transaction !== false) {
             ids.push(transaction.hash);
@@ -582,6 +583,7 @@ Transactions.prototype.getUnconfirmedTransaction = function (id) {
 };
 
 Transactions.prototype.removeUnconfirmedTransaction = function (id) {
+    console.log('remove id -> ', id);
     var index = privated.unconfirmedTransactionsIdIndex[id];
     delete privated.unconfirmedTransactionsIdIndex[id];
     privated.unconfirmedTransactions[index] = false;
@@ -589,6 +591,14 @@ Transactions.prototype.removeUnconfirmedTransaction = function (id) {
 
 Transactions.prototype.addDoubleSpending = function (transaction) {
     privated.doubleSpendingTransactions[transaction.hash] = transaction;
+};
+
+Transactions.prototype.revertUnconfirmedTransactions = function (transactions) {
+    privated.unconfirmedTransactions.push(transactions);
+    transactions.forEachAsync(function (item) {
+        let index = privated.unconfirmedTransactions.length - 1;
+        privated.unconfirmedTransactionsIdIndex[item.hash] = index;
+    });
 };
 
 Transactions.prototype.onSendUnconfirmedTrs = function() {
@@ -604,16 +614,18 @@ Transactions.prototype.onSendUnconfirmedTrs = function() {
 
 Transactions.prototype.applyUnconfirmedList = function (ids, cb) {
     async.each(ids, function (id, cb) {
-        var transaction = self.getUnconfirmedTransaction(id);
+        let transaction = self.getUnconfirmedTransaction(id);
         // library.modules.accounts.setAccountAndGet({publicKey: transaction.senderPublicKey}, function (err, sender) {
         library.modules.accounts.getAccount({publicKey:transaction.senderPublicKey}, function (err, sender) {
             if (err) {
+                console.log('applyUnconfirmedList getAccount err', err);
                 self.removeUnconfirmedTransaction(id);
                 self.addDoubleSpending(transaction);
                 return setImmediate(cb);
             }
             self.applyUnconfirmed(transaction, sender, function (err) {
                 if (err) {
+                    console.log('applyUnconfirmedList applyUnconfirmed err', err);
                     self.removeUnconfirmedTransaction(id);
                     self.addDoubleSpending(transaction);
                 }
