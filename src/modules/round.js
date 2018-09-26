@@ -153,7 +153,7 @@ Round.prototype.backwardTick = function (blockObj, previousBlockObj, cb) {
                             return "'" + item + "'";
                         });
                         library.dbClient.query("UPDATE accounts SET missed_blocks = missed_blocks + 1 WHERE master_address IN (" + escaped.join(',') + ")", {
-                            type: Sequelize.QueryTypes.UPDATE
+                            type: Sequelize.QueryTypes.BULKUPDATE
                         }).then(function (rows) {
                             cb();
                         }, function (err) {

@@ -71,11 +71,11 @@ function Transaction() {
     };
 
     this.apply = function (txObj, blockObj, sender, cb) {
+
         library.modules.accounts.setAccountAndGet({master_address: txObj.recipientId}, function (err, recipient) {
             if (err) {
                 return cb(err);
             }
-
             library.modules.accounts.mergeAccountAndGet({
                 master_address: txObj.recipientId,
                 balance: txObj.amount,
@@ -89,11 +89,11 @@ function Transaction() {
     };
 
     this.undo = function (txObj, blockObj, sender, cb) {
+
         library.modules.accounts.setAccountAndGet({master_address: txObj.recipientId}, function (err, recipient) {
             if (err) {
                 return cb(err);
             }
-
             library.modules.accounts.mergeAccountAndGet({
                 master_address: txObj.recipientId,
                 balance: -txObj.amount,
@@ -103,6 +103,7 @@ function Transaction() {
             }, function (err) {
                 cb(err);
             });
+
         });
     };
 
@@ -432,7 +433,8 @@ Transactions.prototype.getUnconfirmedTransactionById = function (id) {
 
 Transactions.prototype.undoUnconfirmedList = function (cb) {
     var ids = [];
-    async.eachSeries(privated.unconfirmedTransactions, function (transaction, cb) {
+    console.log('unconfirmedTransactionsIdIndex  -> ', privated.unconfirmedTransactionsIdIndex);
+    async.each(privated.unconfirmedTransactions, function (transaction, cb) {
         if (transaction !== false) {
             ids.push(transaction.hash);
             self.undoUnconfirmed(transaction, cb);
@@ -546,7 +548,7 @@ Transactions.prototype.undo = function (txObj, blockObj, sender, cb) {
 };
 
 Transactions.prototype.applyUnconfirmed = function (txObj, sender, cb) {
-    if (!sender && txObj.blockHash != genesisblock.block.hash) {
+    if (!sender && txObj.blockHash !== genesisblock.block.hash) {
         return cb("Invalid account");
     } else {
         if (txObj.requesterPublicKey) {
@@ -581,6 +583,7 @@ Transactions.prototype.getUnconfirmedTransaction = function (id) {
 };
 
 Transactions.prototype.removeUnconfirmedTransaction = function (id) {
+    console.log('remove id -> ', id);
     var index = privated.unconfirmedTransactionsIdIndex[id];
     delete privated.unconfirmedTransactionsIdIndex[id];
     privated.unconfirmedTransactions[index] = false;
@@ -588,6 +591,14 @@ Transactions.prototype.removeUnconfirmedTransaction = function (id) {
 
 Transactions.prototype.addDoubleSpending = function (transaction) {
     privated.doubleSpendingTransactions[transaction.hash] = transaction;
+};
+
+Transactions.prototype.revertUnconfirmedTransactions = function (transactions) {
+    privated.unconfirmedTransactions.push(transactions);
+    transactions.forEachAsync(function (item) {
+        let index = privated.unconfirmedTransactions.length - 1;
+        privated.unconfirmedTransactionsIdIndex[item.hash] = index;
+    });
 };
 
 Transactions.prototype.onSendUnconfirmedTrs = function() {
@@ -602,16 +613,19 @@ Transactions.prototype.onSendUnconfirmedTrs = function() {
 };
 
 Transactions.prototype.applyUnconfirmedList = function (ids, cb) {
-    async.eachSeries(ids, function (id, cb) {
-        var transaction = self.getUnconfirmedTransaction(id);
-        library.modules.accounts.setAccountAndGet({publicKey: transaction.senderPublicKey}, function (err, sender) {
+    async.each(ids, function (id, cb) {
+        let transaction = self.getUnconfirmedTransaction(id);
+        // library.modules.accounts.setAccountAndGet({publicKey: transaction.senderPublicKey}, function (err, sender) {
+        library.modules.accounts.getAccount({publicKey:transaction.senderPublicKey}, function (err, sender) {
             if (err) {
+                console.log('applyUnconfirmedList getAccount err', err);
                 self.removeUnconfirmedTransaction(id);
                 self.addDoubleSpending(transaction);
                 return setImmediate(cb);
             }
             self.applyUnconfirmed(transaction, sender, function (err) {
                 if (err) {
+                    console.log('applyUnconfirmedList applyUnconfirmed err', err);
                     self.removeUnconfirmedTransaction(id);
                     self.addDoubleSpending(transaction);
                 }
@@ -622,7 +636,7 @@ Transactions.prototype.applyUnconfirmedList = function (ids, cb) {
 };
 
 Transactions.prototype.receiveTransactions = function (transactions, cb) {
-    async.eachSeries(transactions, function (txObj, cb) {
+    async.each(transactions, function (txObj, cb) {
         self.processUnconfirmedTransaction(txObj, true, cb);
     }, function (err) {
         cb(err, transactions);
@@ -896,7 +910,7 @@ shared_1_0.addTransaction = function (params, cb) {
 shared_1_0.getPackageTransactions = function(params, cb) {
     let blockTransactions = privated.getPackageTransactions();
     return cb(null, 200, blockTransactions);
-}
+};
 
 // export
 module.exports = Transactions;

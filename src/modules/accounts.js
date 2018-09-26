@@ -96,6 +96,7 @@ function Vote() {
     };
 
     this.apply = function (txObj, blockObj, sender, cb) {
+
         this.scope.account.merge(sender.master_address, {
             delegates: txObj.asset.votes,
             blockHash: blockObj.hash,

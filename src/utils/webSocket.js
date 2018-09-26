@@ -1,8 +1,9 @@
 #!/usr/bin/env node
-var WebSocketServer = require('websocket').server;
+// var WebSocketServer = require('websocket').server;
+var webSocket = require('websocket');
+var WebSocketServer = webSocket.server;
 var http = require('http');
 var config = require('../../config.json');
-
 var server = http.createServer(function(request, response) {
     console.log((new Date()) + ' Received request for ' + request.url);
     response.writeHead(404);
@@ -31,7 +32,8 @@ privated.initWebSocket = function () {
         // facilities built into the protocol and the browser.  You should
         // *always* verify the connection's origin and decide whether or not
         // to accept it.
-        autoAcceptConnections: false
+        autoAcceptConnections: false,
+        maxReceivedMessageSize:2494400000,
     });
 
     wsServer.on('request', function(request) {
