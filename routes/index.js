@@ -36,6 +36,9 @@ function selectModule(apiType, scope) {
         case 'minersIp':
             return scope.modules.minersIp;
 
+        case 'delegates':
+            return scope.modules.delegates;
+
         default:
             return null;
     }

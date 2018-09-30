@@ -14,7 +14,7 @@ var crypto = require('crypto');
 require('array.prototype.find'); // Old node fix
 
 // private objects
-var modules_loaded, library, self, privated = {}, shared = {};
+var modules_loaded, library, self, privated = {}, shared = {}, shared_1_0 = {};
 
 function Delegate() {
 
@@ -26,7 +26,6 @@ function Delegate() {
         txObj.recipientId = null;
         txObj.amount = 0;
         txObj.asset.delegate = {
-            publicKey: data.sender.publicKey,
             address: data.sender.master_address
         };
 
@@ -37,12 +36,11 @@ function Delegate() {
         var report = library.schema.validate(txObj.asset.delegate, {
             type: 'object',
             properties: {
-                publicKey: {
-                    type: 'string',
-                    format: 'publicKey'
+                address: {
+                    type: 'string'
                 }
             },
-            required: ['publicKey']
+            required: ['address']
         });
 
         if (!report) {
@@ -105,7 +103,7 @@ function Delegate() {
                 return cb(err);
             }
 
-            if (account) {
+            if (account.isDelegate) {
                 return cb("address is already existed");
             }
 
@@ -134,10 +132,10 @@ function Delegate() {
             isDelegate_unconfirmed: 1
         };
 
-        if (!sender.name_exist && txObj.asset.delegate.username) {
-            data.username = null;
-            data.username_unconfirmed = txObj.asset.delegate.username;
-        }
+        // if (!sender.name_exist && txObj.asset.delegate.address) {
+        //     data.address = null;
+        //     data.username_unconfirmed = txObj.asset.delegate.username;
+        // }
 
         library.modules.accounts.setAccountAndGet(data, cb);
     };
@@ -180,8 +178,7 @@ function Delegate() {
             return null;
         } else {
             var delegate = {
-                publicKey: raw.t_senderPublicKey,
-                address: raw.t_senderId
+                address: raw.d_address
             };
 
             return {delegate: delegate};
@@ -353,10 +350,14 @@ Delegates.prototype.sandboxApi = function (call, args, cb) {
     sandboxHelper.callMethod(shared, call, args, cb);
 };
 
-Delegates.prototype.callApi = function (call, args, cb) {
+Delegates.prototype.callApi = function (call, rpcjson, args, cb) {
     var callArgs = [args, cb];
     // execute
-    shared[call].apply(null, callArgs);
+    if (rpcjson === '1.0') {
+        shared_1_0[call].apply(null, callArgs);
+    } else {
+        shared_1_0[call].apply(null, callArgs);
+    }
 };
 
 Delegates.prototype.generateDelegateList = function (height, cb) {
@@ -525,6 +526,58 @@ Delegates.prototype.onBlockchainReady = function () {
 Delegates.prototype.onEnd = function (cb) {
     privated.loaded = false;
     cb();
+};
+
+shared_1_0.addNewMiners = function(params, cb) {
+    let mnemonic = params[0] || '';
+    let secondSecret = params[1] || '';
+    if(!mnemonic)
+        return cb(11000, 'miss must params');
+    let keyPair = library.base.account.getKeypair(mnemonic);
+    let publicKey = keyPair.getPublicKeyBuffer().toString('hex');
+    library.balancesSequence.add(function (cb) {
+        library.modules.accounts.getAccount({master_pub: publicKey}, function (err, account) {
+            if (err) {
+                return cb(err.toString(), 11003);
+            }
+            if (!account || !account.master_pub) {
+                return cb("Invalid account", 13007);
+            }
+
+            if (account.secondsign && !secondSecret) {
+                return cb("Invalid second passphrase", 13008);
+            }
+            if (account.isDelegate || account.isDelegate_unconfirmed) {
+                return cb('the account is already be delegate', 13009);
+            }
+            let secondKeypair = null;
+            if (account.secondsign) {
+                var secondHash = crypto.createHash('sha256').update(query.secondSecret, 'utf8').digest();
+                secondKeypair = ed.MakeKeypair(secondHash);
+            }
+            let lastHeight = library.modules.blocks.getLastBlock().height;
+            if(account.lockHeight > lastHeight) {
+                return cb("Account is locked", 11000);
+            }
+            try {
+                var transaction = library.base.transaction.create({
+                    type: TransactionTypes.DELEGATE,
+                    sender: account,
+                    keypair: keyPair,
+                    secondKeypair: secondKeypair
+                });
+            } catch (e) {
+                return cb(e.toString(), 15001);
+            }
+            library.modules.transactions.receiveTransactions([transaction], cb);
+        });
+    }, function (err, transaction) {
+        if(err) {
+            return cb(err.toString(), 15001);
+        } else {
+            return cb(null, 200, {transaction: transaction[0]});
+        }
+    });
 };
 
 // export

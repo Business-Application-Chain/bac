@@ -71,6 +71,8 @@ privated.initWebSocket = function () {
                     }
                 } else if(msg[0] === '102' && msg[1] === 'accounts' && msg[2] === 'miner') {
                     library.notification_center.notify("loginMiner");
+                } else if(msg[0] === '102' && msg[1] === 'miner' && msg[2] === 'list') {
+                    library.notification_center.notify('modifyMinerIp')
                 } else if(msg[0] === '201' && msg[1] === 'blocks' && msg[2] === 'newBlock') {
                     let newBlock = JSON.parse(msg[3]);
                     library.notification_center.notify('hasNewBlock', newBlock);

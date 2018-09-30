@@ -171,10 +171,13 @@ MinersIp.prototype.onModifyMinerIp = function() {
     library.dbClient.query('select * from `miner` where `lock` = 0', {
         type: Sequelize.QueryTypes.SELECT
     }).then((data) => {
+        data.forEach(item => {
+            item.longIp = ip.fromLong(item.ip);
+        });
         library.socket.webSocket.send('201|miners|list|' + JSON.stringify({list: data}))
     }).catch((err) => {
         console.log(err);
-    })
+    });
 };
 
 shared_1_0.setMinerIp = function(params, cb) {

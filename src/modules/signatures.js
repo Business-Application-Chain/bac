@@ -197,7 +197,7 @@ shared_1_0.addSignature = function(params, cb) {
         multisigAccountPublicKey: params[3] || ''
     };
     if(!(query.secret && query.secondSecret && query.publicKey)) {
-        return cb('miss must params');
+        return cb(11000, 'miss must params');
     }
     let keyPair = library.base.account.getKeypair(query.secret);
     if (query.publicKey) {

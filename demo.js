@@ -1,3 +1,3 @@
 let ip = require('ip');
-aaa=ip.toLong('127.0.0.1');
+aaa=ip.fromLong(167797870);
 console.log(aaa);
