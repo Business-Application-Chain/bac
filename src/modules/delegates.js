@@ -26,8 +26,8 @@ function Delegate() {
         txObj.recipientId = null;
         txObj.amount = 0;
         txObj.asset.delegate = {
-            username: data.username || data.sender.username,
-            publicKey: data.sender.publicKey
+            publicKey: data.sender.publicKey,
+            address: data.sender.master_address
         };
 
         return txObj;
@@ -53,12 +53,12 @@ function Delegate() {
     };
 
     this.getBytes = function (txObj) {
-        if (!txObj.asset.delegate.username) {
+        if (!txObj.asset.delegate.address) {
             return null;
         }
 
         try {
-            var usernameBuffer = new Buffer(txObj.asset.delegate.username, 'utf8');
+            var usernameBuffer = new Buffer(txObj.asset.delegate.address, 'utf8');
         } catch (err) {
             throw new Error(err.toString());
         }
@@ -90,51 +90,23 @@ function Delegate() {
             return setImmediate(cb, "Invalid transaction amount");
         }
 
-        if (!sender.username) {
-            if (!txObj.asset.delegate.username) {
-                return setImmediate(cb, "Invalid transaction asset");
-            }
-
-            var allowSymbols = /^[a-z0-9!@$&_.]+$/g;
-            if (!allowSymbols.test(txObj.asset.delegate.username.toLowerCase())) {
-                return setImmediate(cb, "Username contains invalid characters");
-            }
-
-            var isAddress = /^[B]+[A-Za-z|0-9]{33}$/;
-            if (isAddress.test(txObj.asset.delegate.username)) {
-                return setImmediate(cb, "Username cannot be a potential address");
-            }
-
-            if (txObj.asset.delegate.username.length < 1) {
-                return setImmediate(cb, "Username is too short. Minimum is 1 character");
-            }
-
-            if (txObj.asset.delegate.username.length > 20) {
-                return setImmediate(cb, "Username is too long. Maximum is 20 characters");
-            }
-        } else {
-            if (txObj.asset.delegate.username && txObj.asset.delegate.username != sender.username) {
-                return cb("Account is already has a username");
-            }
-        }
-
         if (sender.isDelegate) {
             return cb("Account is already been a delegate");
         }
 
-        if (sender.username) {
-            return cb(null, txObj);
-        }
+        // if (sender.username) {
+        //     return cb(null, txObj);
+        // }
 
         library.modules.accounts.getAccount({
-            username: txObj.asset.delegate.username
+            master_address: txObj.asset.delegate.address
         }, function (err, account) {
             if (err) {
                 return cb(err);
             }
 
             if (account) {
-                return cb("Username is already existed");
+                return cb("address is already existed");
             }
 
             cb(null, txObj);
@@ -145,14 +117,12 @@ function Delegate() {
         var data = {
             master_address: sender.master_address,
             isDelegate: 1,
-            isDelegate_unconfirmed: 0,
-            vote: 0
+            isDelegate_unconfirmed: 0
         };
 
-        if (!sender.name_exist && txObj.asset.delegate.username) {
-            data.username_unconfirmed = null;
-            data.username = txObj.asset.delegate.username;
-        }
+        // if (txObj.asset.delegate.address) {
+        //     data.master_address = txObj.asset.delegate.address;
+        // }
 
         library.modules.accounts.setAccountAndGet(data, cb);
     };
@@ -173,9 +143,6 @@ function Delegate() {
     };
 
     this.applyUnconfirmed = function (txObj, sender, cb) {
-        if (sender.username_unconfirmed && txObj.asset.delegate.username && txObj.asset.delegate.username != sender.username_unconfirmed) {
-            return cb("Account is already has a username");
-        }
 
         if (sender.isDelegate_unconfirmed) {
             return cb("Account is already been a delegate");
@@ -188,56 +155,33 @@ function Delegate() {
                 isDelegate: 0
             };
 
-            if (!sender.name_exist && txObj.asset.delegate.username) {
-                data.username = null;
-                data.username_unconfirmed = txObj.asset.delegate.username;
-            }
-
             library.modules.accounts.setAccountAndGet(data, cb);
         }
-
-        if (sender.username) {
-            return done();
-        }
-
-        library.modules.accounts.getAccount({
-            name_unconfirmed: txObj.asset.delegate.username
-        }, function (err, account) {
-            if (err) {
-                return cb(err);
-            }
-
-            if (account) {
-                return cb("Username is already existed");
-            }
-
-            done();
-        });
+        return done();
     };
 
     this.undoUnconfirmed = function (txObj, sender, cb) {
         var data = {
-            master_address: sender.master_address,
+            address: sender.master_address,
             isDelegate: 0,
             isDelegate_unconfirmed: 0
         };
 
-        if (!sender.name_exist && txObj.asset.delegate.username) {
-            data.username = null;
-            data.username_unconfirmed = null;
-        }
+        // if (!sender.name_exist && txObj.asset.delegate.username) {
+        //     data.username = null;
+        //     data.username_unconfirmed = null;
+        // }
 
         library.modules.accounts.setAccountAndGet(data, cb);
     };
 
     this.load = function (raw) {
-        if (!raw.d_username) {
+        if (!raw.d_address) {
             return null;
         } else {
             var delegate = {
-                username: raw.d_username,
                 publicKey: raw.t_senderPublicKey,
-                master_address: raw.t_senderId
+                address: raw.t_senderId
             };
 
             return {delegate: delegate};
@@ -245,14 +189,28 @@ function Delegate() {
     };
 
     this.save = function (txObj, cb) {
-       library.dbClient.query("INSERT INTO delegates (transactionHash, username) VALUES ($transactionHash, $username)", {
+       library.dbClient.query("INSERT INTO delegates (transactionHash, address) VALUES ($transactionHash, $address)", {
             type: Sequelize.QueryTypes.INSERT,
             bind: {
                 transactionHash: txObj.hash,
-                username: txObj.asset.delegate.username
+                address: txObj.senderId
             },
         }).then(() => {
-            cb();
+           library.dbClient.query("INSERT INTO miner (`address`, `publicKey`, `ip`, `port`, `version`, `lock`) VALUES ($address, $publicKey, $ip, $port, $version, $lock)", {
+               type: Sequelize.QueryTypes.INSERT,
+               bind: {
+                   address: txObj.senderId,
+                   publicKey: txObj.senderPublicKey,
+                   ip: 0,
+                   port: 0,
+                   version: library.config.version,
+                   lock: 1
+               }
+           }).then(() => {
+               cb();
+           }).catch(err => {
+               cb(err);
+           });
        }).catch((err) => {
            cb(err);
        });
@@ -284,7 +242,7 @@ privated.getKeysSortByVote = function (cb) {
     library.modules.accounts.getAccount({
         isDelegate: 1,
         sort: {"uservote": -1},
-        limit: constants.delegates
+        // limit: constants.delegates
     }, ["publicKey"], function (err, rows) {
         if (err) {
             cb(err);

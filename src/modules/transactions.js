@@ -433,7 +433,6 @@ Transactions.prototype.getUnconfirmedTransactionById = function (id) {
 
 Transactions.prototype.undoUnconfirmedList = function (cb) {
     var ids = [];
-    console.log('unconfirmedTransactionsIdIndex  -> ', privated.unconfirmedTransactionsIdIndex);
     async.each(privated.unconfirmedTransactions, function (transaction, cb) {
         if (transaction !== false) {
             ids.push(transaction.hash);
@@ -583,7 +582,6 @@ Transactions.prototype.getUnconfirmedTransaction = function (id) {
 };
 
 Transactions.prototype.removeUnconfirmedTransaction = function (id) {
-    console.log('remove id -> ', id);
     var index = privated.unconfirmedTransactionsIdIndex[id];
     delete privated.unconfirmedTransactionsIdIndex[id];
     privated.unconfirmedTransactions[index] = false;
@@ -653,7 +651,6 @@ shared_1_0.transaction = function (params, cb) {
     if (!tHash) {
         return cb('missing params', 11000);
     }
-    // privated.getByTrsId(tId, function (err, data) {
     privated.getByHash(tHash, function (err, data) {
         if (err) {
             return cb(err.msg, err.code);

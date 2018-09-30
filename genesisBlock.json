@@ -26,12 +26,12 @@
       "type": 2,
       "amount": 0,
       "recipientId": null,
-      "senderId": "BLX3EozVesMb9emWPW2qHGB7RMrcAESysQ",
-      "senderPublicKey": "0319fbb80c2b59f0ef42b454819b18555643861677328fcc541b57671be9596de4",
+      "senderId": "BBGiXeKL6tLQwe5Hqg6eXBBHn8ErUtNM1Z",
+      "senderPublicKey": "021d830f0a86eb830d9154fd6c3ca89f5e8b319470f72fa08b6528bfb7f3f23b4e",
       "timestamp": 1532420482220,
       "asset": {
         "delegate": {
-          "username": "genesisDelegate1"
+          "address": "BBGiXeKL6tLQwe5Hqg6eXBBHn8ErUtNM1Z"
         }
       },
       "signature": "203a46f0cac586dd7e42e0a57b2baf7eecd5da4b88d191186599ec4bdc721d761d42adb1cadbed3a3f2efe6c771e268db5c3b91534a91de326b55b4c0b43cfb4ff",

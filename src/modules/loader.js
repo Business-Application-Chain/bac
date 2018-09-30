@@ -158,7 +158,21 @@ privated.loadBlockChain = function () {
                                         load(count);
                                     } else {
                                         library.modules.blocks.loadBlocksOffset(1, count, verify, function (err, lastBlock) {
-
+                                            if (err) {
+                                                library.log.Error(err || "Unable to load last block");
+                                                library.log.Info("Unable to load without verifying, clearing accounts from database and loading");
+                                                load(count);
+                                            } else {
+                                                load(count);
+                                                // library.modules.blocks.loadLastBlock(function (err, block) {
+                                                //     if (err) {
+                                                //         return load(count);
+                                                //     }
+                                                //     privated.lastBlock = block;
+                                                //     library.log.Info('Blockchain ready');
+                                                //     library.bus.message('blockchainReady');
+                                                // });
+                                            }
                                         });
                                     }
                                 }).catch((err) => {

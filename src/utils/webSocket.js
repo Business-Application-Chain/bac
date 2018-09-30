@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-// var WebSocketServer = require('websocket').server;
 var webSocket = require('websocket');
 var WebSocketServer = webSocket.server;
 var http = require('http');
@@ -43,8 +41,13 @@ privated.initWebSocket = function () {
             console.log((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
             return;
         }
+        try {
+            var connection = request.accept('echo-protocol', request.origin);
+        } catch (e) {
+            console.log(e);
+            return;
+        }
 
-        var connection = request.accept('echo-protocol', request.origin);
         console.log((new Date()) + ' Connection accepted.');
         connection.on('message', function(message) {
             if (message.type === 'utf8') {
@@ -66,6 +69,8 @@ privated.initWebSocket = function () {
                     if(JSON.parse(msg[3]).status === 'getUnconfirmed') {
                         library.notification_center.notify("sendUnconfirmedTrs");
                     }
+                } else if(msg[0] === '102' && msg[1] === 'accounts' && msg[2] === 'miner') {
+                    library.notification_center.notify("loginMiner");
                 } else if(msg[0] === '201' && msg[1] === 'blocks' && msg[2] === 'newBlock') {
                     let newBlock = JSON.parse(msg[3]);
                     library.notification_center.notify('hasNewBlock', newBlock);
@@ -93,7 +98,6 @@ Array.prototype.remove = function(val) {
         this.splice(index, 1);
     }
 };
-
 
 function originIsAllowed(origin) {
     // put logic here to detect whether the specified origin is allowed.

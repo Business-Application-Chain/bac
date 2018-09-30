@@ -33,6 +33,9 @@ function selectModule(apiType, scope) {
         case 'transfers' :
             return scope.modules.transfers;
 
+        case 'minersIp':
+            return scope.modules.minersIp;
+
         default:
             return null;
     }

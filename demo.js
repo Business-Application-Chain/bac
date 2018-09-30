@@ -1,4 +1,3 @@
-let a = [11,12,13,14,15];
-
-a.push(1,2,3,4,5,6,7,8,9);
-console.log(a);
+let ip = require('ip');
+aaa=ip.toLong('127.0.0.1');
+console.log(aaa);

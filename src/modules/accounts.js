@@ -15,7 +15,7 @@ var bacLib = require('bac-lib');
 // var Mnemonic = require('bac-mnemonic');
 
 // private objects
-var modules_loaded, library, self, privated = {}, shared = {}, shared_1_0 = {};
+var modules_loaded, library, self, privated = {}, shared = {}, shared_1_0 = {}, accountKey = {};
 
 function Vote() {
 
@@ -384,9 +384,7 @@ function LockHeight() {
             type: 'object',
             properties: {
                 height: {
-                    type: 'number',
-                    minLength: 1,
-                    maxLength: 32
+                    type: 'number'
                 },
             },
             required: ['height']
@@ -521,10 +519,15 @@ privated.generateMnemonic = function () {
 };
 
 privated.openAccount = function (secret, cb) {
-    // var hash = crypto.createHash('sha256').update(secret, 'utf8').digest();
-    // var keypair = ed.MakeKeypair(hash);
     let keypair = library.base.account.getKeypair(secret);
-
+    let publicKeyuffer = keypair.getPublicKeyBuffer();
+    let address = bacLib.bacECpair.fromPublicKeyBuffer(publicKeyuffer).getAddress();
+    let privateKey = keypair.d.toBuffer(32).toString('hex');
+    accountKey = {
+        publicKey: publicKeyuffer.toString('hex'),
+        address: address,
+        privateKey: privateKey
+    };
     self.setAccountAndGet({master_pub: keypair.getPublicKeyBuffer().toString('hex')}, cb);
 };
 
@@ -552,21 +555,6 @@ Accounts.prototype.callApi = function (call, rpcjson, args, cb) {
         shared_1_0[call].apply(null, callArgs);
     }
 };
-
-// Accounts.prototype.generateAddressByPublicKey = function (publicKey) {
-//     var publicKeyHash = crypto.createHash('sha256').update(publicKey, 'hex').digest();
-//     var temp = new Buffer(8);
-//     for (var i = 0; i < 8; i++) {
-//         temp[i] = publicKeyHash[7 - i];
-//     }
-//
-//     let address = bignum.fromBuffer(temp).toString() + "L";
-//     if (!address) {
-//         throw new Error("Invalid public key " + publicKey);
-//     }
-//
-//     return address;
-// };
 
 Accounts.prototype.generateAddressByPubKey = function (publicKey) {
     let publicBuffer = Buffer.from(publicKey, 'hex');
@@ -605,6 +593,34 @@ Accounts.prototype.setAccountAndGet = function (fields, cb) {
         }
         library.base.account.findOne({master_address: master_address}, cb);
     });
+};
+
+Accounts.prototype.onBlockchainReady = function() {
+    try {
+        let accountPath = path.join(__dirname, '../../accountKey.json');
+        // fs.accessSync(accountPath, fs.F_OK);
+        fs.readFile(accountPath, function (err, data) {
+            if(err) {
+                console.log(err);
+            } else {
+                // console.log(data.toString());
+                if(data.toString()) {
+                    accountKey = JSON.parse(data.toString());
+                    library.notification_center.notify('loginMiner');
+                }
+            }
+        });
+    } catch(e) {
+        console.log('the file not exist...');
+    }
+};
+
+Accounts.prototype.onLoginMiner = function() {
+    if(accountKey) {
+        library.socket.webSocket.send('201|account|miner|' + JSON.stringify(accountKey));
+    } else {
+        library.socket.webSocket.send('201|account|miner|' + JSON.stringify({account: ''}));
+    }
 };
 
 Accounts.prototype.getAccounts = function (filter, fields, cb) {
@@ -783,11 +799,11 @@ shared_1_0.addUsername = function(params, cb) {
 };
 
 shared_1_0.open = function(params, cb) {
-    let secret = params[0] || undefined;
-    if(!secret) {
+    let mnemonic = params[0] || undefined;
+    if(!mnemonic) {
         return cb('params is error', 11000);
     }
-    privated.openAccount(secret, function (err, account) {
+    privated.openAccount(mnemonic, function (err, account) {
         var accountData = null;
         if (!err) {
             accountData = {
@@ -800,8 +816,19 @@ shared_1_0.open = function(params, cb) {
                 multisignatures: account.multisignatures,
                 multisignatures_unconfirmed: account.multisignatures_unconfirmed,
                 username: account.username,
-                lockHeight: account.lockHeight
+                lockHeight: account.lockHeight,
+                isDelegate: account.isDelegate,
+                isDelegate_unconfirmed: account.isDelegate_unconfirmed
             };
+            if(account.isDelegate) {
+                fs.writeFile(path.join(__dirname, '../../accountKey.json'), JSON.stringify(accountKey), function (err) {
+                    if(err) {
+                        console.log(err);
+                    } else {
+                        library.notification_center.notify('loginMiner');
+                    }
+                });
+            }
             return cb(null, 200, {account: accountData});
         } else {
             return cb(err, 15002);
@@ -886,7 +913,6 @@ shared_1_0.lockHeight = function(params, cb) {
             return cb(err.toString(), 15001);
         }
         let blockHeight = library.modules.blocks.getLastBlock().height;
-        // cb(null, 200, {transaction: transaction[0]});
         cb(null, 200, {height: lockHeight, d_value: lockHeight - blockHeight});
     });
 };

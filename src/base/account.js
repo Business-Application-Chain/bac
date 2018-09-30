@@ -344,6 +344,42 @@ function Account(scope, cb) {
             },
             conv: Number,
             default: 0
+        },
+        {
+            name: 'ip',
+            type: 'BigInt',
+            filter: {
+                type: 'integer'
+            },
+            conv: Number,
+            default: 0
+        },
+        {
+            name: 'ip_unconfirmed',
+            type: 'BigInt',
+            filter: {
+                type: 'integer'
+            },
+            conv: Number,
+            default: 0
+        },
+        {
+            name: 'port',
+            type: 'BigInt',
+            filter: {
+                type: 'integer'
+            },
+            conv: Number,
+            default: 0
+        },
+        {
+            name: 'port_unconfirmed',
+            type: 'BigInt',
+            filter: {
+                type: 'integer'
+            },
+            conv: Number,
+            default: 0
         }
     ];
 
@@ -819,7 +855,7 @@ Account.prototype.insertOrUpdate = function (master_address, fields, cb) {
 
     async.each(sqles, function (sql, cb) {
         let type = sql.type === 'update' ? Sequelize.QueryTypes.UPDATE : sql.type === 'insert' ? Sequelize.QueryTypes.INSERT : Sequelize.QueryTypes.IGNORE;
-        self.scope.dbClient.query(sql.query.replace('or', ''), {
+        self.scope.dbClient.query(sql.query.replace(' or', ' '), {
             bind: sql.values,
             type: type
         }).then(function (data) {
