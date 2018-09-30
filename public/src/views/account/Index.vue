@@ -174,7 +174,13 @@
                 key: state =>  state.key
             }),
             lockBtnDisabled () {
-                return !this.lockHeight ||  !this.lockPassword
+                if (!this.lockHeight) {
+                    return true
+                }
+                if ((this.account.secondsign == 1 || this.account.secondsign_unconfirmed == 1) && !this.lockPassword) {
+                    return true
+                }
+                return false
             }
         },
         components: {
