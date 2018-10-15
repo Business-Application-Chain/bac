@@ -5,13 +5,13 @@
  Source Server Type    : MySQL
  Source Server Version : 50721
  Source Host           : localhost:3306
- Source Schema         : db_entu
+ Source Schema         : db_bac
 
  Target Server Type    : MySQL
  Target Server Version : 50721
  File Encoding         : 65001
 
- Date: 17/08/2018 15:39:40
+ Date: 15/10/2018 17:30:28
 */
 
 SET NAMES utf8mb4;
@@ -69,6 +69,12 @@ CREATE TABLE `accounts` (
   `virgin` tinyint(1) DEFAULT '0',
   `fees` bigint(20) DEFAULT '0',
   `rewards` bigint(20) DEFAULT '0',
+  `lockHeight` int(11) DEFAULT NULL,
+  `lockHeight_unconfirmed` int(11) DEFAULT NULL,
+  `ip` bigint(11) DEFAULT NULL,
+  `ip_unconfirmed` bigint(11) DEFAULT NULL,
+  `port` int(10) DEFAULT NULL,
+  `port_unconfirmed` int(10) DEFAULT NULL,
   PRIMARY KEY (`master_address`),
   UNIQUE KEY `master_address` (`master_address`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -180,6 +186,7 @@ CREATE TABLE `blocks` (
   `payloadHash` varchar(64) NOT NULL,
   `generatorPublicKey` varchar(128) NOT NULL,
   `blockSignature` varchar(255) NOT NULL,
+  `merkleRoot` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`hash`) USING BTREE,
   KEY `previousBlock` (`previousBlock`),
   CONSTRAINT `blocks_ibkf_1` FOREIGN KEY (`previousBlock`) REFERENCES `blocks` (`hash`) ON DELETE SET NULL
@@ -218,7 +225,7 @@ CREATE TABLE `dapps` (
 DROP TABLE IF EXISTS `delegates`;
 CREATE TABLE `delegates` (
   `transactionHash` varchar(64) NOT NULL,
-  `username` varchar(20) NOT NULL
+  `address` varchar(64) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ----------------------------
@@ -230,8 +237,42 @@ CREATE TABLE `forks_stat` (
   `blockTimestamp` bigint(13) NOT NULL,
   `blockHash` varchar(64) NOT NULL,
   `blockHeight` int(11) NOT NULL,
-  `previousBlock` varchar(20) NOT NULL,
+  `previousBlock` varchar(64) NOT NULL,
   `cause` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Table structure for lock_height
+-- ----------------------------
+DROP TABLE IF EXISTS `lock_height`;
+CREATE TABLE `lock_height` (
+  `transactionHash` varchar(255) DEFAULT NULL,
+  `lockHeight` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- ----------------------------
+-- Table structure for miner
+-- ----------------------------
+DROP TABLE IF EXISTS `miner`;
+CREATE TABLE `miner` (
+  `address` varchar(64) CHARACTER SET utf8 NOT NULL,
+  `publicKey` varchar(255) NOT NULL,
+  `ip` bigint(10) NOT NULL,
+  `port` int(11) DEFAULT NULL,
+  `version` varchar(64) DEFAULT NULL,
+  `lock` tinyint(8) DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- ----------------------------
+-- Table structure for miner_ip
+-- ----------------------------
+DROP TABLE IF EXISTS `miner_ip`;
+CREATE TABLE `miner_ip` (
+  `transactionHash` varchar(64) CHARACTER SET latin1 NOT NULL,
+  `ip` bigint(11) NOT NULL,
+  `port` int(10) NOT NULL,
+  `address` varchar(64) CHARACTER SET latin1 NOT NULL,
+  `publicKey` varchar(128) CHARACTER SET latin1 NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ----------------------------
@@ -260,7 +301,7 @@ CREATE TABLE `peers` (
   `clock` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `ip_UNIQUE` (`ip`)
-) ENGINE=InnoDB AUTO_INCREMENT=6129072 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=6167153 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for peers_dapp
