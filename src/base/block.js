@@ -126,21 +126,22 @@ Block.prototype.getBlockHash = function(blockObj) {
     return blockHash;
 };
 
-Block.prototype.verifyMerkle = function(blockObj, cb) {
+Block.prototype.verifyMerkle = function(blockObj) {
     if(blockObj.numberOfTransactions === 0) {
         return true;
     }
     let transHash = [];
-    blockObj.transactions.forEach(function (item) {
-        transHash.push(item.hash);
-    });
+    for (let i=0; i<blockObj.transactions.length; i++) {
+        transHash.push(blockObj.transactions[i].hash);
+    }
+    transHash.sort();
     if(transHash.length % 2 !== 0) {
         transHash.push(transHash[transHash.length - 1]);
     }
     var sha256tree = merkle('sha256').sync(transHash);
     let result = sha256tree.root() === blockObj.merkleRoot;
     return result;
-}
+};
 
 Block.prototype.getHash = function (blockObj) {
     return crypto.createHash('sha256').update(this.getBytes(blockObj)).digest().toString('hex');

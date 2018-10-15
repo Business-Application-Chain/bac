@@ -420,9 +420,7 @@ Loader.prototype.onPeerReady = function() {
         }, function (err) {
             err && library.log.Error('loadBlocks timer', err);
             privated.isActive = false;
-            if (!privated.loaded)
-                return;
-            // setTimeout(nextLoadBlock, 60 * 1000);
+            setTimeout(nextLoadBlock, 60 * 1000);
         });
     });
 };

@@ -625,9 +625,15 @@ Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
                                 cb(err);
                             }
                         });
-                    }, cb);
+                    }, function (err) {
+                        if(err) {
+                            cb(err);
+                        } else {
+                            cb();
+                        }
+                    })
                 }
-            ], function (err, data) {
+            ], function (err) {
                 if(err) {
                     return setImmediate(cb, err);
                 } else {
@@ -1007,10 +1013,11 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                 privated.lastBlock = block;
                                 library.notification_center.notify('newBlock', block, broadcast);
                                 library.modules.round.tick(block, done);
-                                setImmediate(cb);
+                                // setImmediate(cb);
                             }).catch((err) => {
                                 library.log.Error("saveBlock failed", "Error", err);
-                                setImmediate(cb, err);
+                                // setImmediate(cb, err);
+                                done(err)
                             });
                         }
                     }).catch((err) => {
