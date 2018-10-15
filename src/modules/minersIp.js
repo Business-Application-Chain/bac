@@ -1,9 +1,7 @@
-
 var TransactionTypes = require('../utils/transaction-types');
 var constants = require('../utils/constants');
 var ip = require('ip');
 var Sequelize = require('sequelize');
-// private objects
 var modules_loaded, library, self, privated = {}, shared_1_0 = {};
 var crypto = require('crypto');
 

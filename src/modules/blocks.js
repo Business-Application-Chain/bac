@@ -16,9 +16,9 @@ var	ip = require('ip');
 var Json2csv = require('json2csv').Parser;
 var BluePromise = require("bluebird");
 
-var header = ['b_hash', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward', 'b_payloadLength', 'b_payloadHash','b_generatorPublicKey','b_blockSignature', 'b_merkleRoot','t_hash',
-    't_type','t_timestamp','t_senderPublicKey', 't_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature', 'd_address', 's_publicKey','c_address','u_alias',
-    'm_min','m_lifetime','m_keysgroup','t_requesterPublicKey','t_signatures', 'a_name', 'a_description', 'a_hash', 'a_decimal', 'a_total', 'tr_amount', 'tr_assetsHash', 'tr_assetsName', 'l_lockHeight'];
+var header = ['b_hash', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward', 'b_payloadLength', 'b_payloadHash','b_generatorPublicKey','b_blockSignature', 'b_merkleRoot',
+    't_hash', 't_type','t_timestamp','t_senderPublicKey', 't_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature', 's_publicKey', 'd_address','c_address','u_alias',
+    'm_min','m_lifetime','m_keysgroup','t_requesterPublicKey','t_signatures', 'a_name', 'a_description', 'a_hash', 'a_decimal', 'a_total', 'tr_amount', 'tr_assetsHash', 'tr_assetsName', 'l_lockHeight', 'min_ip', 'min_port'];
 
 require('array.prototype.findindex'); // Old node fix
 
@@ -74,7 +74,9 @@ privated.blocksDataFields = {
     'tr_amount': Number,
     'tr_assetsHash': String,
     'tr_assetsName': String,
-    'l_lockHeight': Number
+    'l_lockHeight': Number,
+    'min_ip': Number,
+    'min_port': Number
 };
 
 // constructor
@@ -126,7 +128,7 @@ privated.saveBlock = function (blockObj, cb) {
             else {
                 resolve();
             }
-        })
+        });
     }));
     async.each(blockObj.transactions, function (txObj, cb) {
         txObj.blockHash = blockObj.hash;
@@ -267,7 +269,7 @@ privated.getById = function (hash, cb) {
         }
     ], function (err, hash) {
         library.dbClient.query('SELECT ' +
-            'b.hash as b_hash, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward, b.payloadLength as b_payloadLength, b.payloadHash as b_payloadHash, b.generatorPublicKey as b_generatorPublicKey,  lower(b.blockSignature) as b_blockSignature, ' +
+            'b.hash as b_hash, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward, b.payloadLength as b_payloadLength, b.payloadHash as b_payloadHash, b.generatorPublicKey as b_generatorPublicKey, b.blockSignature as b_blockSignature, b.merkleRoot as b_merkleRoot, ' +
             't.hash as t_hash, t.type as t_type, t.timestamp as t_timestamp, t.senderPublicKey as t_senderPublicKey, t.senderId as t_senderId, t.recipientId as t_recipientId, t.senderUsername as t_senderUsername, t.recipientUsername as t_recipientUsername, t.amount as t_amount, t.fee as t_fee, t.signature as t_signature, t.signSignature as t_signSignature,  ' +
             's.publicKey as s_publicKey, ' +
             'd.address as d_address, ' +
@@ -275,9 +277,10 @@ privated.getById = function (hash, cb) {
             'u.username as u_alias,' +
             'm.min as m_min, m.lifetime as m_lifetime, m.keysgroup as m_keysgroup, ' +
             't.requesterPublicKey as t_requesterPublicKey, t.signatures as t_signatures, ' +
-            'a.name as a_name, a.description as a_description, a.hash as a_hash, a.decimal as a_decimal, a.total as a_total, ' +
-            'tr.amount as tr_amount, tr.assetsHash as tr_assetsHash, ' +
-            'l.lockHeight as l_lockHeight ' +
+            'a.name as a_name, a.description as a_description, a.hash as a_hash,  a.decimal as a_decimal, a.total as a_total, ' +
+            'tr.amount as tr_amount, tr.assetsHash as tr_assetsHash, tr.assets_name as tr_assetsName, ' +
+            'l.lockHeight as l_lockHeight, ' +
+            'min.ip as min_ip, min.port as min_port ' +
             "FROM blocks b " +
             "left outer join transactions as t on t.blockHash=b.hash " +
             "left outer join delegates as d on d.transactionHash=t.hash " +
@@ -288,6 +291,7 @@ privated.getById = function (hash, cb) {
             "left outer join account2assets as a on a.transactionHash=t.hash " +
             "left outer join transfers as tr on tr.transactionHash=t.hash " +
             "left outer join lock_height as l on l.transactionHash=t.hash " +
+            "left outer join miner_ip as min on min.transactionHash=t.hash " +
             `where b.hash = "${hash}" or b.height = "${hash}" `, {
             type: Sequelize.QueryTypes.SELECT
         }).then((rows) => {
@@ -330,7 +334,6 @@ privated.getBlocks = function(option, cb) {
 };
 
 privated.popLastBlock = function (oldLastBlock, cb) {
-
 };
 
 privated.getIdSequence = function (height, cb) {
@@ -1064,17 +1067,18 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
             }
 
             let sql = 'SELECT '+
-                'b.hash as b_hash, b.version , b.timestamp as b_timestamp , b.height , b.previousBlock , b.numberOfTransactions , b.totalAmount , b.totalFee , b.reward , b.payloadLength, lower(b.payloadHash) as payloadHash, lower(b.generatorPublicKey) as generatorPublicKey, lower(b.blockSignature) as blockSignature, ' +
-                "t.hash as t_hash, t.type, t.timestamp as t_timestamp , t.senderPublicKey , t.senderId , t.recipientId , t.senderUsername , t.recipientUsername , t.amount , t.fee , t.signature , t.signSignature , " +
-                'd.address as d_address , ' +
-                "s.publicKey , " +
-                'c.address , ' +
-                'u.username as c_username ,' +
-                'm.min , m.lifetime , m.keysgroup , ' +
-                't.requesterPublicKey , t.signatures , ' +
+                'b.hash as b_hash, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward, b.payloadLength as b_payloadLength, b.payloadHash as b_payloadHash, b.generatorPublicKey as b_generatorPublicKey, b.blockSignature as b_blockSignature, b.merkleRoot as b_merkleRoot, ' +
+                't.hash as t_hash, t.type as t_type, t.timestamp as t_timestamp, t.senderPublicKey as t_senderPublicKey, t.senderId as t_senderId, t.recipientId as t_recipientId, t.senderUsername as t_senderUsername, t.recipientUsername as t_recipientUsername, t.amount as t_amount, t.fee as t_fee, t.signature as t_signature, t.signSignature as t_signSignature,  ' +
+                's.publicKey as s_publicKey, ' +
+                'd.address as d_address, ' +
+                'c.address as c_address, ' +
+                'u.username as u_alias,' +
+                'm.min as m_min, m.lifetime as m_lifetime, m.keysgroup as m_keysgroup, ' +
+                't.requesterPublicKey as t_requesterPublicKey, t.signatures as t_signatures, ' +
                 'a.name as a_name, a.description as a_description, a.hash as a_hash,  a.decimal as a_decimal, a.total as a_total, ' +
                 'tr.amount as tr_amount, tr.assetsHash as tr_assetsHash, tr.assets_name as tr_assetsName, ' +
-                'l.lock_height as l_lockHeight ' +
+                'l.lockHeight as l_lockHeight, ' +
+                'min.ip as min_ip, min.port as min_port ' +
                 "FROM blocks b " +
                 "left outer join transactions as t on t.blockHash=b.hash " +
                 "left outer join delegates as d on d.transactionHash=t.hash " +
@@ -1085,6 +1089,7 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
                 "left outer join account2assets as a on a.transactionHash=t.hash " +
                 "left outer join transfers as tr on tr.transactionHash=t.hash " +
                 "left outer join lock_height as l on l.transactionHash=t.hash " +
+                "left outer join miner_ip as min on min.transactionHash=t.hash " +
                 (filter.hash || filter.lastBlockHash ? " where " : " ") + " " +
                 (filter.hash ? " b.hash = $hash " : " ") + (filter.hash && filter.lastBlockHash ? " and " : " ") + (filter.lastBlockHash ? " b.height > $height and b.height < $limit " : " ") +
                 "ORDER BY b.height";
