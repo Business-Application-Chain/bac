@@ -1037,11 +1037,11 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
     if (filter.lastBlockHash && filter.hash) {
         return cb("Invalid filter");
     }
-    var params = {limit: filter.limit || 1};
+    let params = {limit: filter.limit || 1};
     filter.lastBlockHash && (params.lastBlockHash = filter.lastBlockHash);
     filter.hash && !filter.lastBlockHash && (params.hash = filter.hash);
-    var fields = privated.blocksDataFields;
-    var method;
+    let fields = privated.blocksDataFields;
+    let method = false;
 
     if (options.plain) {
         method = true;
@@ -1097,11 +1097,11 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
                 type: Sequelize.QueryTypes.SELECT,
                 bind: params,
             }).then((blocks) => {
-                blocks.forEach(function (block) {
-                    block.blockSignature = block.blockSignature.toString('utf8');
-                    block.generatorPublicKey = block.generatorPublicKey.toString('utf8');
-                    block.payloadHash = block.payloadHash.toString('utf8');
-                });
+                // blocks.forEach(function (block) {
+                //     block.b_blockSignature = block.b_blockSignature.toString('utf8');
+                //     block.b_generatorPublicKey = block.b_generatorPublicKey.toString('utf8');
+                //     block.b_payloadHash = block.b_payloadHash.toString('utf8');
+                // });
                 let json2csv = new Json2csv({header: false});
                 let csv = json2csv.parse(blocks);
                return cb(null, csv);
