@@ -375,6 +375,8 @@ Transaction.prototype.verify = function (txObj, sender, requester, cb) {
     }
 
     if (!valid) {
+        console.log('errrrrrrrrrrrrrrrrrrrr');
+        console.log(txObj);
         return setImmediate(cb, "Failed to verify signature");
     }
 

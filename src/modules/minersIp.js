@@ -114,8 +114,8 @@ function MinerIp() {
             return null;
         } else {
             var minerIp = {
-                ip: raw.min_ip,
-                port: raw.min_port
+                ip: parseInt(raw.min_ip),
+                port: parseInt(raw.min_port)
             };
 
             return {minerIp: minerIp};

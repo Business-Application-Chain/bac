@@ -8,13 +8,13 @@
     "db": {
         "host": "127.0.0.1",
         "port": "3306",
-        "name": "db_entu",
+        "name": "db_bac",
         "user": "root",
         "password": "123456"
     },
     "peers": {
         "list": [
-            {"ip": "127.0.0.1", "port": 7259}
+            {"ip": "10.0.248.211", "port": 7259}
         ],
         "blackList": [],
         "optional": {
