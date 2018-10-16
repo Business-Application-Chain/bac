@@ -357,7 +357,6 @@ Kernel.prototype.onUnconfirmedTransaction = function (transaction, broadcast) {
     }
 };
 
-
 shared_1_0.list = function (req, cb) {
     library.modules.peer.list({limit: 100}, function (err, peers) {
         if(err) {
@@ -365,7 +364,6 @@ shared_1_0.list = function (req, cb) {
         } else {
            return cb(null, 200, peers);
         }
-
     });
 };
 
