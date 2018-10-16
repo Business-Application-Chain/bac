@@ -39,6 +39,22 @@
       "fee": 0
     },
     {
+      "type": 2,
+      "amount": 0,
+      "recipientId": null,
+      "senderId": "BLX3EozVesMb9emWPW2qHGB7RMrcAESysQ",
+      "senderPublicKey": "0319fbb80c2b59f0ef42b454819b18555643861677328fcc541b57671be9596de4",
+      "timestamp": 1532420482220,
+      "asset": {
+        "delegate": {
+          "address": "BLX3EozVesMb9emWPW2qHGB7RMrcAESysQ"
+        }
+      },
+      "signature": "203a46f0cqrs86dd7e42e0a57b2baf7eecd5da4b88d191186599ec4bdc721d761d42adb1cadbed3a3f2efe6c771e268db5c3b91534a91de326b55b4c0b43cfb4ff",
+      "hash": "8465945453657670454",
+      "fee": 0
+    },
+    {
       "type": 3,
       "amount": 0,
       "recipientId": "BLwuEZjVTVgQAYR3r2rcAY4FKgZ3bRPBa4",
@@ -69,6 +85,23 @@
       },
       "signature": "202c507072qw7ecf2662723063feadbe9d0af4f0ff70ee8f39f382391e0b6af2c01bbf6284feaf918c27b490284723350eeac686d0e07f3eb3e395aec0d0feb677",
       "hash": "98575549538740098435",
+      "fee": 0
+    },
+    {
+      "type": 15,
+      "amount": 0,
+      "recipientId": null,
+      "senderId": "BLX3EozVesMb9emWPW2qHGB7RMrcAESysQ",
+      "senderPublicKey": "0319fbb80c2b59f0ef42b454819b18555643861677328fcc541b57671be9596de4",
+      "timestamp": 1532420482220,
+      "asset": {
+        "minerIp": {
+          "ip": 2887716699,
+          "port": 7259
+        }
+      },
+      "signature": "202c507072qw7ecf2112723063feadbe9d0af4f0ff70ee8f39f382391e0b6af2c01bbf6284feaf918c27b490284723350eeac686d0e07f3eb3e395aec0d0feb677",
+      "hash": "98575549538740098466",
       "fee": 0
     }
   ],
