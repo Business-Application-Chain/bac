@@ -1,3 +1,3 @@
-let a = ["123321", "11456987", "3214ss56"];
-a.sort();
-console.log(a);
+let ip = require('ip');
+let a = "172.31.10.46";
+console.log(ip.toLong(a));
