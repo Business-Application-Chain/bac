@@ -1,4 +1,4 @@
-const baseUrl = '//10.0.248.211'
+const baseUrl = '//10.0.100.110'
 // const baseUrl = '//0.0.0.0'
 
 export default {
