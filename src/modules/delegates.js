@@ -186,31 +186,35 @@ function Delegate() {
     };
 
     this.save = function (txObj, cb) {
-       library.dbClient.query("INSERT INTO delegates (transactionHash, address) VALUES ($transactionHash, $address)", {
+        let p1 = library.dbClient.query("INSERT INTO delegates (transactionHash, address) VALUES ($transactionHash, $address)", {
             type: Sequelize.QueryTypes.INSERT,
             bind: {
                 transactionHash: txObj.hash,
                 address: txObj.senderId
             },
+        });
+        let p2 = library.dbClient.query("INSERT INTO miner (`address`, `publicKey`, `ip`, `port`, `version`, `lock`) VALUES ($address, $publicKey, $ip, $port, $version, $lock)", {
+            type: Sequelize.QueryTypes.INSERT,
+            bind: {
+                address: txObj.senderId,
+                publicKey: txObj.senderPublicKey,
+                ip: 0,
+                port: 0,
+                version: library.config.version,
+                lock: 1
+            }
         }).then(() => {
-           library.dbClient.query("INSERT INTO miner (`address`, `publicKey`, `ip`, `port`, `version`, `lock`) VALUES ($address, $publicKey, $ip, $port, $version, $lock)", {
-               type: Sequelize.QueryTypes.INSERT,
-               bind: {
-                   address: txObj.senderId,
-                   publicKey: txObj.senderPublicKey,
-                   ip: 0,
-                   port: 0,
-                   version: library.config.version,
-                   lock: 1
-               }
-           }).then(() => {
-               cb();
-           }).catch(err => {
-               cb(err);
-           });
-       }).catch((err) => {
-           cb(err);
-       });
+            cb();
+        }).catch(err => {
+            cb(err);
+        });
+        Promise.all([p1, p2]).then((data) => {
+            // console.log(data);
+            cb();
+        }).catch((err) => {
+            console.log(err);
+            cb(err);
+        });
     };
 }
 
