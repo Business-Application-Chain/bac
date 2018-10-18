@@ -293,7 +293,7 @@ Block.prototype.load = function (raw) {
 };
 
 Block.prototype.save = function (blockObj, cb) {
-    return library.dbClient.query("INSERT INTO blocks (hash, version, timestamp, height, previousBlock, numberOfTransactions, totalAmount, totalFee, reward, payloadLength, payloadHash, generatorPublicKey, blockSignature, merkleRoot) VALUES ($hash, $version, $timestamp, $height, $previousBlock, $numberOfTransactions, $totalAmount, $totalFee, $reward, $payloadLength, $payloadHash, $generatorPublicKey, $blockSignature, $merkleRoot)", {
+    return library.dbClient.query("INSERT INTO blocks (hash, version, timestamp, height, previousBlock, numberOfTransactions, totalAmount, totalFee, reward, payloadLength, payloadHash, generatorPublicKey, blockSignature, merkleRoot, difficulty, basic) VALUES ($hash, $version, $timestamp, $height, $previousBlock, $numberOfTransactions, $totalAmount, $totalFee, $reward, $payloadLength, $payloadHash, $generatorPublicKey, $blockSignature, $merkleRoot, $difficulty, $basic)", {
         type: Sequelize.QueryTypes.INSERT,
         bind: {
             hash: blockObj.hash,
@@ -309,7 +309,9 @@ Block.prototype.save = function (blockObj, cb) {
             payloadHash: blockObj.payloadHash,
             generatorPublicKey: blockObj.generatorPublicKey,
             blockSignature: blockObj.blockSignature,
-            merkleRoot: blockObj.merkleRoot
+            merkleRoot: blockObj.merkleRoot,
+            basic: blockObj.basic,
+            difficulty: blockObj.difficulty
         },
     }).then(() => {
         cb();

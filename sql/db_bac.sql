@@ -11,7 +11,7 @@
  Target Server Version : 50721
  File Encoding         : 65001
 
- Date: 15/10/2018 17:30:28
+ Date: 18/10/2018 11:42:40
 */
 
 SET NAMES utf8mb4;
@@ -187,6 +187,8 @@ CREATE TABLE `blocks` (
   `generatorPublicKey` varchar(128) NOT NULL,
   `blockSignature` varchar(255) NOT NULL,
   `merkleRoot` varchar(255) DEFAULT NULL,
+  `difficulty` varchar(255) DEFAULT NULL,
+  `basic` int(11) DEFAULT NULL,
   PRIMARY KEY (`hash`) USING BTREE,
   KEY `previousBlock` (`previousBlock`),
   CONSTRAINT `blocks_ibkf_1` FOREIGN KEY (`previousBlock`) REFERENCES `blocks` (`hash`) ON DELETE SET NULL
@@ -260,7 +262,8 @@ CREATE TABLE `miner` (
   `ip` bigint(10) NOT NULL,
   `port` int(11) DEFAULT NULL,
   `version` varchar(64) DEFAULT NULL,
-  `lock` tinyint(8) DEFAULT '0'
+  `lock` tinyint(8) DEFAULT '0',
+  PRIMARY KEY (`address`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- ----------------------------
@@ -301,7 +304,7 @@ CREATE TABLE `peers` (
   `clock` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `ip_UNIQUE` (`ip`)
-) ENGINE=InnoDB AUTO_INCREMENT=6167153 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=6173693 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for peers_dapp
@@ -380,5 +383,4 @@ CREATE TABLE `votes` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 SET FOREIGN_KEY_CHECKS = 1;
-
 flush privileges;
