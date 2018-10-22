@@ -126,21 +126,23 @@ function MinerIp() {
         library.dbClient.query(`INSERT INTO miner_ip (transactionHash, ip, port, address, publicKey) VALUES ("${txObj.hash}", "${txObj.asset.minerIp.ip}", "${txObj.asset.minerIp.port}", "${txObj.senderId}", "${txObj.senderPublicKey}")`, {
             type: Sequelize.QueryTypes.INSERT,
         }).then(() => {
-            library.dbClient.query('UPDATE miner SET `ip`=$ip, `port`=$port, `lock`=0 WHERE `address` = $address', {
-                type: Sequelize.QueryTypes.UPDATE,
-                bind: {
-                    ip: txObj.asset.minerIp.ip,
-                    port: txObj.asset.minerIp.port,
-                    publicKey: txObj.senderPublicKey,
-                    address: txObj.senderId
-                }
-            }).then(() => {
-                library.notification_center.notify('modifyMinerIp');
-                cb();
-            }).catch(err => {
-                console.log('err1 -> ', txObj.hash);
-                cb(err);
-            });
+            setTimeout(() => {
+                library.dbClient.query('UPDATE miner SET `ip`=$ip, `port`=$port, `lock`=0 WHERE `address` = $address', {
+                    type: Sequelize.QueryTypes.UPDATE,
+                    bind: {
+                        ip: txObj.asset.minerIp.ip,
+                        port: txObj.asset.minerIp.port,
+                        publicKey: txObj.senderPublicKey,
+                        address: txObj.senderId
+                    }
+                }).then(() => {
+                    library.notification_center.notify('modifyMinerIp');
+                    cb();
+                }).catch(err => {
+                    console.log('err1 -> ', txObj.hash);
+                    cb(err);
+                });
+            }, 300);
         }).catch((err) => {
             console.log('err2 -> ', txObj.hash);
             cb(err);
