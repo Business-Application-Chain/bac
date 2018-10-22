@@ -16,7 +16,7 @@ var	ip = require('ip');
 var Json2csv = require('json2csv').Parser;
 var BluePromise = require("bluebird");
 
-var header = ['b_hash', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward', 'b_payloadLength', 'b_payloadHash','b_generatorPublicKey','b_blockSignature', 'b_merkleRoot', 'b_difficulty', 'b_basic',
+var header = ['b_hash', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward','b_generatorPublicKey','b_blockSignature', 'b_merkleRoot', 'b_difficulty', 'b_basic', 'b_decisionSignature', 'b_decisionAddress',
     't_hash', 't_type','t_timestamp','t_senderPublicKey', 't_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature', 's_publicKey', 'd_address','c_address','u_alias',
     'm_min','m_lifetime','m_keysgroup','t_requesterPublicKey','t_signatures', 'a_name', 'a_description', 'a_hash', 'a_decimal', 'a_total', 'tr_amount', 'tr_assetsHash', 'tr_assetsName', 'l_lockHeight', 'min_ip', 'min_port'];
 
@@ -40,11 +40,11 @@ privated.blocksDataFields = {
     'b_totalAmount': String,
     'b_totalFee': String,
     'b_reward': String,
-    'b_payloadLength': String,
-    'b_payloadHash': String,
     'b_generatorPublicKey': String,
     'b_blockSignature': String,
     'b_merkleRoot': String,
+    'b_decisionSignature': String,
+    'b_decisionAddress': String,
     't_hash': String,
     't_type': Number,
     't_timestamp': Number,
@@ -230,7 +230,7 @@ privated.list = function (filter, cb) {
         type: Sequelize.QueryTypes.SELECT
     }).then((rows) => {
         let count = rows[0].count;
-        library.dbClient.query('SELECT b.hash, b.version, b.timestamp, b.height, b.previousBlock, b.numberOfTransactions, b.totalAmount, b.totalFee, b.reward, b.payloadLength, lower(hex(b.payloadHash)), lower(hex(b.generatorPublicKey)), lower(hex(b.blockSignature)), (select max(height) + 1 from blocks) - b.height' +
+        library.dbClient.query('SELECT b.hash, b.version, b.timestamp, b.height, b.previousBlock, b.numberOfTransactions, b.totalAmount, b.totalFee, b.reward, lower(hex(b.generatorPublicKey)), lower(hex(b.blockSignature)), (select max(height) + 1 from blocks) - b.height' +
         "from blocks b " + (fields.length ? "where " + fields.join(' and ') : '') + " " +
         (filter.orderBy ? 'order by ' + sortBy + ' ' + sortMethod : '') + ` limit ${params.limit} offset ${params.offset} `, {
             type: Sequelize.QueryTypes.SELECT
@@ -271,7 +271,7 @@ privated.getById = function (hash, cb) {
         }
     ], function (err, hash) {
         library.dbClient.query('SELECT ' +
-            'b.hash as b_hash, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward, b.payloadLength as b_payloadLength, b.payloadHash as b_payloadHash, b.generatorPublicKey as b_generatorPublicKey, b.blockSignature as b_blockSignature, b.merkleRoot as b_merkleRoot, b.difficulty as b_difficulty, b.basic as b_basic, ' +
+            'b.hash as b_hash, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward,  b.generatorPublicKey as b_generatorPublicKey, b.blockSignature as b_blockSignature, b.merkleRoot as b_merkleRoot, b.difficulty as b_difficulty, b.basic as b_basic, b.decisionSignature as b_decisionSignature, b.decisionAddress as b_decisionAddress, ' +
             't.hash as t_hash, t.type as t_type, t.timestamp as t_timestamp, t.senderPublicKey as t_senderPublicKey, t.senderId as t_senderId, t.recipientId as t_recipientId, t.senderUsername as t_senderUsername, t.recipientUsername as t_recipientUsername, t.amount as t_amount, t.fee as t_fee, t.signature as t_signature, t.signSignature as t_signSignature,  ' +
             's.publicKey as s_publicKey, ' +
             'd.address as d_address, ' +
@@ -301,7 +301,6 @@ privated.getById = function (hash, cb) {
             blocks.forEach(function (block) {
                 block.blockSignature = block.blockSignature.toString('utf8');
                 block.generatorPublicKey = block.generatorPublicKey.toString('utf8');
-                block.payloadHash = block.payloadHash.toString('utf8');
                 block.confirmations = privated.lastBlock.height - block.b_height;
             });
             return cb(null, blocks);
@@ -315,7 +314,7 @@ privated.getBlocks = function(option, cb) {
     let height = option.height || 0;
     let size = option.size || 10;
     let sql = 'SELECT ' +
-        'hash, version, timestamp, height , previousBlock , numberOfTransactions , totalAmount , totalFee , reward , payloadLength, lower(payloadHash) as payloadHash, lower(generatorPublicKey) as generatorPublicKey, lower(blockSignature) as blockSignature FROM blocks';
+        'hash, version, timestamp, height , previousBlock , numberOfTransactions , totalAmount , totalFee , reward , lower(generatorPublicKey) as generatorPublicKey, lower(blockSignature) as blockSignature FROM blocks';
     if(height) {
         sql += ' WHERE height < ' + height;
     }
@@ -327,7 +326,6 @@ privated.getBlocks = function(option, cb) {
         rows.forEach(function (block) {
             block.blockSignature = block.blockSignature.toString('utf8');
             block.generatorPublicKey = block.generatorPublicKey.toString('utf8');
-            block.payloadHash = block.payloadHash.toString('utf8');
         });
         cb(null, rows);
     }).catch((err) => {
@@ -654,7 +652,7 @@ Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
 
     library.dbSequence.add(function (cb) {
         var sql = 'SELECT ' +
-            'b.hash as b_hash, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward, b.payloadLength as b_payloadLength, b.payloadHash as b_payloadHash, b.generatorPublicKey as b_generatorPublicKey, b.blockSignature as b_blockSignature, b.merkleRoot as b_merkleRoot, b.difficulty as b_difficulty, b.basic as b_basic, ' +
+            'b.hash as b_hash, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward, b.generatorPublicKey as b_generatorPublicKey, b.blockSignature as b_blockSignature, b.merkleRoot as b_merkleRoot, b.difficulty as b_difficulty, b.basic as b_basic, b.decisionSignature as b_decisionSignature, b.decisionAddress as b_decisionAddress, ' +
             't.hash as t_hash, t.type as t_type, t.timestamp as t_timestamp, t.senderPublicKey as t_senderPublicKey, t.senderId as t_senderId, t.recipientId as t_recipientId, t.senderUsername as t_senderUsername, t.recipientUsername as t_recipientUsername, t.amount as t_amount, t.fee as t_fee, t.signature as t_signature, t.signSignature as t_signSignature,  ' +
             's.publicKey as s_publicKey, ' +
             'd.address as d_address, ' +
@@ -884,14 +882,11 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                 if (block.version > 0) {
                     return done("Invalid block version: " + block.hash);
                 }
-                if (typeof block.basic === "number" || block.basic < 16) {
+                if (typeof block.basic !== "number" || block.basic < 16) {
                     return done("basic should more 16: " + block.hash);
                 }
                 if (!block.difficulty) {
                     return done("Can't find difficulty: " + block.hash);
-                }
-                if (block.payloadLength > constants.maxPayloadLength) {
-                    return done("Can't verify payload length of block: " + block.hash);
                 }
                 // if (block.transactions.length != block.numberOfTransactions || block.transactions.length > 100) {
                 if (block.transactions.length !== block.numberOfTransactions) {
@@ -1082,7 +1077,7 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
             }
 
             let sql = 'SELECT '+
-                'b.hash as b_hash, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward, b.payloadLength as b_payloadLength, b.payloadHash as b_payloadHash, b.generatorPublicKey as b_generatorPublicKey, b.blockSignature as b_blockSignature, b.merkleRoot as b_merkleRoot, b.difficulty as b_difficulty, b.basic as b_basic,  ' +
+                'b.hash as b_hash, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward,  b.generatorPublicKey as b_generatorPublicKey, b.blockSignature as b_blockSignature, b.merkleRoot as b_merkleRoot, b.difficulty as b_difficulty, b.basic as b_basic, b.decisionSignature as b_decisionSignature, b.decisionAddress as b_decisionAddress, ' +
                 't.hash as t_hash, t.type as t_type, t.timestamp as t_timestamp, t.senderPublicKey as t_senderPublicKey, t.senderId as t_senderId, t.recipientId as t_recipientId, t.senderUsername as t_senderUsername, t.recipientUsername as t_recipientUsername, t.amount as t_amount, t.fee as t_fee, t.signature as t_signature, t.signSignature as t_signSignature,  ' +
                 's.publicKey as s_publicKey, ' +
                 'd.address as d_address, ' +
@@ -1115,7 +1110,6 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
                 // blocks.forEach(function (block) {
                 //     block.b_blockSignature = block.b_blockSignature.toString('utf8');
                 //     block.b_generatorPublicKey = block.b_generatorPublicKey.toString('utf8');
-                //     block.b_payloadHash = block.b_payloadHash.toString('utf8');
                 // });
                 let json2csv = new Json2csv({header: false});
                 let csv = json2csv.parse(blocks);

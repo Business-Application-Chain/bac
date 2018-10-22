@@ -66,13 +66,6 @@ Block.prototype.objectNormalize = function (block) {
             numberOfTransactions: {
                 type: "integer"
             },
-            payloadHash: {
-                type: "string",
-                format: "hex"
-            },
-            payloadLength: {
-                type: "integer"
-            },
             previousBlock: {
                 type: "string"
             },
@@ -103,7 +96,7 @@ Block.prototype.objectNormalize = function (block) {
                 type: "string"
             }
         },
-        required: ['blockSignature', 'generatorPublicKey', 'numberOfTransactions', 'payloadHash', 'payloadLength', 'timestamp', 'totalAmount', 'totalFee', 'reward', 'transactions', 'version', 'merkleRoot']
+        required: ['blockSignature', 'generatorPublicKey', 'numberOfTransactions', 'timestamp', 'totalAmount', 'totalFee', 'reward', 'transactions', 'version', 'merkleRoot']
     });
 
     if (!report) {
@@ -161,8 +154,6 @@ Block.prototype.dbRead = function (raw) {
             totalAmount: parseInt(raw.b_totalAmount),
             totalFee: parseInt(raw.b_totalFee),
             reward: parseInt(raw.b_reward),
-            payloadLength: parseInt(raw.b_payloadLength),
-            payloadHash: raw.b_payloadHash,
             generatorPublicKey: raw.b_generatorPublicKey,
             blockSignature: raw.b_blockSignature,
             merkleRoot: raw.b_merkleRoot || ''
@@ -182,8 +173,6 @@ Block.prototype.getBytes = function (blockObj) {
         // 8:totalAmount
         // 8:totalFee
         // 8:reward
-        // 4:payloadLength
-        // 32:payloadHash
         // 32:generatorPublicKey
         // 64:blockSignature
         bb.writeInt(blockObj.version);
@@ -207,15 +196,6 @@ Block.prototype.getBytes = function (blockObj) {
         bb.writeLong(blockObj.totalAmount);
         bb.writeLong(blockObj.totalFee);
         bb.writeLong(blockObj.reward);
-
-        bb.writeInt(blockObj.payloadLength);
-
-        if (blockObj.payloadHash) {
-            var payloadHashBuffer = new Buffer(blockObj.payloadHash, 'hex');
-            for (var i = 0; i < payloadHashBuffer.length; i++) {
-                bb.writeByte(payloadHashBuffer[i]);
-            }
-        }
 
         if (blockObj.generatorPublicKey) {
             var generatorPublicKeyBuffer = new Buffer(blockObj.generatorPublicKey, 'hex');
@@ -251,20 +231,29 @@ Block.prototype.verifySignature = function (blockObj) {
         totalAmount: blockObj.totalAmount,
         totalFee: blockObj.totalFee,
         reward: blockObj.reward,
-        payloadHash: blockObj.payloadHash,
         timestamp: blockObj.timestamp,
         numberOfTransactions: blockObj.numberOfTransactions,
-        payloadLength: blockObj.payloadLength,
         previousBlock: blockObj.previousBlock,
         generatorPublicKey: blockObj.generatorPublicKey,
-        merkleRoot: blockObj.merkleRoot || ''
+        merkleRoot: blockObj.merkleRoot || '',
+        difficulty: blockObj.difficulty,
+        basic: blockObj.basic
     };
     let blockSignature = new Buffer(blockObj.blockSignature, 'hex');
     let publicBuffer = Buffer.from(blockObj.generatorPublicKey, 'hex');
     let address = bacLib.bacECpair.fromPublicKeyBuffer(publicBuffer).getAddress();
     let res = bacLib.bacSign.verify(JSON.stringify(block), address, blockSignature);
-
-    return res;
+    // return res;
+    if (res) {
+        //矿工签名正确
+        let decisionSign = new Buffer(blockObj.decisionSignature, 'hex');
+        let decisionMsg = {
+            blockSignature: blockObj.blockSignature,
+            decisionAddress: blockObj.decisionAddress
+        };
+        return bacLib.bacSign.verify(JSON.stringify(decisionMsg), blockObj.decisionAddress, decisionSign);
+    }
+    return false;
 };
 
 Block.prototype.load = function (raw) {
@@ -281,8 +270,6 @@ Block.prototype.load = function (raw) {
             totalAmount: parseInt(raw.b_totalAmount),
             totalFee: parseInt(raw.b_totalFee),
             reward: parseInt(raw.b_reward),
-            payloadLength: parseInt(raw.b_payloadLength),
-            payloadHash: raw.b_payloadHash,
             generatorPublicKey: raw.b_generatorPublicKey,
             blockSignature: raw.b_blockSignature,
             confirmations: raw.b_confirmations
@@ -293,7 +280,7 @@ Block.prototype.load = function (raw) {
 };
 
 Block.prototype.save = function (blockObj, cb) {
-    return library.dbClient.query("INSERT INTO blocks (hash, version, timestamp, height, previousBlock, numberOfTransactions, totalAmount, totalFee, reward, payloadLength, payloadHash, generatorPublicKey, blockSignature, merkleRoot, difficulty, basic) VALUES ($hash, $version, $timestamp, $height, $previousBlock, $numberOfTransactions, $totalAmount, $totalFee, $reward, $payloadLength, $payloadHash, $generatorPublicKey, $blockSignature, $merkleRoot, $difficulty, $basic)", {
+    return library.dbClient.query("INSERT INTO blocks (hash, version, timestamp, height, previousBlock, numberOfTransactions, totalAmount, totalFee, reward, generatorPublicKey, blockSignature, merkleRoot, difficulty, basic, decisionSignature, decisionAddress) VALUES ($hash, $version, $timestamp, $height, $previousBlock, $numberOfTransactions, $totalAmount, $totalFee, $reward, $generatorPublicKey, $blockSignature, $merkleRoot, $difficulty, $basic, $decisionSignature, $decisionAddress)", {
         type: Sequelize.QueryTypes.INSERT,
         bind: {
             hash: blockObj.hash,
@@ -305,13 +292,13 @@ Block.prototype.save = function (blockObj, cb) {
             totalAmount: blockObj.totalAmount,
             totalFee: blockObj.totalFee,
             reward: blockObj.reward || 0,
-            payloadLength: blockObj.payloadLength,
-            payloadHash: blockObj.payloadHash,
             generatorPublicKey: blockObj.generatorPublicKey,
             blockSignature: blockObj.blockSignature,
             merkleRoot: blockObj.merkleRoot,
             basic: blockObj.basic,
-            difficulty: blockObj.difficulty
+            difficulty: blockObj.difficulty,
+            decisionSignature: blockObj.decisionSignature,
+            decisionAddress: blockObj.decisionAddress
         },
     }).then(() => {
         cb();

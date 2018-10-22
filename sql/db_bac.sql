@@ -11,7 +11,7 @@
  Target Server Version : 50721
  File Encoding         : 65001
 
- Date: 18/10/2018 11:42:40
+ Date: 22/10/2018 11:21:44
 */
 
 SET NAMES utf8mb4;
@@ -173,22 +173,22 @@ CREATE TABLE `accounts_round` (
 -- ----------------------------
 DROP TABLE IF EXISTS `blocks`;
 CREATE TABLE `blocks` (
-  `hash` varchar(64) NOT NULL,
   `version` int(11) NOT NULL,
   `timestamp` bigint(13) NOT NULL,
+  `hash` varchar(64) NOT NULL,
   `height` int(11) NOT NULL,
   `previousBlock` varchar(64) DEFAULT NULL,
   `numberOfTransactions` int(11) NOT NULL,
   `totalAmount` bigint(20) NOT NULL,
   `totalFee` bigint(20) NOT NULL,
   `reward` bigint(20) NOT NULL,
-  `payloadLength` int(11) NOT NULL,
-  `payloadHash` varchar(64) NOT NULL,
   `generatorPublicKey` varchar(128) NOT NULL,
   `blockSignature` varchar(255) NOT NULL,
   `merkleRoot` varchar(255) DEFAULT NULL,
   `difficulty` varchar(255) DEFAULT NULL,
   `basic` int(11) DEFAULT NULL,
+  `decisionAddress` varchar(64) DEFAULT NULL,
+  `decisionSignature` varchar(255) NOT NULL,
   PRIMARY KEY (`hash`) USING BTREE,
   KEY `previousBlock` (`previousBlock`),
   CONSTRAINT `blocks_ibkf_1` FOREIGN KEY (`previousBlock`) REFERENCES `blocks` (`hash`) ON DELETE SET NULL
@@ -304,7 +304,7 @@ CREATE TABLE `peers` (
   `clock` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `ip_UNIQUE` (`ip`)
-) ENGINE=InnoDB AUTO_INCREMENT=6173693 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=6173765 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for peers_dapp
@@ -383,4 +383,3 @@ CREATE TABLE `votes` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 SET FOREIGN_KEY_CHECKS = 1;
-flush privileges;

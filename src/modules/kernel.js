@@ -357,6 +357,10 @@ Kernel.prototype.onUnconfirmedTransaction = function (transaction, broadcast) {
     }
 };
 
+Kernel.prototype.onAddressNewBlock = function (addMap) {
+
+};
+
 shared_1_0.list = function (req, cb) {
     library.modules.peer.list({limit: 100}, function (err, peers) {
         if(err) {

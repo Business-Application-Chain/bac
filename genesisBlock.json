@@ -3,10 +3,8 @@
   "totalAmount": 10000000000000000,
   "totalFee": 0,
   "reward": 0,
-  "payloadHash": "1cedb278bd64b910c2d4b91339bc3747960b9e0acf4a7cda8ec217c558f429ad",
   "timestamp": 1532420482220,
   "numberOfTransactions": 3,
-  "payloadLength": 20326,
   "previousBlock": null,
   "generatorPublicKey": "021d830f0a86eb830d9154fd6c3ca89f5e8b319470f72fa08b6528bfb7f3f23b4e",
   "transactions": [
@@ -110,5 +108,7 @@
   "hash": "8593810399212843182",
   "merkleRoot": "A9C0E510A34365C2CC3A08E2A0B690ED8F2F35D9",
   "difficulty": "",
-  "basic": 0
+  "basic": 0,
+  "decisionSignature": "1fe3cc8bed650374bdb1cd01832d68f21cd98634084478e6acffe5ae1940fc9392783681ff31e0cecfc9c9bad321befaff8f8e3d8f4282e7e0370b6303f010ebc7",
+  "decisionAddress": ""
 }

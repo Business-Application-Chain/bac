@@ -2,7 +2,6 @@
 
 module.exports = {
     maxAmount: 10000000000,
-    maxPayloadLength: 4 * 1024 * 1024,
     blockHeaderLength: 248,
     addressLength: 208,
     maxAddressLength: 208 * 128,

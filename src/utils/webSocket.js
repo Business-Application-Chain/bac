@@ -76,6 +76,9 @@ privated.initWebSocket = function () {
                 } else if(msg[0] === '201' && msg[1] === 'blocks' && msg[2] === 'newBlock') {
                     let newBlock = JSON.parse(msg[3]);
                     library.notification_center.notify('hasNewBlock', newBlock);
+                } else if(msg[0] === '201' && msg[1] === 'kernel' && msg[2] === 'blocks') {
+                    let addMap = JSON.parse(msg[3]);
+                    library.notification_center.notify('addressNewBlock', addMap);
                 }
             }
         });
