@@ -13,7 +13,7 @@ var bignum = require('../utils/bignum.js');
 var express = require('express');
 var router = express.Router();
 var Sequelize = require('sequelize');
-
+var bacLib = require('bac-lib');
 // private objects
 var modules_loaded, library, self, privated = {}, shared_1_0 = {};
 
@@ -355,6 +355,39 @@ Kernel.prototype.onUnconfirmedTransaction = function (transaction, broadcast) {
         library.socket.webSocket.send('201|transactions|transaction|' + JSON.stringify(transaction));
         // 通知前端，产生新的交易
     }
+};
+
+Kernel.prototype.onShouldSign = function(msg) {
+    try {
+        let accountPath = path.join(__dirname, '../../accountKey.json');
+        fs.readFile(accountPath, function (err, data) {
+            if(err) {
+                console.log(err);
+            } else {
+                let mnemonic = JSON.parse(data.toString()).mnemonic;
+                let keyPair = library.base.account.getKeypair(mnemonic);
+                let signs = bacLib.bacSign.sign(msg, keyPair.d.toBuffer(32), 1).toString('hex');
+                let signMsg = {
+                    msg: signs
+                };
+                library.socket.webSocket.send('201|kernel|shouldSign|' + JSON.stringify(signMsg));
+            }
+        });
+    } catch(e) {
+        let signMsg = {
+            msg: "sign message error"
+        };
+        library.socket.webSocket.send('201|kernel|shouldSign|' + JSON.stringify(signMsg));
+    }
+};
+
+Kernel.prototype.onShouldVerify = function(signMsg) {
+    let signJson = JSON.parse(signMsg);
+    let res = bacLib.bacSign.verify(signJson.msg, signJson.address, new Buffer.from(signJson.sign, 'hex'));
+    let verifyRes = {
+        res: res
+    };
+    library.socket.webSocket.send('201|kernel|shouldVerify|' + JSON.stringify(verifyRes));
 };
 
 Kernel.prototype.onAddressNewBlock = function (addMap) {
