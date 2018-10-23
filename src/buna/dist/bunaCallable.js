@@ -1,0 +1,6 @@
+"use strict";Object.defineProperty(exports, "__esModule", { value: true });var _classCallCheck2 = require("babel-runtime/helpers/classCallCheck");var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);var _createClass2 = require("babel-runtime/helpers/createClass");var _createClass3 = _interopRequireDefault(_createClass2);function _interopRequireDefault(obj) {return obj && obj.__esModule ? obj : { default: obj };}var
+BunaCallable = function () {function BunaCallable() {(0, _classCallCheck3.default)(this, BunaCallable);}(0, _createClass3.default)(BunaCallable, [{ key: "arity", value: function arity()
+        {
+            this.arity;
+        } }]);return BunaCallable;}();exports.default = BunaCallable;
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uL2xpYi9idW5hQ2FsbGFibGUuanMiXSwibmFtZXMiOlsiQnVuYUNhbGxhYmxlIiwiYXJpdHkiXSwibWFwcGluZ3MiOiI7QUFDcUJBLFk7QUFDVDtBQUNKLGlCQUFLQyxLQUFMO0FBQ0gsUywrQ0FIZ0JELFkiLCJmaWxlIjoiYnVuYUNhbGxhYmxlLmpzIiwic291cmNlc0NvbnRlbnQiOlsiXG5leHBvcnQgZGVmYXVsdCBjbGFzcyBCdW5hQ2FsbGFibGUge1xuICAgIGFyaXR5KCkge1xuICAgICAgICB0aGlzLmFyaXR5O1xuICAgIH1cbn0iXX0=
