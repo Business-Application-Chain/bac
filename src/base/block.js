@@ -156,7 +156,12 @@ Block.prototype.dbRead = function (raw) {
             reward: parseInt(raw.b_reward),
             generatorPublicKey: raw.b_generatorPublicKey,
             blockSignature: raw.b_blockSignature,
-            merkleRoot: raw.b_merkleRoot || ''
+            merkleRoot: raw.b_merkleRoot || '',
+            basic: parseInt(raw.b_basic),
+            difficulty: raw.b_difficulty,
+            decisionSignature: raw.b_decisionSignature,
+            minerHash: raw.b_minerHash,
+            decisionAddress: raw.b_decisionAddress
         }
         block.totalForged = (block.totalFee + block.reward);
         return block;
@@ -273,9 +278,14 @@ Block.prototype.load = function (raw) {
             reward: parseInt(raw.b_reward),
             generatorPublicKey: raw.b_generatorPublicKey,
             blockSignature: raw.b_blockSignature,
-            confirmations: raw.b_confirmations
+            merkleRoot: raw.b_merkleRoot || '',
+            basic: parseInt(raw.b_basic),
+            difficulty: raw.b_difficulty,
+            decisionSignature: raw.b_decisionSignature,
+            minerHash: raw.b_minerHash,
+            decisionAddress: raw.b_decisionAddress
         };
-        blockoObj.totalForged = (blockObj.totalFee + blockObj.reward);
+        blockObj.totalForged = (blockObj.totalFee + blockObj.reward);
         return blockObj;
     }
 };
