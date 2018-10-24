@@ -11,7 +11,7 @@
  Target Server Version : 50721
  File Encoding         : 65001
 
- Date: 22/10/2018 11:21:44
+ Date: 24/10/2018 11:46:03
 */
 
 SET NAMES utf8mb4;
@@ -189,6 +189,7 @@ CREATE TABLE `blocks` (
   `basic` int(11) DEFAULT NULL,
   `decisionAddress` varchar(64) DEFAULT NULL,
   `decisionSignature` varchar(255) NOT NULL,
+  `minerHash` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`hash`) USING BTREE,
   KEY `previousBlock` (`previousBlock`),
   CONSTRAINT `blocks_ibkf_1` FOREIGN KEY (`previousBlock`) REFERENCES `blocks` (`hash`) ON DELETE SET NULL
@@ -304,7 +305,7 @@ CREATE TABLE `peers` (
   `clock` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `ip_UNIQUE` (`ip`)
-) ENGINE=InnoDB AUTO_INCREMENT=6173765 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=6175386 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for peers_dapp

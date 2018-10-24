@@ -16,7 +16,7 @@ var	ip = require('ip');
 var Json2csv = require('json2csv').Parser;
 var BluePromise = require("bluebird");
 
-var header = ['b_hash', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward','b_generatorPublicKey','b_blockSignature', 'b_merkleRoot', 'b_difficulty', 'b_basic', 'b_decisionSignature', 'b_decisionAddress',
+var header = ['b_hash', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward','b_generatorPublicKey','b_blockSignature', 'b_merkleRoot', 'b_difficulty', 'b_basic', 'b_decisionSignature', 'b_decisionAddress', 'b_minerHash',
     't_hash', 't_type','t_timestamp','t_senderPublicKey', 't_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature', 's_publicKey', 'd_address','c_address','u_alias',
     'm_min','m_lifetime','m_keysgroup','t_requesterPublicKey','t_signatures', 'a_name', 'a_description', 'a_hash', 'a_decimal', 'a_total', 'tr_amount', 'tr_assetsHash', 'tr_assetsName', 'l_lockHeight', 'min_ip', 'min_port'];
 
@@ -45,6 +45,7 @@ privated.blocksDataFields = {
     'b_merkleRoot': String,
     'b_decisionSignature': String,
     'b_decisionAddress': String,
+    'b_minerHash': String,
     't_hash': String,
     't_type': Number,
     't_timestamp': Number,
@@ -271,7 +272,7 @@ privated.getById = function (hash, cb) {
         }
     ], function (err, hash) {
         library.dbClient.query('SELECT ' +
-            'b.hash as b_hash, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward,  b.generatorPublicKey as b_generatorPublicKey, b.blockSignature as b_blockSignature, b.merkleRoot as b_merkleRoot, b.difficulty as b_difficulty, b.basic as b_basic, b.decisionSignature as b_decisionSignature, b.decisionAddress as b_decisionAddress, ' +
+            'b.hash as b_hash, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward,  b.generatorPublicKey as b_generatorPublicKey, b.blockSignature as b_blockSignature, b.merkleRoot as b_merkleRoot, b.difficulty as b_difficulty, b.basic as b_basic, b.decisionSignature as b_decisionSignature, b.decisionAddress as b_decisionAddress, b.minerHash as b_minerHash, ' +
             't.hash as t_hash, t.type as t_type, t.timestamp as t_timestamp, t.senderPublicKey as t_senderPublicKey, t.senderId as t_senderId, t.recipientId as t_recipientId, t.senderUsername as t_senderUsername, t.recipientUsername as t_recipientUsername, t.amount as t_amount, t.fee as t_fee, t.signature as t_signature, t.signSignature as t_signSignature,  ' +
             's.publicKey as s_publicKey, ' +
             'd.address as d_address, ' +
@@ -652,7 +653,7 @@ Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
 
     library.dbSequence.add(function (cb) {
         var sql = 'SELECT ' +
-            'b.hash as b_hash, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward, b.generatorPublicKey as b_generatorPublicKey, b.blockSignature as b_blockSignature, b.merkleRoot as b_merkleRoot, b.difficulty as b_difficulty, b.basic as b_basic, b.decisionSignature as b_decisionSignature, b.decisionAddress as b_decisionAddress, ' +
+            'b.hash as b_hash, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward, b.generatorPublicKey as b_generatorPublicKey, b.blockSignature as b_blockSignature, b.merkleRoot as b_merkleRoot, b.difficulty as b_difficulty, b.basic as b_basic, b.decisionSignature as b_decisionSignature, b.decisionAddress as b_decisionAddress, b.minerHash as b_minerHash,  ' +
             't.hash as t_hash, t.type as t_type, t.timestamp as t_timestamp, t.senderPublicKey as t_senderPublicKey, t.senderId as t_senderId, t.recipientId as t_recipientId, t.senderUsername as t_senderUsername, t.recipientUsername as t_recipientUsername, t.amount as t_amount, t.fee as t_fee, t.signature as t_signature, t.signSignature as t_signSignature,  ' +
             's.publicKey as s_publicKey, ' +
             'd.address as d_address, ' +
@@ -1077,7 +1078,7 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
             }
 
             let sql = 'SELECT '+
-                'b.hash as b_hash, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward,  b.generatorPublicKey as b_generatorPublicKey, b.blockSignature as b_blockSignature, b.merkleRoot as b_merkleRoot, b.difficulty as b_difficulty, b.basic as b_basic, b.decisionSignature as b_decisionSignature, b.decisionAddress as b_decisionAddress, ' +
+                'b.hash as b_hash, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward,  b.generatorPublicKey as b_generatorPublicKey, b.blockSignature as b_blockSignature, b.merkleRoot as b_merkleRoot, b.difficulty as b_difficulty, b.basic as b_basic, b.decisionSignature as b_decisionSignature, b.decisionAddress as b_decisionAddress, b.minerHash as b_minerHash,  ' +
                 't.hash as t_hash, t.type as t_type, t.timestamp as t_timestamp, t.senderPublicKey as t_senderPublicKey, t.senderId as t_senderId, t.recipientId as t_recipientId, t.senderUsername as t_senderUsername, t.recipientUsername as t_recipientUsername, t.amount as t_amount, t.fee as t_fee, t.signature as t_signature, t.signSignature as t_signSignature,  ' +
                 's.publicKey as s_publicKey, ' +
                 'd.address as d_address, ' +

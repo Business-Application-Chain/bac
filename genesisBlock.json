@@ -110,5 +110,6 @@
   "difficulty": "",
   "basic": 0,
   "decisionSignature": "1fe3cc8bed650374bdb1cd01832d68f21cd98634084478e6acffe5ae1940fc9392783681ff31e0cecfc9c9bad321befaff8f8e3d8f4282e7e0370b6303f010ebc7",
-  "decisionAddress": ""
+  "decisionAddress": "",
+  "minerHash": "000026d26a6ff17b8e305f17fb3d871285374a319b8b0f05cd31654df250171f"
 }
