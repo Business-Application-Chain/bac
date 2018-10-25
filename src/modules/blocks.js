@@ -879,6 +879,10 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                     library.modules.delegates.fork(block, 1);
                     return done("Can't verify previous block: " + block.hash);
                 }
+                if (block.height === privated.lastBlock.height) {
+                    library.modules.delegates.fork(block, 1);
+                    return done("Can't verify previous height: " + block.hash);
+                }
                 if (block.version > 0) {
                     return done("Invalid block version: " + block.hash);
                 }
