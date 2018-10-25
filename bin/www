@@ -349,6 +349,13 @@ d.run(function () {
             })
         }],
 
+        buna: ['dbWorkQueue', 'mainWorkQueue', 'balancesWorkQueue', 'notification_center', 'dbClient', function (scope, cb) {
+            scope.log.Info("Start buna ");
+            let Buna = require('../src/buna/dist/buna');
+            let ercBunaPath = path.join(__dirname, '../src/buna/buna.buna');
+            Buna.default.main([ercBunaPath]);
+        }],
+
         ready: ['network', 'modules', 'notification_center', function (scope, cb) {
             scope.notification_center.notify('init', scope.modules);
             cb();

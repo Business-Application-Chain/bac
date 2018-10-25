@@ -36,6 +36,9 @@
     "express-query-int": "^3.0.0",
     "extend": "^3.0.1",
     "fast-glob": "^2.2.2",
+    "ffi": "^2.2.0",
+    "fs-readfile-promise": "^3.0.1",
+    "hashmap": "^2.3.0",
     "ip": "^1.1.5",
     "json2csv": "^4.1.6",
     "knuth-shuffle": "^1.0.8",
@@ -57,6 +60,8 @@
     "z-schema": "^3.19.1"
   },
   "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
     "mocha": "^5.0.5"
   },
   "bin": "./bin/www",
