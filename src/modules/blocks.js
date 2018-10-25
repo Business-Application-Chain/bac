@@ -883,7 +883,7 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                 if (block.version > 0) {
                     return done("Invalid block version: " + block.hash);
                 }
-                if (typeof block.basic !== "number" || block.basic < 16) {
+                if (typeof block.basic !== "number" || block.basic < 1) {
                     return done("basic should more 16: " + block.hash);
                 }
                 if (!block.difficulty) {
