@@ -965,6 +965,11 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                         }
                                         totalAmount += transaction.amount;
                                         totalFee += transaction.fee;
+                                        if(block.totalAmount < totalAmount) {
+                                            reject("block.totalAmount < totalAmount");
+                                        } else if(block.fee < totalFee) {
+                                            reject("block.fee < totalFee");
+                                        }
                                         resolve();
                                     });
                                 });
@@ -991,6 +996,30 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                     if (err) {
                         errors.push(err);
                     }
+                    // Promise.all(dealTask).then(() => {
+                    //     if (totalAmount !== block.totalAmount) {
+                    //         errors.push("Invalid total amount: " + block.hash);
+                    //     }
+                    //     if (totalFee !== block.totalFee) {
+                    //         errors.push("Invalid total fee: " + block.hash);
+                    //     }
+                    //     if (errors.length > 0) {
+                    //         async.each(block.transactions, function (transaction, cb) {
+                    //             if (appliedTransactions[transaction.hash]) {
+                    //                 library.modules.transactions.undoUnconfirmed(transaction, cb);
+                    //             } else {
+                    //                 setImmediate(cb);
+                    //             }
+                    //         }, function () {
+                    //             cb(errors);
+                    //         });
+                    //         return done(errors[0]);
+                    //     }
+                    // }).catch(err => {
+                    //     library.log.Error("Failed to save block...");
+                    //     library.log.Error(err);
+                    //     process.exit(0);
+                    // })
                     BluePromise.map(dealTask, function (task) {
                         return task;
                     }, {concurrency: 20000}).then(() => {
@@ -1001,7 +1030,6 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                             errors.push("Invalid total fee: " + block.hash);
                         }
                         if (errors.length > 0) {
-                            debugger;
                             async.each(block.transactions, function (transaction, cb) {
                                 if (appliedTransactions[transaction.hash]) {
                                     library.modules.transactions.undoUnconfirmed(transaction, cb);
