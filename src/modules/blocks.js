@@ -989,9 +989,12 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                     if (err) {
                         errors.push(err);
                     }
-                    BluePromise.map(dealTask, function (task) {
-                        return task;
-                    }, {concurrency: 20000}).then(() => {
+                    async.eachSeries(dealTask, function (task, err) {
+                        if(err) {
+                            library.log.Error("Failed to save block...");
+                            library.log.Error(err);
+                            process.exit(0);
+                        }
                         if (totalAmount !== block.totalAmount) {
                             errors.push("Invalid total amount: " + block.hash);
                         }
@@ -1006,7 +1009,7 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                     setImmediate(cb);
                                 }
                             }, function () {
-                                done(errors[0]);
+                                return done(errors[0]);
                             });
                         } else {
                             try {
@@ -1028,11 +1031,51 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                 done(err)
                             });
                         }
-                    }).catch((err) => {
-                        library.log.Error("Failed to save block...");
-                        library.log.Error(err);
-                        process.exit(0);
-                    });
+                    })
+                    // BluePromise.map(dealTask, function (task) {
+                    //     return task;
+                    // }, {concurrency: 20000}).then(() => {
+                    //     if (totalAmount !== block.totalAmount) {
+                    //         errors.push("Invalid total amount: " + block.hash);
+                    //     }
+                    //     if (totalFee !== block.totalFee) {
+                    //         errors.push("Invalid total fee: " + block.hash);
+                    //     }
+                    //     if (errors.length > 0) {
+                    //         async.each(block.transactions, function (transaction, cb) {
+                    //             if (appliedTransactions[transaction.hash]) {
+                    //                 library.modules.transactions.undoUnconfirmed(transaction, cb);
+                    //             } else {
+                    //                 setImmediate(cb);
+                    //             }
+                    //         }, function () {
+                    //             return done(errors[0]);
+                    //         });
+                    //     } else {
+                    //         try {
+                    //             block = library.base.block.objectNormalize(block);
+                    //         } catch (e) {
+                    //             return setImmediate(done, e);
+                    //         }
+                    //         BluePromise.map(saveTask, function (task) {
+                    //             return task
+                    //         }, {concurrency: 20000}).then(() => {
+                    //             library.log.Debug("saveBlock successed");
+                    //             privated.lastBlock = block;
+                    //             library.notification_center.notify('newBlock', block, broadcast);
+                    //             library.modules.round.tick(block, done);
+                    //             // setImmediate(cb);
+                    //         }).catch((err) => {
+                    //             library.log.Error("saveBlock failed", "Error", err);
+                    //             // setImmediate(cb, err);
+                    //             done(err)
+                    //         });
+                    //     }
+                    // }).catch((err) => {
+                    //     library.log.Error("Failed to save block...");
+                    //     library.log.Error(err);
+                    //     process.exit(0);
+                    // });
                 });
             }).catch((error) => {
                 if (error) {

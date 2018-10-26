@@ -146,7 +146,6 @@ Kernel.prototype.getFromPeerNews = function (peer, options, cb) {
         if (err || response.statusCode !== 200) {
 
             // library.log.Debug("Request", "Error", err);
-            console.log(req);
             if (peer) {
                 if (err && (err.code == 'ETIMEOUT' || err.code == 'ESOCKETTIMEOUT' || err.code == 'ECONNREFUSED')) {
                     library.modules.peer.remove(peer.ip, peer.port, function (err) {

@@ -875,7 +875,9 @@ shared_1_0.addTransaction = function (params, cb) {
                         var secondHash = crypto.createHash('sha256').update(secondSecret, 'utf8').digest();
                         secondKeypair = ed.MakeKeypair(secondHash);
                     }
-                    let lastBlockHeight = library.modules.blocks.getLastBlock().height;
+                    let lastBlock = library.modules.blocks.getLastBlock();
+                    console.log(lastBlock);
+                    let lastBlockHeight = lastBlock.height;
                     if(account.lockHeight > lastBlockHeight) {
                         return cb("Account is locked", 11000);
                     }
