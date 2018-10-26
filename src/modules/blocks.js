@@ -901,17 +901,17 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                 }
                 var totalAmount = 0, totalFee = 0, appliedTransactions = {};
                 var dealTask = [], saveTask = [];
-                // saveTask.push(new Promise((resolve, reject) => {
-                //     library.base.block.save(block, function (err) {
-                //         if (err) {
-                //             library.log.Error("saveBlock", "Error", err.toString());
-                //             reject("saveBlock", "Error", err.toString());
-                //         }
-                //         else {
-                //             resolve();
-                //         }
-                //     });
-                // }));
+                saveTask.push(new Promise((resolve, reject) => {
+                    library.base.block.save(block, function (err) {
+                        if (err) {
+                            library.log.Error("saveBlock", "Error", err.toString());
+                            reject("saveBlock", "Error", err.toString());
+                        }
+                        else {
+                            resolve();
+                        }
+                    });
+                }));
                 async.each(block.transactions, function (transaction, cb) {
                     // try {
                     //     transaction.hash = library.base.transaction.getTrsHash(transaction);
@@ -1116,15 +1116,15 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
                 type: Sequelize.QueryTypes.SELECT,
                 bind: params,
             }).then((blocks) => {
-                // blocks.forEach(function (block) {
-                //     block.b_blockSignature = block.b_blockSignature.toString('utf8');
-                //     block.b_generatorPublicKey = block.b_generatorPublicKey.toString('utf8');
-                // });
+                blocks.forEach(function (block) {
+                    block.b_blockSignature = block.b_blockSignature.toString('utf8');
+                    block.b_generatorPublicKey = block.b_generatorPublicKey.toString('utf8');
+                });
                 if(!blocks)
                     return cb(null, null);
                 let json2csv = new Json2csv({header: false});
                 let csv = json2csv.parse(blocks);
-               return cb(null, csv);
+                return cb(null, csv);
             });
         }).catch((err) => {
             return cb(err);
