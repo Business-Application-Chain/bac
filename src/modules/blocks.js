@@ -623,7 +623,9 @@ Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
                                 var peerStr = data.peer ? ip.fromLong(data.peer.ip) + ":" + data.peer.port : 'unknown';
                                 library.log.Info('Block ' + (block ? block.hash : 'null') + ' is not valid, ban 60 min', peerStr);
                                 library.modules.peer.state(peer.ip, peer.port, 0, 3600);
-                                cb(err);
+                                console.log(err);
+                                cb();
+                                // cb(err);
                             }
                         });
                     }, function (err) {
@@ -899,17 +901,17 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                 }
                 var totalAmount = 0, totalFee = 0, appliedTransactions = {};
                 var dealTask = [], saveTask = [];
-                saveTask.push(new Promise((resolve, reject) => {
-                    library.base.block.save(block, function (err) {
-                        if (err) {
-                            library.log.Error("saveBlock", "Error", err.toString());
-                            reject("saveBlock", "Error", err.toString());
-                        }
-                        else {
-                            resolve();
-                        }
-                    });
-                }));
+                // saveTask.push(new Promise((resolve, reject) => {
+                //     library.base.block.save(block, function (err) {
+                //         if (err) {
+                //             library.log.Error("saveBlock", "Error", err.toString());
+                //             reject("saveBlock", "Error", err.toString());
+                //         }
+                //         else {
+                //             resolve();
+                //         }
+                //     });
+                // }));
                 async.each(block.transactions, function (transaction, cb) {
                     // try {
                     //     transaction.hash = library.base.transaction.getTrsHash(transaction);
@@ -989,12 +991,9 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                     if (err) {
                         errors.push(err);
                     }
-                    async.eachSeries(dealTask, function (task, err) {
-                        if(err) {
-                            library.log.Error("Failed to save block...");
-                            library.log.Error(err);
-                            process.exit(0);
-                        }
+                    BluePromise.map(dealTask, function (task) {
+                        return task;
+                    }, {concurrency: 20000}).then(() => {
                         if (totalAmount !== block.totalAmount) {
                             errors.push("Invalid total amount: " + block.hash);
                         }
@@ -1002,6 +1001,7 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                             errors.push("Invalid total fee: " + block.hash);
                         }
                         if (errors.length > 0) {
+                            debugger;
                             async.each(block.transactions, function (transaction, cb) {
                                 if (appliedTransactions[transaction.hash]) {
                                     library.modules.transactions.undoUnconfirmed(transaction, cb);
@@ -1009,8 +1009,9 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                     setImmediate(cb);
                                 }
                             }, function () {
-                                return done(errors[0]);
+                                cb(errors);
                             });
+                            return done(errors[0]);
                         } else {
                             try {
                                 block = library.base.block.objectNormalize(block);
@@ -1020,7 +1021,7 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                             BluePromise.map(saveTask, function (task) {
                                 return task
                             }, {concurrency: 20000}).then(() => {
-                                library.log.Debug("saveBlock successed");
+                                library.log.Debug("saveBlock success");
                                 privated.lastBlock = block;
                                 library.notification_center.notify('newBlock', block, broadcast);
                                 library.modules.round.tick(block, done);
@@ -1031,51 +1032,11 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                 done(err)
                             });
                         }
-                    })
-                    // BluePromise.map(dealTask, function (task) {
-                    //     return task;
-                    // }, {concurrency: 20000}).then(() => {
-                    //     if (totalAmount !== block.totalAmount) {
-                    //         errors.push("Invalid total amount: " + block.hash);
-                    //     }
-                    //     if (totalFee !== block.totalFee) {
-                    //         errors.push("Invalid total fee: " + block.hash);
-                    //     }
-                    //     if (errors.length > 0) {
-                    //         async.each(block.transactions, function (transaction, cb) {
-                    //             if (appliedTransactions[transaction.hash]) {
-                    //                 library.modules.transactions.undoUnconfirmed(transaction, cb);
-                    //             } else {
-                    //                 setImmediate(cb);
-                    //             }
-                    //         }, function () {
-                    //             return done(errors[0]);
-                    //         });
-                    //     } else {
-                    //         try {
-                    //             block = library.base.block.objectNormalize(block);
-                    //         } catch (e) {
-                    //             return setImmediate(done, e);
-                    //         }
-                    //         BluePromise.map(saveTask, function (task) {
-                    //             return task
-                    //         }, {concurrency: 20000}).then(() => {
-                    //             library.log.Debug("saveBlock successed");
-                    //             privated.lastBlock = block;
-                    //             library.notification_center.notify('newBlock', block, broadcast);
-                    //             library.modules.round.tick(block, done);
-                    //             // setImmediate(cb);
-                    //         }).catch((err) => {
-                    //             library.log.Error("saveBlock failed", "Error", err);
-                    //             // setImmediate(cb, err);
-                    //             done(err)
-                    //         });
-                    //     }
-                    // }).catch((err) => {
-                    //     library.log.Error("Failed to save block...");
-                    //     library.log.Error(err);
-                    //     process.exit(0);
-                    // });
+                    }).catch((err) => {
+                        library.log.Error("Failed to save block...");
+                        library.log.Error(err);
+                        process.exit(0);
+                    });
                 });
             }).catch((error) => {
                 if (error) {
