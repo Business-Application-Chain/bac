@@ -6,6 +6,7 @@ var fs = require('fs');
 var sandboxHelper = require('../utils/sandbox.js');
 var ip = require('ip');
 var request = require('request');
+var fatch = require('node-fetch');
 var _ = require('underscore');
 var zlib = require('zlib');
 var crypto = require('crypto');
@@ -135,7 +136,7 @@ Kernel.prototype.getFromPeerNews = function (peer, options, cb) {
             method: options.func,
             params: options.data,
             jsonrpc: options.jsonrpc,
-            id: options.id
+            id: 10
         },
         headers: _.extend({}, privated.headers, options.headers),
         timeout: library.config.peers.optional.timeout,
@@ -143,8 +144,9 @@ Kernel.prototype.getFromPeerNews = function (peer, options, cb) {
     };
     request(req, function (err, response, body) {
         if (err || response.statusCode !== 200) {
-            // library.log.Debug("Request", "Error", err);
 
+            // library.log.Debug("Request", "Error", err);
+            console.log(req);
             if (peer) {
                 if (err && (err.code == 'ETIMEOUT' || err.code == 'ESOCKETTIMEOUT' || err.code == 'ECONNREFUSED')) {
                     library.modules.peer.remove(peer.ip, peer.port, function (err) {
@@ -238,7 +240,7 @@ Kernel.prototype.getFromPeer = function (peer, options, cb) {
     } else {
         req.body = options.data;
     }
-    return request(req, function (err, response, body) {
+    request(req, function (err, response, body) {
         if (err || response.statusCode !== 200) {
             // library.log.Debug("Request", "Error", err);
 

@@ -1116,6 +1116,8 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
                 //     block.b_blockSignature = block.b_blockSignature.toString('utf8');
                 //     block.b_generatorPublicKey = block.b_generatorPublicKey.toString('utf8');
                 // });
+                if(!blocks)
+                    return cb(null, null);
                 let json2csv = new Json2csv({header: false});
                 let csv = json2csv.parse(blocks);
                return cb(null, csv);
