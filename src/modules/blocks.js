@@ -950,6 +950,7 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                                     library.log.Error("saveBlock", "Error", err.toString());
                                                     return cb("saveBlock", "Error", err.toString());
                                                 } else {
+
                                                     setImmediate(cb);
                                                 }
                                             });
@@ -993,8 +994,9 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                 cb("saveBlock", "Error", err.toString());
                             }
                             else {
-                                // resolve();
-
+                                privated.lastBlock = block;
+                                library.log.Debug("saveBlock success");
+                                cb();
                             }
                         });
                     }
