@@ -900,7 +900,7 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                     return done("Invalid amount of block assets: " + block.hash);
                 }
                 var totalAmount = 0, totalFee = 0, appliedTransactions = {};
-                var dealTask = [], saveTask = [];
+                var saveTask = [];
                 saveTask.push(new Promise((resolve, reject) => {
                     library.base.block.save(block, function (err) {
                         if (err) {
@@ -913,12 +913,6 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                     });
                 }));
                 async.each(block.transactions, function (transaction, cb) {
-                    // try {
-                    //     transaction.hash = library.base.transaction.getTrsHash(transaction);
-                    // } catch (e) {
-                    //     return setImmediate(cb, e.toString());
-                    // }
-
                     transaction.blockHash = block.hash;
                     library.dbClient.query(`SELECT hash FROM transactions WHERE hash="${transaction.hash}"`,{
                         type: Sequelize.QueryTypes.SELECT
@@ -933,138 +927,89 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                 if (err) {
                                     return cb(err);
                                 }
-                                let p1 = new Promise((resolve, reject) => {
-                                    library.base.transaction.verify(transaction, sender, function (err) {
-                                        if (err) {
-                                            reject(err);
-                                        }
-                                        resolve();
-                                    });
-                                });
-                                dealTask.push(p1);
-                                let p2 = new Promise((resolve, reject) => {
+                                library.base.transaction.verify(transaction, sender, function (err) {
+                                    if (err) {
+                                       return cb(err);
+                                    }
                                     library.modules.transactions.apply(transaction, block, sender, function (err) {
                                         if (err) {
-                                            reject("Failed to apply transaction: " + transaction.hash);
+                                            cb("Failed to apply transaction: " + transaction.hash);
                                         }
                                         library.modules.transactions.removeUnconfirmedTransaction(transaction.hash);
-                                        resolve();
+                                        library.modules.transactions.applyUnconfirmed(transaction, sender, function (err) {
+                                            if (err) {
+                                                // return setImmediate(cb, "Failed to apply transaction: " + transaction.hash);
+                                                cb("Failed to apply transaction: " + transaction.hash);
+                                            }
+                                            appliedTransactions[transaction.hash] = transaction;
+                                            var index = unconfirmedTransactions.indexOf(transaction.hash);
+                                            if (index >= 0) {
+                                                unconfirmedTransactions.splice(index, 1);
+                                            }
+                                            totalAmount += transaction.amount;
+                                            totalFee += transaction.fee;
+                                            if(block.totalAmount < totalAmount) {
+                                                return cb("block.totalAmount < totalAmount");
+                                            } else if(block.fee < totalFee) {
+                                                return cb("block.fee < totalFee");
+                                            }
+                                            let saveTrsPromise = new Promise((resolve, reject) => {
+                                                library.base.transaction.save(transaction, function (err) {
+                                                    if (err) {
+                                                        library.log.Error("saveBlock", "Error", err.toString());
+                                                        reject("saveBlock", "Error", err.toString());
+                                                    } else {
+                                                        resolve();
+                                                    }
+                                                });
+                                            });
+                                            saveTask.push(saveTrsPromise);
+                                            setImmediate(cb);
+                                        });
                                     });
                                 });
-                                dealTask.push(p2);
-                                let p3 = new Promise((resolve, reject) => {
-                                    library.modules.transactions.applyUnconfirmed(transaction, sender, function (err) {
-                                        if (err) {
-                                            // return setImmediate(cb, "Failed to apply transaction: " + transaction.hash);
-                                            reject("Failed to apply transaction: " + transaction.hash);
-                                        }
-                                        appliedTransactions[transaction.hash] = transaction;
-                                        var index = unconfirmedTransactions.indexOf(transaction.hash);
-                                        if (index >= 0) {
-                                            unconfirmedTransactions.splice(index, 1);
-                                        }
-                                        totalAmount += transaction.amount;
-                                        totalFee += transaction.fee;
-                                        if(block.totalAmount < totalAmount) {
-                                            reject("block.totalAmount < totalAmount");
-                                        } else if(block.fee < totalFee) {
-                                            reject("block.fee < totalFee");
-                                        }
-                                        resolve();
-                                    });
-                                });
-                                dealTask.push(p3);
-                                let saveTrsPromise = new Promise((resolve, reject) => {
-                                    library.base.transaction.save(transaction, function (err) {
-                                        if (err) {
-                                            library.log.Error("saveBlock", "Error", err.toString());
-                                            reject("saveBlock", "Error", err.toString());
-                                        } else {
-                                            resolve();
-                                        }
-                                    });
-                                });
-                                saveTask.push(saveTrsPromise);
-                                setImmediate(cb);
                             });
                         }
                     }).catch((err) => {
                         cb(err);
                     });
                 }, function (err) {
-                    var errors = [];
-                    if (err) {
-                        errors.push(err);
-                    }
-                    // Promise.all(dealTask).then(() => {
-                    //     if (totalAmount !== block.totalAmount) {
-                    //         errors.push("Invalid total amount: " + block.hash);
-                    //     }
-                    //     if (totalFee !== block.totalFee) {
-                    //         errors.push("Invalid total fee: " + block.hash);
-                    //     }
-                    //     if (errors.length > 0) {
-                    //         async.each(block.transactions, function (transaction, cb) {
-                    //             if (appliedTransactions[transaction.hash]) {
-                    //                 library.modules.transactions.undoUnconfirmed(transaction, cb);
-                    //             } else {
-                    //                 setImmediate(cb);
-                    //             }
-                    //         }, function () {
-                    //             cb(errors);
-                    //         });
-                    //         return done(errors[0]);
-                    //     }
-                    // }).catch(err => {
-                    //     library.log.Error("Failed to save block...");
-                    //     library.log.Error(err);
-                    //     process.exit(0);
-                    // })
-                    BluePromise.map(dealTask, function (task) {
-                        return task;
-                    }, {concurrency: 20000}).then(() => {
-                        if (totalAmount !== block.totalAmount) {
-                            errors.push("Invalid total amount: " + block.hash);
-                        }
-                        if (totalFee !== block.totalFee) {
-                            errors.push("Invalid total fee: " + block.hash);
-                        }
-                        if (errors.length > 0) {
-                            async.each(block.transactions, function (transaction, cb) {
-                                if (appliedTransactions[transaction.hash]) {
-                                    library.modules.transactions.undoUnconfirmed(transaction, cb);
-                                } else {
-                                    setImmediate(cb);
-                                }
-                            }, function () {
-                                cb(errors);
-                            });
-                            return done(errors[0]);
-                        } else {
-                            try {
-                                block = library.base.block.objectNormalize(block);
-                            } catch (e) {
-                                return setImmediate(done, e);
-                            }
-                            BluePromise.map(saveTask, function (task) {
-                                return task
-                            }, {concurrency: 20000}).then(() => {
-                                library.log.Debug("saveBlock success");
-                                privated.lastBlock = block;
-                                library.notification_center.notify('newBlock', block, broadcast);
-                                library.modules.round.tick(block, done);
-                                // setImmediate(cb);
-                            }).catch((err) => {
-                                library.log.Error("saveBlock failed", "Error", err);
-                                // setImmediate(cb, err);
-                                done(err)
-                            });
-                        }
-                    }).catch((err) => {
+                    if(err) {
                         library.log.Error("Failed to save block...");
                         library.log.Error(err);
                         process.exit(0);
-                    });
+                    }
+                    var errors = [];
+                    if (totalAmount !== block.totalAmount) {
+                        errors.push("Invalid total amount: " + block.hash);
+                    }
+                    if (totalFee !== block.totalFee) {
+                        errors.push("Invalid total fee: " + block.hash);
+                    }
+                    if (errors.length > 0) {
+                        async.each(block.transactions, function (transaction, cb) {
+                            if (appliedTransactions[transaction.hash]) {
+                                library.modules.transactions.undoUnconfirmed(transaction, cb);
+                            } else {
+                                setImmediate(cb);
+                            }
+                        }, function () {
+                            cb(errors);
+                        });
+                        return cb(errors[0]);
+                    } else {
+                        BluePromise.map(saveTask, function (task) {
+                            return task
+                        }, {concurrency: 20000}).then(() => {
+                            library.log.Debug("saveBlock success");
+                            privated.lastBlock = block;
+                            library.notification_center.notify('newBlock', block, broadcast);
+                            library.modules.round.tick(block, done);
+                        }).catch((err) => {
+                            library.log.Error("saveBlock failed", "Error", err);
+                            done(err)
+                        });
+                    }
                 });
             }).catch((error) => {
                 if (error) {
