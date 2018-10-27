@@ -945,7 +945,14 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                             } else if(block.fee < totalFee) {
                                                 return cb("block.fee < totalFee");
                                             }
-                                            setImmediate(cb);
+                                            library.base.transaction.save(transaction, function (err) {
+                                                if (err) {
+                                                    library.log.Error("saveBlock", "Error", err.toString());
+                                                    return cb("saveBlock", "Error", err.toString());
+                                                } else {
+                                                    setImmediate(cb);
+                                                }
+                                            });
                                         });
                                     });
                                 });
@@ -987,14 +994,7 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                             }
                             else {
                                 // resolve();
-                                library.base.transaction.save(transaction, function (err) {
-                                    if (err) {
-                                        library.log.Error("saveBlock", "Error", err.toString());
-                                        cb("saveBlock", "Error", err.toString());
-                                    } else {
-                                        cb();
-                                    }
-                                });
+
                             }
                         });
                     }
