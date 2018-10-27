@@ -994,8 +994,10 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                 cb("saveBlock", "Error", err.toString());
                             }
                             else {
+                                console.log(block);
                                 privated.lastBlock = block;
                                 library.log.Debug("saveBlock success");
+                                library.notification_center.notify('sendLastBlock');
                                 cb();
                             }
                         });
