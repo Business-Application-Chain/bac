@@ -977,7 +977,8 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                     if(err) {
                         library.log.Error("Failed to save block...");
                         library.log.Error(err);
-                        process.exit(0);
+                        return cb(err);
+                        // process.exit(0);
                     }
                     var errors = [];
                     if (totalAmount !== block.totalAmount) {
