@@ -1,0 +1,45 @@
+{
+  "address": "0.0.0.0",
+  "port": 7259,
+  "echoLogLevel": "Debug",
+  "outputLogLevel": "Info",
+  "sharePort": true,
+  "version": "0.1.3",
+  "db": {
+    "host": "127.0.0.1",
+    "port": "3306",
+    "name": "db_bac",
+    "user": "root",
+    "password": "123456"
+  },
+  "peers": {
+    "list": [
+      {"ip": "172.31.13.173", "port": 7259},
+      {"ip": "172.31.15.91", "port": 7259},
+      {"ip": "172.31.15.56", "port": 7259},
+      {"ip": "172.31.6.143", "port": 7259},
+      {"ip": "172.31.3.81", "port": 7259}
+    ],
+    "blackList": [],
+    "optional": {
+      "timeout": 4000
+    }
+  },
+  "forging": {
+    "secret": [
+      "wKyoJM1vS4ucHmWvxDSdcpC23mJwqfg3G6MKZoXaFfcnWHTqo7"
+    ],
+    "access": {
+      "whiteList": [
+        "127.0.0.1"
+      ]
+    }
+  },
+  "loading": {
+    "verifyOnLoading": false,
+    "loadPerIteration": 5000
+  },
+  "socket": {
+    "port": 18008
+  }
+}
