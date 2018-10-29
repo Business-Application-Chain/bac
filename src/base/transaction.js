@@ -48,7 +48,6 @@ Transaction.prototype.create = function (data) {
         senderPublicKey: data.sender.master_pub.toString('hex'),
         timestamp: Date.now(),
         asset: {},
-
     };
 
     txObj = privated.types[txObj.type].create.call(this, data, txObj);
@@ -323,8 +322,6 @@ Transaction.prototype.process = function (txObj, sender, requester, cb) {
 };
 
 Transaction.prototype.sign = function (txObj, keypair) {
-    // var hash = this.getHash(txObj);
-    // return ed.Sign(hash, keypair).toString('hex');
     let sign = bacLib.bacSign.sign(JSON.stringify(txObj), keypair.d.toBuffer(32), 1).toString('hex');
     return sign;
 };

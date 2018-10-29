@@ -39,6 +39,9 @@ function selectModule(apiType, scope) {
         case 'delegates':
             return scope.modules.delegates;
 
+        case 'dapp':
+            return scope.modules.dapp;
+
         default:
             return null;
     }

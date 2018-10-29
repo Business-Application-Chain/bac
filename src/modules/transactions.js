@@ -121,7 +121,6 @@ function Transaction() {
 
     this.save = function (txObj, cb) {
         setImmediate(cb);
-        // return null;
     };
 }
 
@@ -830,7 +829,7 @@ shared_1_0.addTransaction = function (params, cb) {
                         if (requester.secondsign && !body.secondSecret) {
                             return cb("Invalid second passphrase");
                         }
-                        if (requester.master_pub == account.master_pub) {
+                        if (requester.master_pub === account.master_pub) {
                             return cb("Invalid requester");
                         }
                         var secondKeypair = null;

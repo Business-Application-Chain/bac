@@ -41,6 +41,7 @@ var params = {
         "assets": "../src/modules/assets.js",
         "transfers": "../src/modules/transfers.js",
         "minersIp": "../src/modules/minersIp.js",
+        "dapp": "../src/modules/dapp.js"
     }
 };
 
@@ -270,6 +271,7 @@ d.run(function () {
                             module[eventName].apply(module[eventName], args);
                         }
                     });
+
                 }
             }
             cb(null, new ncenter);
@@ -351,13 +353,15 @@ d.run(function () {
 
         buna: ['config', 'dbWorkQueue', 'mainWorkQueue', 'balancesWorkQueue', 'notification_center', 'dbClient', function (scope, cb) {
             // scope.log.Info("Start buna ");
-            let Buna = require('../src/buna/buna');
+            let Buna = require('../src/buna/buna.js');
             async.auto({
                 notification_center: function (cb) {
                     cb(null, scope.notification_center);
                 },
                 buna: ['notification_center', function (scope, cb) {
-                    new Buna(cb, scope);
+                    let bunas = new Buna(cb, scope);
+                    modules.push(bunas);
+                    modules_name.push("buna");
                 }]
             }, cb)
         }],

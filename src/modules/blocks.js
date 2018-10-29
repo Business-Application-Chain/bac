@@ -1144,7 +1144,7 @@ shared_1_0.block = function(params, cb) {
         else {
             return cb('can not find transaction', 13004);
         }
-    })
+    });
 };
 
 shared_1_0.getLastBlock = function(params, cb) {

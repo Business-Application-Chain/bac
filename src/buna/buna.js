@@ -3,7 +3,7 @@ function Buna(cb, scope) {
     library = scope;
     self = this;
     self.__private = privated;
-    privated.doDapp();
+    // privated.doDapp();
     setImmediate(cb, null, self);
 }
 
@@ -23,6 +23,9 @@ function runBuna() {
 
 Buna.prototype.onNewContract = function(txObj) {
     let contract = txObj.message;
+    let TestToken = require(contract);
+    let tToken = new TestToken(msg, balance, new runBuna);
+    tToken.init();
 };
 
 runBuna.prototype.transfer = function(from, to, value) {
