@@ -8,7 +8,7 @@ function Buna(cb, scope) {
 }
 
 let msg = {
-    from: 'BBGiXeKL6tLQwe5Hqg6eXBBHn8ErUtNM1Z'
+    from: 'BBGiXeKL6tLQwe5Hqg6eXBBHn8ErUtNM1Z',
 };
 let balance = {};
 
@@ -20,6 +20,10 @@ privated.doDapp = function() {
 
 function runBuna() {
 }
+
+Buna.prototype.onNewContract = function(txObj) {
+    let contract = txObj.message;
+};
 
 runBuna.prototype.transfer = function(from, to, value) {
     console.log(from, to, value);
