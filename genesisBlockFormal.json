@@ -125,8 +125,8 @@
       "timestamp": 1532420482220,
       "asset": {
         "minerIp": {
-          "ip": 2887716269,
-          "port": 7259
+          "ip": 234562459,
+          "port": 8080
         }
       },
       "signature": "202c507072qw7ecf2662723063feadbe9d0af4f0ff70ee8f39f382391e0b6af2c01bbf6284feaf918c27b490284723350eeac686d0e07f3eb3e395aec0d0feb677",
@@ -142,8 +142,8 @@
       "timestamp": 1532420482220,
       "asset": {
         "minerIp": {
-          "ip": 2887716699,
-          "port": 7259
+          "ip": 50344339,
+          "port": 8080
         }
       },
       "signature": "202c507072qw7ecf2112723063feadbe9d0af4f0ff70ee8f39f382391e0b6af2c01bbf6284feaf918c27b490284723350eeac686d0e07f3eb3e395aec0d0feb677",
@@ -159,8 +159,8 @@
       "timestamp": 1532420482220,
       "asset": {
         "minerIp": {
-          "ip": 2887716664,
-          "port": 7259
+          "ip": 234569583,
+          "port": 8080
         }
       },
       "signature": "202c507072qw7ecf2112723063feadbe9d0af4f0ff70ee8f39f382391e0b6af2c01bbf6284feaf918c27b490284723350eeac686d0e07f3eb3e395aec0d0feb677",
@@ -176,8 +176,8 @@
       "timestamp": 1532420482220,
       "asset": {
         "minerIp": {
-          "ip": 2887714447,
-          "port": 7259
+          "ip": 234586464,
+          "port": 8080
         }
       },
       "signature": "202c507072qw7ecf2112723063feadbe9d0af4f0ff70ee8f39f382391e0b6af2c01bbf6284feaf918c27b490284723350eeac686d0e07f3eb3e395aec0d0feb677",
@@ -193,8 +193,8 @@
       "timestamp": 1532420482220,
       "asset": {
         "minerIp": {
-          "ip": 2887713617,
-          "port": 7259
+          "ip": 233149420,
+          "port": 8080
         }
       },
       "signature": "202c507072qw7ecf2112723063feadbe9d0af4f0ff70ee8f39f382391e0b6af2c01bbf6284feaf918c27b490284723350eeac686d0e07f3eb3e395aec0d0feb677",
