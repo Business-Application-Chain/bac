@@ -156,7 +156,12 @@ Block.prototype.dbRead = function (raw) {
             reward: parseInt(raw.b_reward),
             generatorPublicKey: raw.b_generatorPublicKey,
             blockSignature: raw.b_blockSignature,
-            merkleRoot: raw.b_merkleRoot || ''
+            merkleRoot: raw.b_merkleRoot || '',
+            basic: parseInt(raw.b_basic),
+            difficulty: raw.b_difficulty,
+            decisionSignature: raw.b_decisionSignature,
+            minerHash: raw.b_minerHash,
+            decisionAddress: raw.b_decisionAddress
         }
         block.totalForged = (block.totalFee + block.reward);
         return block;
@@ -237,13 +242,14 @@ Block.prototype.verifySignature = function (blockObj) {
         generatorPublicKey: blockObj.generatorPublicKey,
         merkleRoot: blockObj.merkleRoot || '',
         difficulty: blockObj.difficulty,
-        basic: blockObj.basic
+        basic: blockObj.basic,
+        minerHash: blockObj.minerHash
     };
     let blockSignature = new Buffer(blockObj.blockSignature, 'hex');
     let publicBuffer = Buffer.from(blockObj.generatorPublicKey, 'hex');
     let address = bacLib.bacECpair.fromPublicKeyBuffer(publicBuffer).getAddress();
     let res = bacLib.bacSign.verify(JSON.stringify(block), address, blockSignature);
-    // return res;
+
     if (res) {
         //矿工签名正确
         let decisionSign = new Buffer(blockObj.decisionSignature, 'hex');
@@ -272,15 +278,20 @@ Block.prototype.load = function (raw) {
             reward: parseInt(raw.b_reward),
             generatorPublicKey: raw.b_generatorPublicKey,
             blockSignature: raw.b_blockSignature,
-            confirmations: raw.b_confirmations
-        }
-        blockoObj.totalForged = (blockObj.totalFee + blockObj.reward);
+            merkleRoot: raw.b_merkleRoot || '',
+            basic: parseInt(raw.b_basic),
+            difficulty: raw.b_difficulty,
+            decisionSignature: raw.b_decisionSignature,
+            minerHash: raw.b_minerHash,
+            decisionAddress: raw.b_decisionAddress
+        };
+        blockObj.totalForged = (blockObj.totalFee + blockObj.reward);
         return blockObj;
     }
 };
 
 Block.prototype.save = function (blockObj, cb) {
-    return library.dbClient.query("INSERT INTO blocks (hash, version, timestamp, height, previousBlock, numberOfTransactions, totalAmount, totalFee, reward, generatorPublicKey, blockSignature, merkleRoot, difficulty, basic, decisionSignature, decisionAddress) VALUES ($hash, $version, $timestamp, $height, $previousBlock, $numberOfTransactions, $totalAmount, $totalFee, $reward, $generatorPublicKey, $blockSignature, $merkleRoot, $difficulty, $basic, $decisionSignature, $decisionAddress)", {
+    return library.dbClient.query("INSERT INTO blocks (hash, version, timestamp, height, previousBlock, numberOfTransactions, totalAmount, totalFee, reward, generatorPublicKey, blockSignature, merkleRoot, difficulty, basic, decisionSignature, decisionAddress, minerHash) VALUES ($hash, $version, $timestamp, $height, $previousBlock, $numberOfTransactions, $totalAmount, $totalFee, $reward, $generatorPublicKey, $blockSignature, $merkleRoot, $difficulty, $basic, $decisionSignature, $decisionAddress, $minerHash)", {
         type: Sequelize.QueryTypes.INSERT,
         bind: {
             hash: blockObj.hash,
@@ -298,7 +309,8 @@ Block.prototype.save = function (blockObj, cb) {
             basic: blockObj.basic,
             difficulty: blockObj.difficulty,
             decisionSignature: blockObj.decisionSignature,
-            decisionAddress: blockObj.decisionAddress
+            decisionAddress: blockObj.decisionAddress,
+            minerHash: blockObj.minerHash
         },
     }).then(() => {
         cb();

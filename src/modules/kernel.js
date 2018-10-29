@@ -6,6 +6,7 @@ var fs = require('fs');
 var sandboxHelper = require('../utils/sandbox.js');
 var ip = require('ip');
 var request = require('request');
+var fatch = require('node-fetch');
 var _ = require('underscore');
 var zlib = require('zlib');
 var crypto = require('crypto');
@@ -13,7 +14,7 @@ var bignum = require('../utils/bignum.js');
 var express = require('express');
 var router = express.Router();
 var Sequelize = require('sequelize');
-
+var bacLib = require('bac-lib');
 // private objects
 var modules_loaded, library, self, privated = {}, shared_1_0 = {};
 
@@ -135,7 +136,7 @@ Kernel.prototype.getFromPeerNews = function (peer, options, cb) {
             method: options.func,
             params: options.data,
             jsonrpc: options.jsonrpc,
-            id: options.id
+            id: 10
         },
         headers: _.extend({}, privated.headers, options.headers),
         timeout: library.config.peers.optional.timeout,
@@ -143,8 +144,8 @@ Kernel.prototype.getFromPeerNews = function (peer, options, cb) {
     };
     request(req, function (err, response, body) {
         if (err || response.statusCode !== 200) {
-            // library.log.Debug("Request", "Error", err);
 
+            // library.log.Debug("Request", "Error", err);
             if (peer) {
                 if (err && (err.code == 'ETIMEOUT' || err.code == 'ESOCKETTIMEOUT' || err.code == 'ECONNREFUSED')) {
                     library.modules.peer.remove(peer.ip, peer.port, function (err) {
@@ -238,7 +239,7 @@ Kernel.prototype.getFromPeer = function (peer, options, cb) {
     } else {
         req.body = options.data;
     }
-    return request(req, function (err, response, body) {
+    request(req, function (err, response, body) {
         if (err || response.statusCode !== 200) {
             // library.log.Debug("Request", "Error", err);
 
@@ -355,6 +356,39 @@ Kernel.prototype.onUnconfirmedTransaction = function (transaction, broadcast) {
         library.socket.webSocket.send('201|transactions|transaction|' + JSON.stringify(transaction));
         // 通知前端，产生新的交易
     }
+};
+
+Kernel.prototype.onShouldSign = function(msg) {
+    try {
+        let accountPath = path.join(__dirname, '../../accountKey.json');
+        fs.readFile(accountPath, function (err, data) {
+            if(err) {
+                console.log(err);
+            } else {
+                let mnemonic = JSON.parse(data.toString()).mnemonic;
+                let keyPair = library.base.account.getKeypair(mnemonic);
+                let signs = bacLib.bacSign.sign(msg, keyPair.d.toBuffer(32), 1).toString('hex');
+                let signMsg = {
+                    msg: signs
+                };
+                library.socket.webSocket.send('201|kernel|shouldSign|' + JSON.stringify(signMsg));
+            }
+        });
+    } catch(e) {
+        let signMsg = {
+            msg: "sign message error"
+        };
+        library.socket.webSocket.send('201|kernel|shouldSign|' + JSON.stringify(signMsg));
+    }
+};
+
+Kernel.prototype.onShouldVerify = function(signMsg) {
+    let signJson = JSON.parse(signMsg);
+    let res = bacLib.bacSign.verify(signJson.msg, signJson.address, new Buffer.from(signJson.sign, 'hex'));
+    let verifyRes = {
+        res: res
+    };
+    library.socket.webSocket.send('201|kernel|shouldVerify|' + JSON.stringify(verifyRes));
 };
 
 Kernel.prototype.onAddressNewBlock = function (addMap) {

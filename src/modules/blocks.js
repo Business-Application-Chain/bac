@@ -16,7 +16,7 @@ var	ip = require('ip');
 var Json2csv = require('json2csv').Parser;
 var BluePromise = require("bluebird");
 
-var header = ['b_hash', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward','b_generatorPublicKey','b_blockSignature', 'b_merkleRoot', 'b_difficulty', 'b_basic', 'b_decisionSignature', 'b_decisionAddress',
+var header = ['b_hash', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward','b_generatorPublicKey','b_blockSignature', 'b_merkleRoot', 'b_difficulty', 'b_basic', 'b_decisionSignature', 'b_decisionAddress', 'b_minerHash',
     't_hash', 't_type','t_timestamp','t_senderPublicKey', 't_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature', 's_publicKey', 'd_address','c_address','u_alias',
     'm_min','m_lifetime','m_keysgroup','t_requesterPublicKey','t_signatures', 'a_name', 'a_description', 'a_hash', 'a_decimal', 'a_total', 'tr_amount', 'tr_assetsHash', 'tr_assetsName', 'l_lockHeight', 'min_ip', 'min_port'];
 
@@ -45,6 +45,7 @@ privated.blocksDataFields = {
     'b_merkleRoot': String,
     'b_decisionSignature': String,
     'b_decisionAddress': String,
+    'b_minerHash': String,
     't_hash': String,
     't_type': Number,
     't_timestamp': Number,
@@ -271,7 +272,7 @@ privated.getById = function (hash, cb) {
         }
     ], function (err, hash) {
         library.dbClient.query('SELECT ' +
-            'b.hash as b_hash, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward,  b.generatorPublicKey as b_generatorPublicKey, b.blockSignature as b_blockSignature, b.merkleRoot as b_merkleRoot, b.difficulty as b_difficulty, b.basic as b_basic, b.decisionSignature as b_decisionSignature, b.decisionAddress as b_decisionAddress, ' +
+            'b.hash as b_hash, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward,  b.generatorPublicKey as b_generatorPublicKey, b.blockSignature as b_blockSignature, b.merkleRoot as b_merkleRoot, b.difficulty as b_difficulty, b.basic as b_basic, b.decisionSignature as b_decisionSignature, b.decisionAddress as b_decisionAddress, b.minerHash as b_minerHash, ' +
             't.hash as t_hash, t.type as t_type, t.timestamp as t_timestamp, t.senderPublicKey as t_senderPublicKey, t.senderId as t_senderId, t.recipientId as t_recipientId, t.senderUsername as t_senderUsername, t.recipientUsername as t_recipientUsername, t.amount as t_amount, t.fee as t_fee, t.signature as t_signature, t.signSignature as t_signSignature,  ' +
             's.publicKey as s_publicKey, ' +
             'd.address as d_address, ' +
@@ -622,7 +623,9 @@ Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
                                 var peerStr = data.peer ? ip.fromLong(data.peer.ip) + ":" + data.peer.port : 'unknown';
                                 library.log.Info('Block ' + (block ? block.hash : 'null') + ' is not valid, ban 60 min', peerStr);
                                 library.modules.peer.state(peer.ip, peer.port, 0, 3600);
-                                cb(err);
+                                console.log(err);
+                                cb();
+                                // cb(err);
                             }
                         });
                     }, function (err) {
@@ -652,7 +655,7 @@ Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
 
     library.dbSequence.add(function (cb) {
         var sql = 'SELECT ' +
-            'b.hash as b_hash, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward, b.generatorPublicKey as b_generatorPublicKey, b.blockSignature as b_blockSignature, b.merkleRoot as b_merkleRoot, b.difficulty as b_difficulty, b.basic as b_basic, b.decisionSignature as b_decisionSignature, b.decisionAddress as b_decisionAddress, ' +
+            'b.hash as b_hash, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward, b.generatorPublicKey as b_generatorPublicKey, b.blockSignature as b_blockSignature, b.merkleRoot as b_merkleRoot, b.difficulty as b_difficulty, b.basic as b_basic, b.decisionSignature as b_decisionSignature, b.decisionAddress as b_decisionAddress, b.minerHash as b_minerHash,  ' +
             't.hash as t_hash, t.type as t_type, t.timestamp as t_timestamp, t.senderPublicKey as t_senderPublicKey, t.senderId as t_senderId, t.recipientId as t_recipientId, t.senderUsername as t_senderUsername, t.recipientUsername as t_recipientUsername, t.amount as t_amount, t.fee as t_fee, t.signature as t_signature, t.signSignature as t_signSignature,  ' +
             's.publicKey as s_publicKey, ' +
             'd.address as d_address, ' +
@@ -886,7 +889,7 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                 if (block.version > 0) {
                     return done("Invalid block version: " + block.hash);
                 }
-                if (typeof block.basic !== "number" || block.basic < 16) {
+                if (typeof block.basic !== "number" || block.basic < 1) {
                     return done("basic should more 16: " + block.hash);
                 }
                 if (!block.difficulty) {
@@ -897,25 +900,11 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                     return done("Invalid amount of block assets: " + block.hash);
                 }
                 var totalAmount = 0, totalFee = 0, appliedTransactions = {};
-                var dealTask = [], saveTask = [];
+                var saveTask = [];
                 saveTask.push(new Promise((resolve, reject) => {
-                    library.base.block.save(block, function (err) {
-                        if (err) {
-                            library.log.Error("saveBlock", "Error", err.toString());
-                            reject("saveBlock", "Error", err.toString());
-                        }
-                        else {
-                            resolve();
-                        }
-                    });
+
                 }));
                 async.each(block.transactions, function (transaction, cb) {
-                    // try {
-                    //     transaction.hash = library.base.transaction.getTrsHash(transaction);
-                    // } catch (e) {
-                    //     return setImmediate(cb, e.toString());
-                    // }
-
                     transaction.blockHash = block.hash;
                     library.dbClient.query(`SELECT hash FROM transactions WHERE hash="${transaction.hash}"`,{
                         type: Sequelize.QueryTypes.SELECT
@@ -930,108 +919,88 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                 if (err) {
                                     return cb(err);
                                 }
-                                let p1 = new Promise((resolve, reject) => {
-                                    library.base.transaction.verify(transaction, sender, function (err) {
-                                        if (err) {
-                                            reject(err);
-                                        }
-                                        resolve();
-                                    });
-                                });
-                                dealTask.push(p1);
-                                let p2 = new Promise((resolve, reject) => {
+                                library.base.transaction.verify(transaction, sender, function (err) {
+                                    if (err) {
+                                       return cb(err);
+                                    }
                                     library.modules.transactions.apply(transaction, block, sender, function (err) {
                                         if (err) {
-                                            reject("Failed to apply transaction: " + transaction.hash);
+                                            cb("Failed to apply transaction: " + transaction.hash);
                                         }
                                         library.modules.transactions.removeUnconfirmedTransaction(transaction.hash);
-                                        resolve();
+                                        library.modules.transactions.applyUnconfirmed(transaction, sender, function (err) {
+                                            if (err) {
+                                                // return setImmediate(cb, "Failed to apply transaction: " + transaction.hash);
+                                                cb("Failed to apply transaction: " + transaction.hash);
+                                            }
+                                            appliedTransactions[transaction.hash] = transaction;
+                                            var index = unconfirmedTransactions.indexOf(transaction.hash);
+                                            if (index >= 0) {
+                                                unconfirmedTransactions.splice(index, 1);
+                                            }
+                                            totalAmount += transaction.amount;
+                                            totalFee += transaction.fee;
+                                            if(block.totalAmount < totalAmount) {
+                                                return cb("block.totalAmount < totalAmount");
+                                            } else if(block.fee < totalFee) {
+                                                return cb("block.fee < totalFee");
+                                            }
+                                            library.base.transaction.save(transaction, function (err) {
+                                                if (err) {
+                                                    library.log.Error("saveBlock", "Error", err.toString());
+                                                    return cb("saveBlock", "Error", err.toString());
+                                                } else {
+
+                                                    setImmediate(cb);
+                                                }
+                                            });
+                                        });
                                     });
                                 });
-                                dealTask.push(p2);
-                                let p3 = new Promise((resolve, reject) => {
-                                    library.modules.transactions.applyUnconfirmed(transaction, sender, function (err) {
-                                        if (err) {
-                                            // return setImmediate(cb, "Failed to apply transaction: " + transaction.hash);
-                                            reject("Failed to apply transaction: " + transaction.hash);
-                                        }
-                                        appliedTransactions[transaction.hash] = transaction;
-                                        var index = unconfirmedTransactions.indexOf(transaction.hash);
-                                        if (index >= 0) {
-                                            unconfirmedTransactions.splice(index, 1);
-                                        }
-                                        totalAmount += transaction.amount;
-                                        totalFee += transaction.fee;
-                                        resolve();
-                                    });
-                                });
-                                dealTask.push(p3);
-                                let saveTrsPromise = new Promise((resolve, reject) => {
-                                    library.base.transaction.save(transaction, function (err) {
-                                        if (err) {
-                                            library.log.Error("saveBlock", "Error", err.toString());
-                                            reject("saveBlock", "Error", err.toString());
-                                        } else {
-                                            resolve();
-                                        }
-                                    });
-                                });
-                                saveTask.push(saveTrsPromise);
-                                setImmediate(cb);
                             });
                         }
                     }).catch((err) => {
                         cb(err);
                     });
                 }, function (err) {
-                    var errors = [];
-                    if (err) {
-                        errors.push(err);
-                    }
-                    BluePromise.map(dealTask, function (task) {
-                        return task;
-                    }, {concurrency: 20000}).then(() => {
-                        if (totalAmount !== block.totalAmount) {
-                            errors.push("Invalid total amount: " + block.hash);
-                        }
-                        if (totalFee !== block.totalFee) {
-                            errors.push("Invalid total fee: " + block.hash);
-                        }
-                        if (errors.length > 0) {
-                            async.each(block.transactions, function (transaction, cb) {
-                                if (appliedTransactions[transaction.hash]) {
-                                    library.modules.transactions.undoUnconfirmed(transaction, cb);
-                                } else {
-                                    setImmediate(cb);
-                                }
-                            }, function () {
-                                done(errors[0]);
-                            });
-                        } else {
-                            try {
-                                block = library.base.block.objectNormalize(block);
-                            } catch (e) {
-                                return setImmediate(done, e);
-                            }
-                            BluePromise.map(saveTask, function (task) {
-                                return task
-                            }, {concurrency: 20000}).then(() => {
-                                library.log.Debug("saveBlock successed");
-                                privated.lastBlock = block;
-                                library.notification_center.notify('newBlock', block, broadcast);
-                                library.modules.round.tick(block, done);
-                                // setImmediate(cb);
-                            }).catch((err) => {
-                                library.log.Error("saveBlock failed", "Error", err);
-                                // setImmediate(cb, err);
-                                done(err)
-                            });
-                        }
-                    }).catch((err) => {
+                    if(err) {
                         library.log.Error("Failed to save block...");
                         library.log.Error(err);
-                        process.exit(0);
-                    });
+                        return cb(err);
+                        // process.exit(0);
+                    }
+                    var errors = [];
+                    if (totalAmount !== block.totalAmount) {
+                        errors.push("Invalid total amount: " + block.hash);
+                    }
+                    if (totalFee !== block.totalFee) {
+                        errors.push("Invalid total fee: " + block.hash);
+                    }
+                    if (errors.length > 0) {
+                        async.each(block.transactions, function (transaction, cb) {
+                            if (appliedTransactions[transaction.hash]) {
+                                library.modules.transactions.undoUnconfirmed(transaction, cb);
+                            } else {
+                                setImmediate(cb);
+                            }
+                        }, function () {
+                            cb(errors);
+                        });
+                        return cb(errors[0]);
+                    } else {
+                        library.base.block.save(block, function (err) {
+                            if (err) {
+                                library.log.Error("saveBlock", "Error", err.toString());
+                                cb("saveBlock", "Error", err.toString());
+                            }
+                            else {
+                                privated.lastBlock = block;
+                                library.log.Debug("saveBlock success");
+                                library.notification_center.notify('sendLastBlock');
+                                cb();
+                            }
+                        });
+                    }
                 });
             }).catch((error) => {
                 if (error) {
@@ -1081,7 +1050,7 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
             }
 
             let sql = 'SELECT '+
-                'b.hash as b_hash, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward,  b.generatorPublicKey as b_generatorPublicKey, b.blockSignature as b_blockSignature, b.merkleRoot as b_merkleRoot, b.difficulty as b_difficulty, b.basic as b_basic, b.decisionSignature as b_decisionSignature, b.decisionAddress as b_decisionAddress, ' +
+                'b.hash as b_hash, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward,  b.generatorPublicKey as b_generatorPublicKey, b.blockSignature as b_blockSignature, b.merkleRoot as b_merkleRoot, b.difficulty as b_difficulty, b.basic as b_basic, b.decisionSignature as b_decisionSignature, b.decisionAddress as b_decisionAddress, b.minerHash as b_minerHash,  ' +
                 't.hash as t_hash, t.type as t_type, t.timestamp as t_timestamp, t.senderPublicKey as t_senderPublicKey, t.senderId as t_senderId, t.recipientId as t_recipientId, t.senderUsername as t_senderUsername, t.recipientUsername as t_recipientUsername, t.amount as t_amount, t.fee as t_fee, t.signature as t_signature, t.signSignature as t_signSignature,  ' +
                 's.publicKey as s_publicKey, ' +
                 'd.address as d_address, ' +
@@ -1111,13 +1080,15 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
                 type: Sequelize.QueryTypes.SELECT,
                 bind: params,
             }).then((blocks) => {
-                // blocks.forEach(function (block) {
-                //     block.b_blockSignature = block.b_blockSignature.toString('utf8');
-                //     block.b_generatorPublicKey = block.b_generatorPublicKey.toString('utf8');
-                // });
+                blocks.forEach(function (block) {
+                    block.b_blockSignature = block.b_blockSignature.toString('utf8');
+                    block.b_generatorPublicKey = block.b_generatorPublicKey.toString('utf8');
+                });
+                if(!blocks)
+                    return cb(null, null);
                 let json2csv = new Json2csv({header: false});
                 let csv = json2csv.parse(blocks);
-               return cb(null, csv);
+                return cb(null, csv);
             });
         }).catch((err) => {
             return cb(err);

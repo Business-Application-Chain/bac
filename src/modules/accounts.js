@@ -526,7 +526,8 @@ privated.openAccount = function (secret, cb) {
     accountKey = {
         publicKey: publicKeyuffer.toString('hex'),
         address: address,
-        privateKey: privateKey
+        privateKey: privateKey,
+        mnemonic: secret
     };
     self.setAccountAndGet({master_pub: keypair.getPublicKeyBuffer().toString('hex')}, cb);
 };

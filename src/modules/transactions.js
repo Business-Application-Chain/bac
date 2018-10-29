@@ -614,7 +614,7 @@ Transactions.prototype.applyUnconfirmedList = function (ids, cb) {
     async.each(ids, function (id, cb) {
         let transaction = self.getUnconfirmedTransaction(id);
         // library.modules.accounts.setAccountAndGet({publicKey: transaction.senderPublicKey}, function (err, sender) {
-        library.modules.accounts.getAccount({publicKey:transaction.senderPublicKey}, function (err, sender) {
+        library.modules.accounts.getAccount({master_pub:transaction.senderPublicKey}, function (err, sender) {
             if (err) {
                 console.log('applyUnconfirmedList getAccount err', err);
                 self.removeUnconfirmedTransaction(id);
@@ -875,7 +875,9 @@ shared_1_0.addTransaction = function (params, cb) {
                         var secondHash = crypto.createHash('sha256').update(secondSecret, 'utf8').digest();
                         secondKeypair = ed.MakeKeypair(secondHash);
                     }
-                    let lastBlockHeight = library.modules.blocks.getLastBlock().height;
+                    let lastBlock = library.modules.blocks.getLastBlock();
+                    console.log(lastBlock);
+                    let lastBlockHeight = lastBlock.height;
                     if(account.lockHeight > lastBlockHeight) {
                         return cb("Account is locked", 11000);
                     }

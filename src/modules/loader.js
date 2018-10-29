@@ -57,7 +57,7 @@ privated.loadBlocks = function(lastBlock, cb) {
                 peerHeight: height,
                 peerCount: library.modules.peer.getCount()
             }));
-            if (lastBlock.hash != privated.genesisBlock.block.hash) { // Have to find common block
+            if (lastBlock.hash !== privated.genesisBlock.block.hash) { // Have to find common block
                 // console.log('findUpdate');
                 privated.findUpdate(lastBlock, data.peer, cb);
             } else { // Have to load full db
@@ -250,8 +250,11 @@ privated.findUpdate = function(lastBlock, peer, cb) {
             console.log(err);
             return cb(err);
         }
-        if(commonBlock)
-            library.log.Info("Found common block " + commonBlock.hash + " (at " + commonBlock.height + ")" + " with peer " + peerStr);
+        if(!commonBlock) {
+            library.log.Info("Not Found common block");
+            err = "Not Found common block";
+            return cb(err);
+        }
         var toRemove = lastBlock.height - commonBlock.height;
         if (toRemove > 1010) {
             library.log.log("long fork, ban 60 min", peerStr);
@@ -420,7 +423,7 @@ Loader.prototype.onPeerReady = function() {
         }, function (err) {
             err && library.log.Error('loadBlocks timer', err);
             privated.isActive = false;
-            setTimeout(nextLoadBlock, 60 * 1000);
+            setTimeout(nextLoadBlock, 30 * 1000);
         });
     });
 };
