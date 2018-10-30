@@ -6,7 +6,7 @@
 let ip = require("ip");
 console.log(ip.toLong("13.251.35.155"));
 console.log(ip.toLong("3.0.49.147"));
-console.log(ip.toLong("13.251.63.111"));
-console.log(ip.toLong("13.251.129.96"));
+console.log(ip.toLong("13.229.142.176"));
+console.log(ip.toLong("13.251.130.204"));
 console.log(ip.toLong("13.229.147.236"));
 console.log(ip.toLong("13.229.137.253"));
