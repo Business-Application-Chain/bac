@@ -176,7 +176,7 @@ MinersIp.prototype.onModifyMinerIp = function() {
         data.forEach(item => {
             item.longIp = ip.fromLong(item.ip);
         });
-        library.socket.webSocket.send('201|miners|list|' + JSON.stringify({list: data}))
+        library.socket.webSocket.send('201|||miners|||list|||' + JSON.stringify({list: data}))
     }).catch((err) => {
         console.log(err);
     });

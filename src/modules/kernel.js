@@ -328,9 +328,9 @@ Kernel.prototype.onInit = function (scope) {
 Kernel.prototype.onNewBlock = function(block, broadcast) {
     if (broadcast) {
         self.broadcast({limit: 100}, {api: '/blocks', data: {block: block}, method: "POST"});
-        library.socket.webSocket.send('201|blocks|block|' + JSON.stringify(block), null);
+        library.socket.webSocket.send('201|||blocks|||block|||' + JSON.stringify(block), null);
         let peerCount = library.modules.peer.getCount();
-        library.socket.webSocket.send('201|kernel|status|' +  JSON.stringify({
+        library.socket.webSocket.send('201|||kernel|||status|||' +  JSON.stringify({
             height: block.height,
             peerHeight: block.height,
             peerCount: peerCount
@@ -353,7 +353,7 @@ Kernel.prototype.onUnconfirmedTransaction = function (transaction, broadcast) {
             id: Math.random(),
             jsonrpc: '1.0'
         });
-        library.socket.webSocket.send('201|transactions|transaction|' + JSON.stringify(transaction));
+        library.socket.webSocket.send('201|||transactions|||transaction|||' + JSON.stringify(transaction));
         // 通知前端，产生新的交易
     }
 };
@@ -371,14 +371,14 @@ Kernel.prototype.onShouldSign = function(msg) {
                 let signMsg = {
                     msg: signs
                 };
-                library.socket.webSocket.send('201|kernel|shouldSign|' + JSON.stringify(signMsg));
+                library.socket.webSocket.send('201|||kernel|||shouldSign|||' + JSON.stringify(signMsg));
             }
         });
     } catch(e) {
         let signMsg = {
             msg: "sign message error"
         };
-        library.socket.webSocket.send('201|kernel|shouldSign|' + JSON.stringify(signMsg));
+        library.socket.webSocket.send('201|||kernel|||shouldSign|||' + JSON.stringify(signMsg));
     }
 };
 
@@ -388,7 +388,7 @@ Kernel.prototype.onShouldVerify = function(signMsg) {
     let verifyRes = {
         res: res
     };
-    library.socket.webSocket.send('201|kernel|shouldVerify|' + JSON.stringify(verifyRes));
+    library.socket.webSocket.send('201|||kernel|||shouldVerify|||' + JSON.stringify(verifyRes));
 };
 
 Kernel.prototype.onAddressNewBlock = function (addMap) {

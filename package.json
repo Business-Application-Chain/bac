@@ -25,6 +25,7 @@
     "body-parser": "~1.18.2",
     "bytebuffer": "^5.0.1",
     "change-case": "^3.0.2",
+    "child_process": "^1.0.2",
     "cookie-parser": "~1.4.3",
     "crypto-browserify": "^3.9.13",
     "csvtojson": "^2.0.3",

@@ -73,13 +73,11 @@ function Asset() {
     };
 
     this.apply = function (trs, block, sender, cb) {
-        // setImmediate(cb);
         let assets = trs.asset.assets;
         library.base.accountAssets.addAssetsBalance(trs.senderId, {assetsHash: assets.hash, assetsName: assets.name}, assets.total, cb);
     };
 
     this.undo = function (trs, block, sender, cb) {
-        // setImmediate(cb);
         let assets = trs.asset.assets;
         library.base.accountAssets.removeAssetsBalance(trs.senderId, {assetsHash: assets.hash}, cb);
     };

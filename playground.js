@@ -1,3 +1,1 @@
-let i = "5";
-i = parseInt(i);
-console.log(typeof i);
+console.log(0.1 + 0.2 === 0.3)

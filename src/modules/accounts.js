@@ -514,8 +514,7 @@ function Accounts(cb, scope) {
 
 // private methods
 privated.generateMnemonic = function () {
-    var mnemonic = bip39.generateMnemonic();
-    return mnemonic;
+    return bip39.generateMnemonic();
 };
 
 privated.openAccount = function (secret, cb) {
@@ -618,9 +617,9 @@ Accounts.prototype.onBlockchainReady = function() {
 
 Accounts.prototype.onLoginMiner = function() {
     if(accountKey) {
-        library.socket.webSocket.send('201|account|miner|' + JSON.stringify(accountKey));
+        library.socket.webSocket.send('201|||account|||miner|||' + JSON.stringify(accountKey));
     } else {
-        library.socket.webSocket.send('201|account|miner|' + JSON.stringify({account: ''}));
+        library.socket.webSocket.send('201|||account|||miner|||' + JSON.stringify({account: ''}));
     }
 };
 

@@ -606,7 +606,7 @@ Transactions.prototype.onSendUnconfirmedTrs = function() {
             send.push(item);
         }
     });
-    library.socket.webSocket.send('201|transactions|unconfirmed|' + JSON.stringify({send}));
+    library.socket.webSocket.send('201|||transactions|||unconfirmed|||' + JSON.stringify({send}));
 };
 
 Transactions.prototype.applyUnconfirmedList = function (ids, cb) {

@@ -52,7 +52,7 @@ privated.loadBlocks = function(lastBlock, cb) {
 
         if (bignum(library.modules.blocks.getLastBlock().height).lt(height)) { // Diff in chainbases
             privated.blocksToSync = height;
-            library.socket.webSocket.send('201|kernel|status|' + JSON.stringify({
+            library.socket.webSocket.send('201|||kernel|||status|||' + JSON.stringify({
                 height: library.modules.blocks.getLastBlock().height,
                 peerHeight: height,
                 peerCount: library.modules.peer.getCount()
@@ -409,7 +409,7 @@ Loader.prototype.onSendBlockStatus = function() {
     let status = {
         status: privated.loaded ? "blockchainReady" : "blockchainError"
     };
-    let msg = '201|loader|start|' + JSON.stringify(status);
+    let msg = '201|||loader|||start|||' + JSON.stringify(status);
     library.socket.webSocket.send(msg);
 };
 
