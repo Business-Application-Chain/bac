@@ -109,10 +109,10 @@ function Vote() {
     this.undo = function (txObj, blockObj, sender, cb) {
         if (txObj.asset.votes === null) return cb();
 
-        var votesInvert = Diff.reverse(txObj.asset.votes);
-
+        // var votesInvert = Diff.reverse(txObj.asset.votes);
+        //
         this.scope.account.merge(sender.master_address, {
-            delegates: votesInvert,
+            delegates: 1,
             blockHash: blockObj.hash,
             round: library.modules.round.calc(blockObj.height)
         }, function (err) {
@@ -136,12 +136,13 @@ function Vote() {
 
     this.undoUnconfirmed = function (txObj, sender, cb) {
         if (txObj.asset.votes === null) return cb();
-
-        var votesInvert = Diff.reverse(txObj.asset.votes);
-
-        this.scope.account.merge(sender.master_address, {delegates_unconfirmed: votesInvert}, function (err) {
+        //
+        // var votesInvert = Diff.reverse(txObj.asset.votes);
+        //
+        this.scope.account.merge(sender.master_address, {delegates_unconfirmed: 1}, function (err) {
             cb(err);
         });
+        // cb()
     };
 
     this.load = function (raw) {
@@ -310,7 +311,7 @@ function Username() {
             return setImmediate(cb, "Account is already has a username");
         }
 
-        var address = library.modules.accounts.generateAddressByPubKey(txObj.senderPublicKey);
+        let address = library.modules.accounts.generateAddressByPubKey(txObj.senderPublicKey);
 
         self.getAccount({
             $or: {

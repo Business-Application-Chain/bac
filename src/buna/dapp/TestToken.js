@@ -20,7 +20,7 @@ TestToken.prototype.init = function() {
 };
 
 TestToken.prototype.send = function(value, to) {
-    if(status.lock || status.lockTime > Date.now()) {
+    if(status[from].lock || status[from].lockTime > Date.now()) {
         return false;
     }
     if (balance[msg.from] - value > 0) {

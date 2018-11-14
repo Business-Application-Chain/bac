@@ -36,6 +36,7 @@ Buna.prototype.doBunaHandle = function(msg, dappHash, balances, status, fun, par
     let buna = require(filePath);
     let handleDapp = new buna(msg, balances, status, new runBuna);
     return handleDapp[fun](...params);
+
 };
 
 runBuna.prototype.transfer = function(from, to, balance) {

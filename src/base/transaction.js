@@ -656,7 +656,7 @@ Transaction.prototype.applyUnconfirmed = function (txObj, sender, requester, cb)
         return setImmediate(cb, "Account [applyUnconfirmed-sender] does not have a second public key");
     }
 
-    if (txObj.requesterPublicKey && requesterverify.second_pub && !txObj.signSignature) {
+    if (txObj.requesterPublicKey && !txObj.signSignature) {
         return setImmediate(cb, "Failed second signature: " + txObj.hash);
     }
 
@@ -675,7 +675,7 @@ Transaction.prototype.applyUnconfirmed = function (txObj, sender, requester, cb)
             return cb(err);
         }
 
-        privated.types[txObj.type].applyUnconfirmed.call(this, txObj, sender, function (err) {
+        privated.types[txObj.type].applyUnconfirmed.call(this, txObj, sender, function (err, data) {
             if (err) { // once error ocurrs, rollback the balance amount
                 this.scope.account.merge(sender.master_address, {balance_unconfirmed: amount}, function (err2) {
                     cb(err2);

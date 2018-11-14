@@ -15,5 +15,6 @@ module.exports = {
     OTHER: 13,
     LOCK_HEIGHT: 14,
     MINER_IP: 15,
-    DO_DAPP: 16
+    DO_DAPP: 16,
+    ISSUERS: 17
 };

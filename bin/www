@@ -41,7 +41,8 @@ var params = {
         "assets": "../src/modules/assets.js",
         "transfers": "../src/modules/transfers.js",
         "minersIp": "../src/modules/minersIp.js",
-        "dapp": "../src/modules/dapp.js"
+        "dapp": "../src/modules/dapp.js",
+        "issuers": "../src/modules/issuers.js"
     }
 };
 
@@ -329,7 +330,7 @@ d.run(function () {
 
         buna: ['config', 'dbWorkQueue', 'mainWorkQueue', 'balancesWorkQueue', 'notification_center', 'dbClient', function (scope, cb) {
             // scope.log.Info("Start buna ");
-            let Buna = require('../src/buna/buna.js');
+            let Buna = require('../src/buna/bunas.js');
             async.auto({
                 notification_center: function (cb) {
                     cb(null, scope.notification_center);

@@ -4,7 +4,6 @@ var crypto = require('crypto');
 var Sequelize = require('sequelize');
 var bip39 = require('bip39');
 var bacLib = require('bac-lib');
-var hashMap = require('hashmap');
 var library, self, privated = {}, shared_1_0 = {};
 
 function Dapp() {
@@ -19,7 +18,9 @@ function Dapp() {
         let keyPair = library.base.account.getKeypair(mnemonic);
         let address = bacLib.bacECpair.fromPublicKeyBuffer(keyPair.getPublicKeyBuffer()).getAddress();
         txObj.asset.dapp = {
-            hash: address
+            hash: address,
+            className: data.className,
+            issuersAddress: data.issuersAddress
         };
         return txObj;
     };
@@ -63,14 +64,12 @@ function Dapp() {
 
     this.verify = function (txObj, sender, cb) {
         if (!txObj.asset.dapp) {
-            return setImmediate(cb, "Invalid transaction dapp")
+            return setImmediate(cb, "Invalid transaction dapp");
         }
-
         if (txObj.amount !== 0) {
             return setImmediate(cb, "Invalid transaction amount");
         }
-
-        setImmediate(cb, null, txObj);
+        setImmediate(cb);
     };
 
     this.apply = function (txObj, blockObj, sender, cb) {
@@ -82,7 +81,19 @@ function Dapp() {
     };
 
     this.applyUnconfirmed = function (txObj, sender, cb) {
-        setImmediate(cb);
+        // setImmediate(cb);
+        library.dbClient.query('SELECT * FROM dapp2issuers WHERE `accountId` = $accountId', {
+            type: Sequelize.QueryTypes.SELECT,
+            bind: {
+                accountId: txObj.senderId
+            }
+        }).then((rows) => {
+            if(!rows[0]) {
+                setImmediate(cb, 'create dapp applyUnconfirmed is error', 'account must is issuers');
+            } else {
+                setImmediate(cb, null, txObj);
+            }
+        });
     };
 
     this.undoUnconfirmed = function (txObj, sender, cb) {
@@ -94,7 +105,9 @@ function Dapp() {
             return null;
         }
         let dapp = {
-            hash: raw.da_hash
+            hash: raw.da_hash,
+            className: raw.da_className,
+            issuersAddress: raw.da_issuersAddress
         };
 
         return {dapp: dapp};
@@ -102,28 +115,34 @@ function Dapp() {
 
     this.save = function (txObj, cb) {
         library.buna.buna.createContract(txObj, function (err, dappData) {
-            if(err) {
+
+            if(err || dappData.hadError) {
                 return cb(err);
             }
-            if(dappData.data.name && dappData.data.symbol && dappData.data.decimals && dappData.data.totalAmount) {
+            if(dappData.name && dappData.symbol && dappData.decimals && dappData.totalAmount) {
                 let dapp = txObj.asset.dapp;
-                return library.dbClient.query("INSERT INTO dapp2assets(`hash`, `name`, `symbol`, `decimals`, `totalAmount`, `transactionHash`, `createTime`, `accountId`, `others`, `contract`) VALUES ($hash, $name, $symbol, $decimals, $totalAmount, $transactionHash, $createTime, $accountId, $others, $contract)", {
+                return library.dbClient.query("INSERT INTO dapp2assets(`hash`, `name`, `symbol`, `decimals`, `totalAmount`, `transactionHash`, `createTime`, `accountId`, `others`, `contract`, `className`, `abi`, `tokenList`, `tokenCode`, `issuersAddress`) VALUES ($hash, $name, $symbol, $decimals, $totalAmount, $transactionHash, $createTime, $accountId, $others, $contract, $className, $abi, $tokenList, $tokenCode, $issuersAddress)", {
                     type: Sequelize.QueryTypes.INSERT,
                     bind: {
                         hash: dapp.hash,
-                        name: dappData.data.name,
-                        symbol: dappData.data.symbol,
-                        description: dappData.data.description,
-                        decimals: dappData.data.decimals,
-                        totalAmount: dappData.data.totalAmount,
+                        name: dappData.name,
+                        symbol: dappData.symbol,
+                        description: dappData.description,
+                        decimals: dappData.decimals,
+                        totalAmount: dappData.totalAmount,
                         transactionHash: txObj.hash,
                         createTime: txObj.timestamp,
                         accountId: txObj.senderId,
                         contract: txObj.message,
-                        others: dappData.data.others
+                        others: dappData.others,
+                        className: dapp.className,
+                        abi: JSON.stringify(dappData.abi),
+                        tokenList: JSON.stringify(dappData.token),
+                        tokenCode: " ",
+                        issuersAddress: dapp.issuersAddress
                     },
                 }).then(() => {
-                    return library.base.accountAssets.addDappBalance(txObj.senderId, {dappHash: dapp.hash, name: dappData.data.name, symbol: dappData.data.symbol, others: dappData.data.others}, dappData.data.totalAmount);
+                    return library.base.accountAssets.addDappBalance(txObj.senderId, {dappHash: dapp.hash, name: dappData.name, symbol: dappData.symbol, others: dappData.others}, dappData.totalAmount);
                 }).then(() => {
                     cb();
                 }).catch((err) => {
@@ -143,15 +162,14 @@ function DoDapp() {
 
     this.create = function (data, txObj) {
         txObj.amount = 0;
-        let _params = {};
+        let param = [];
         data.params.forEach((item) => {
-            // _params.push({item: typeof item});
-            _params[item] = typeof item;
+            param.push(JSON.stringify({data: item, type: typeof item}));
         });
         txObj.asset.doDapp = {
-            params: JSON.stringify(_params),
+            dappHash: data.dappHash,
             fun: data.fun,
-            dappHash: data.dappHash
+            params: param,
         };
         return txObj;
     };
@@ -205,6 +223,7 @@ function DoDapp() {
             return setImmediate(cb, "Invalid transaction amount");
         }
         setImmediate(cb, null, txObj);
+
     };
 
     this.apply = function (txObj, blockObj, sender, cb) {
@@ -216,7 +235,7 @@ function DoDapp() {
     };
 
     this.applyUnconfirmed = function (txObj, sender, cb) {
-        setImmediate(cb);
+        cb();
     };
 
     this.undoUnconfirmed = function (txObj, sender, cb) {
@@ -228,9 +247,9 @@ function DoDapp() {
             return null;
         }
         let doDapp = {
-            params: raw.do_params,
-            fun: raw.do_fun,
             dappHash: raw.do_dappHash,
+            fun: raw.do_fun,
+            params: JSON.parse(raw.do_params),
         };
         return {doDapp: doDapp};
     };
@@ -251,7 +270,7 @@ function DoDapp() {
                             timestamp: txObj.timestamp,
                             accountId: txObj.senderId,
                             fun: doDapp.fun,
-                            params: doDapp.params
+                            params: JSON.stringify(doDapp.params)
                         },
                     }).then(() => {
                         return library.base.accountAssets.getDappBalances(doDapp.dappHash);
@@ -263,28 +282,37 @@ function DoDapp() {
                         let dappHash = rows[0].dappHash;
                         let fun = doDapp.fun;
                         let params = [];
-                        let jsonParams = JSON.parse(doDapp.params);
-                        let keys = Object.keys(jsonParams);
-                        keys.forEach((item) => {
-                            if(jsonParams[item] === "number") {
-                                params.push(parseInt(item));
+                        doDapp.params.forEach((item) => {
+                            item = JSON.parse(item);
+                            if(item.type === "number") {
+                                params.push(parseInt(item.data));
                             } else {
-                                balances[item] = 0;
-                                params.push(item.toString());
+                                balances[item.data] = 0;
+                                params.push(item.data);
+                                statuses[item.data] = JSON.parse(rows[0].defaultOthers);
                             }
-                            statuses[item] = JSON.parse(rows[0].defaultOthers);
                         });
                         rows.forEach(function (row) {
                             balances[row.accountId] = row.balance;
                             statuses[row.accountId] = JSON.parse(row.others);
                         });
-                        let data = library.buna.buna.doBunaHandle({from: txObj.senderId, admin: rows[0].dappAdmin}, dappHash, balances, statuses, fun, params);
-                        if(data.type === 1)
-                            return library.base.accountAssets.upDateDappBalances(data.data, dappHash);
-                        if(data.type === 2) {
-                            return library.base.accountAssets.upDateDappStatuses(data.data, dappHash);
-                        }
-                        setImmediate(cb, "newBalance is false");
+                        library.buna.buna.doBunaHandleTest({from: txObj.senderId, admin: rows[0].dappAdmin}, dappHash, balances, statuses, fun, params, rows[0].contract, rows[0].className, function (err, dealValue) {
+                            if(err || dealValue.hadRuntimeError || dealValue.hadError) {
+                                // dealResult = 1
+                                // UPDATE peers SET state = 1, clock = null WHERE (state = 0 and clock - $now < 0)
+                                return library.dbClient.query('UPDATE `dapp2assets_handle` SET `dealResult`=1 WHERE transactionHash=$transactionHash', {
+                                    type: Sequelize.QueryTypes.UPDATE,
+                                    bind: {
+                                        transactionHash: txObj.hash
+                                    }
+                                });
+                            }
+                            if(dealValue.tag === 1)
+                                return library.base.accountAssets.upDateDappBalances(dealValue.balance, dappHash);
+                            else {
+                                return library.base.accountAssets.upDateDappStatuses(dealValue.status, dappHash);
+                            }
+                        });
                     }).then(() => {
                         setImmediate(cb);
                     }).catch((err) => {
@@ -319,15 +347,48 @@ Dapps.prototype.callApi = function (call, rpcjson, args, cb) {
     }
 };
 
-shared_1_0.upDateDapp = function(params, cb) {
-    let mnemonic = params[0] || '';
-    let secondSecret = params[1] || '';
-    let msg = params[2] || '';
+privated.checkAccount = function(account, cb) {
+    library.dbClient.query('SELECT * FROM dapp2issuers WHERE `accountId`=$accountId', {
+        type: Sequelize.QueryTypes.SELECT,
+        bind: {
+            accountId: account.master_address
+        }
+    }).then(rows => {
+        if(rows[0]) {
+            cb(null, rows[0].issuersAddress);
+        } else {
+            cb('该用户不是商户');
+        }
+    }).catch(err => {
+        cb(err);
+    });
+};
 
-    if(!(mnemonic && msg)) {
+privated.findIssuersAddress = function(issuersAddress, cb) {
+    library.dbClient.query('SELECT * FROM dapp2assets WHERE `hash`=$dappHash',{
+        type: Sequelize.QueryTypes.SELECT,
+        bind: {
+            dappHash: issuersAddress
+        }
+    }).then((rows) => {
+        if(!rows[0]) {
+            cb("issuers applyUnconfirmed is error")
+        } else {
+            cb();
+        }
+    }).catch((err) => {
+        cb(err);
+    });
+};
+
+shared_1_0.upLoadDapp = function(params, cb) {
+    let mnemonic = params[0] || '';
+    let className = params[1] || '';
+    let msg = params[2] || '';
+    let secondSecret = params[3] || '';
+    if(!(mnemonic && msg && className)) {
         return cb("miss must params", 11000);
     }
-
     let keyPair = library.base.account.getKeypair(mnemonic);
     let publicKey = keyPair.getPublicKeyBuffer().toString('hex');
     let query = {
@@ -354,18 +415,36 @@ shared_1_0.upDateDapp = function(params, cb) {
             if(account.lockHeight > lastBlockHeight) {
                 return cb("Account is locked", 11000);
             }
-            try {
-                var transaction = library.base.transaction.create({
-                    type: TransactionTypes.DAPP,
-                    sender: account,
-                    message: msg,
-                    keypair: keyPair,
-                    secondKeypair: secondKeypair,
-                });
-            } catch (e) {
-                return cb(e.toString(), 13009);
-            }
-            library.modules.transactions.receiveTransactions([transaction], cb);
+            privated.checkAccount(account, function (err, issuersAddress) {
+                if(err) {
+                    cb(err, 11000);
+                } else {
+                    library.buna.buna.testContract({accountId: account.master_address, message: msg, className: className}, function (err, dappData) {
+                        if(err || dappData.hadError) {
+                            return cb(err || "合约缺少关键属性", 11000);
+                        } else {
+                            if(dappData.name && dappData.symbol && dappData.decimals && dappData.totalAmount) {
+                                try {
+                                    var transaction = library.base.transaction.create({
+                                        type: TransactionTypes.DAPP,
+                                        className: className,
+                                        sender: account,
+                                        message: msg,
+                                        keypair: keyPair,
+                                        secondKeypair: secondKeypair,
+                                        issuersAddress: issuersAddress
+                                    });
+                                } catch (e) {
+                                    return cb(e.toString(), 13009);
+                                }
+                                library.modules.transactions.receiveTransactions([transaction], cb);
+                            } else {
+                                return cb("合约不正确", 11111);
+                            }
+                        }
+                    });
+                }
+            });
         });
     }, function (err, transaction) {
         if (err) {
@@ -408,20 +487,26 @@ shared_1_0.handleDapp = function(params, cb) {
             if(account.lockHeight > lastBlockHeight) {
                 return cb("Account is locked", 11000);
             }
-            try {
-                var transaction = library.base.transaction.create({
-                    type: TransactionTypes.DO_DAPP,
-                    sender: account,
-                    params: param,
-                    fun: fun,
-                    dappHash: dappHash,
-                    keypair: keyPair,
-                    secondKeypair: secondKeypair,
-                });
-            } catch (e) {
-                return cb(e.toString(), 13009);
-            }
-            library.modules.transactions.receiveTransactions([transaction], cb);
+            privated.findIssuersAddress(dappHash, function (err) {
+                if(err) {
+                    return cb(err, 11000);
+                } else {
+                    try {
+                        var transaction = library.base.transaction.create({
+                            type: TransactionTypes.DO_DAPP,
+                            sender: account,
+                            params: param,
+                            fun: fun,
+                            dappHash: dappHash,
+                            keypair: keyPair,
+                            secondKeypair: secondKeypair,
+                        });
+                    } catch (e) {
+                        return cb(e.toString(), 13009);
+                    }
+                    library.modules.transactions.receiveTransactions([transaction], cb);
+                }
+            });
         });
     }, function (err, transaction) {
         if (err) {

@@ -42,6 +42,9 @@ function selectModule(apiType, scope) {
         case 'dapp':
             return scope.modules.dapp;
 
+        case 'issuers':
+            return scope.modules.issuers;
+
         default:
             return null;
     }
