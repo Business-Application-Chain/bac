@@ -48,7 +48,6 @@ Transaction.prototype.create = function (data) {
         senderPublicKey: data.sender.master_pub.toString('hex'),
         timestamp: Date.now(),
         asset: {},
-
     };
 
     txObj = privated.types[txObj.type].create.call(this, data, txObj);
@@ -323,8 +322,6 @@ Transaction.prototype.process = function (txObj, sender, requester, cb) {
 };
 
 Transaction.prototype.sign = function (txObj, keypair) {
-    // var hash = this.getHash(txObj);
-    // return ed.Sign(hash, keypair).toString('hex');
     let sign = bacLib.bacSign.sign(JSON.stringify(txObj), keypair.d.toBuffer(32), 1).toString('hex');
     return sign;
 };
@@ -659,7 +656,7 @@ Transaction.prototype.applyUnconfirmed = function (txObj, sender, requester, cb)
         return setImmediate(cb, "Account [applyUnconfirmed-sender] does not have a second public key");
     }
 
-    if (txObj.requesterPublicKey && requesterverify.second_pub && !txObj.signSignature) {
+    if (txObj.requesterPublicKey && !txObj.signSignature) {
         return setImmediate(cb, "Failed second signature: " + txObj.hash);
     }
 
@@ -678,7 +675,7 @@ Transaction.prototype.applyUnconfirmed = function (txObj, sender, requester, cb)
             return cb(err);
         }
 
-        privated.types[txObj.type].applyUnconfirmed.call(this, txObj, sender, function (err) {
+        privated.types[txObj.type].applyUnconfirmed.call(this, txObj, sender, function (err, data) {
             if (err) { // once error ocurrs, rollback the balance amount
                 this.scope.account.merge(sender.master_address, {balance_unconfirmed: amount}, function (err2) {
                     cb(err2);

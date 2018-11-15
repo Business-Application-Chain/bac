@@ -1154,8 +1154,7 @@ Account.prototype.merge = function (master_address, fields, cb) {
 Account.prototype.getKeypair = function (mnemonic) {
     let seed = bacLib.bacBip39.mnemonicToSeed(mnemonic);
     let node = bacLib.bacHDNode.fromSeedHex(seed);
-    let keyPair = bacLib.bacECpair.fromWIF(node.keyPair.toWIF());
-    return keyPair;
+    return bacLib.bacECpair.fromWIF(node.keyPair.toWIF());
 };
 
 Account.prototype.remove = function (master_address, cb) {

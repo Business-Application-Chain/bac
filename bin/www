@@ -41,6 +41,8 @@ var params = {
         "assets": "../src/modules/assets.js",
         "transfers": "../src/modules/transfers.js",
         "minersIp": "../src/modules/minersIp.js",
+        "dapp": "../src/modules/dapp.js",
+        "issuers": "../src/modules/issuers.js"
     }
 };
 
@@ -271,7 +273,7 @@ d.run(function () {
                         }
                     });
                 }
-            }
+            };
             cb(null, new ncenter);
         },
 
@@ -324,10 +326,24 @@ d.run(function () {
                     new webSocket(scope, cb);
                 }]
             }, cb);
-
         }],
 
-        modules: ['network', 'notification_center','base', 'sequence', 'balancesSequence', 'dbSequence', 'socket',  function (scope, cb) {
+        buna: ['config', 'dbWorkQueue', 'mainWorkQueue', 'balancesWorkQueue', 'notification_center', 'dbClient', function (scope, cb) {
+            // scope.log.Info("Start buna ");
+            let Buna = require('../src/buna/bunas.js');
+            async.auto({
+                notification_center: function (cb) {
+                    cb(null, scope.notification_center);
+                },
+                buna: ['notification_center', function (scope, cb) {
+                    let bunas = new Buna(scope, cb);
+                    modules.push(bunas);
+                    modules_name.push("buna");
+                }]
+            }, cb)
+        }],
+
+        modules: ['network', 'notification_center','base', 'buna', 'sequence', 'balancesSequence', 'dbSequence', 'socket',  function (scope, cb) {
             var __modules = {};
             Object.keys(params.modules).forEach(function (module_name) {
                 __modules[module_name] = function (cb) {
@@ -348,13 +364,6 @@ d.run(function () {
                 cb(err, modules);
             })
         }],
-
-        // buna: ['dbWorkQueue', 'mainWorkQueue', 'balancesWorkQueue', 'notification_center', 'dbClient', function (scope, cb) {
-        //     scope.log.Info("Start buna ");
-        //     let Buna = require('../src/buna/dist/buna');
-        //     let ercBunaPath = path.join(__dirname, '../src/buna/buna.buna');
-        //     Buna.default.main([ercBunaPath]);
-        // }],
 
         ready: ['network', 'modules', 'notification_center', function (scope, cb) {
             scope.notification_center.notify('init', scope.modules);

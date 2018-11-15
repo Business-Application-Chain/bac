@@ -99,4 +99,108 @@ AccountAssets.prototype.burnAssetsBalance = function(address, burn, amount, cb) 
     });
 };
 
+AccountAssets.prototype.addDappBalance = function(address, transfers, amount) {
+    self.getDappBalance(address, transfers).then((rows) => {
+        if(rows[0]) {
+            return self.updateDappBalance({assetsHash: rows[0].dappHash, amount: amount}, address);
+        } else {
+            return library.dbClient.query('INSERT INTO dapp2assets_balances(dappHash, name, symbol, balance, others, accountId) VALUE($dappHash, $name, $symbol, $balance, $others, $accountId)', {
+                type: Sequelize.QueryTypes.INSERT,
+                bind: {
+                    dappHash: transfers.dappHash,
+                    name: transfers.name,
+                    symbol: transfers.symbol,
+                    balance: amount,
+                    others: transfers.others,
+                    accountId: address
+                }
+            });
+        }
+    });
+};
+
+AccountAssets.prototype.getDappBalance = function(address, transfers) {
+    let sql = `SELECT * FROM dapp2assets_balances WHERE dappHash = "${transfers.dappHash}" AND accountId = "${address}"`;
+    return library.dbClient.query(sql,{
+        type: Sequelize.QueryTypes.SELECT
+    });
+};
+
+AccountAssets.prototype.getDappBalances = function(dappHash) {
+    let sql = `SELECT a.*, b.accountId as dappAdmin, b.others as defaultOthers, b.className as className, b.tokenList from dapp2assets_balances a LEFT JOIN dapp2assets as b on a.dappHash = b.hash where a.dappHash = "${dappHash}" `;
+    return library.dbClient.query(sql, {
+        type: Sequelize.QueryTypes.SELECT
+    });
+};
+
+AccountAssets.prototype.updateDappBalance = function(transfer, address) {
+    self.getDappBalance(address, transfer).then((rows) => {
+        if(!rows[0]) {
+            library.dbClient.query(`SELECT * FROM dapp2assets WHERE hash="${transfer.dappHash}"`, {
+                type: Sequelize.QueryTypes.SELECT
+            }).then((rows) => {
+                return library.dbClient.query("INSERT INTO dapp2assets_balances(dappHash, name, symbol, balance, others, accountId) VALUE($dappHash, $name, $symbol, $balance, $others, $accountId)", {
+                    type: Sequelize.QueryTypes.INSERT,
+                    bind: {
+                        dappHash: rows[0].hash,
+                        name: rows[0].name,
+                        symbol: rows[0].symbol,
+                        balance: transfer.amount,
+                        others: rows[0].others,
+                        accountId: address
+                    }
+                });
+            });
+        }
+    });
+    return library.dbClient.query(`UPDATE dapp2assets_balances SET balance = ${transfer.amount} WHERE accountId = "${address}" and dappHash = "${transfer.dappHash}"`, {
+        type:Sequelize.QueryTypes.UPDATE
+    });
+};
+
+AccountAssets.prototype.upDateDappBalances = function(balances, dappHash) {
+    let address = Object.keys(balances);
+    return address.forEach((item) => {
+        self.updateDappBalance({dappHash: dappHash, amount: balances[item]}, item);
+    });
+};
+
+AccountAssets.prototype.upDateDappStatuses = function(status, dappHash) {
+    let address = Object.keys(status);
+    return address.forEach((item) => {
+        console.log(status[item]);
+        self.upDateDappStatus({dappHash: dappHash, status: JSON.stringify(status[item])}, item);
+    });
+};
+
+AccountAssets.prototype.upDateDappStatus = function(data, address) {
+    self.getDappBalance(address, data).then((rows) => {
+        if(!rows[0]) {
+            library.dbClient.query(`SELECT * FROM dapp2assets WHERE hash="${data.dappHash}"`, {
+                type: Sequelize.QueryTypes.SELECT
+            }).then((rows) => {
+                return library.dbClient.query("INSERT INTO dapp2assets_balances(dappHash, name, symbol, balance, others, accountId) VALUE($dappHash, $name, $symbol, $balance, $others, $accountId)", {
+                    type: Sequelize.QueryTypes.INSERT,
+                    bind: {
+                        dappHash: data.dappHash,
+                        name: rows[0].name,
+                        symbol: rows[0].symbol,
+                        balance: 0,
+                        others: data.status,
+                        accountId: address
+                    }
+                });
+            });
+        }
+    });
+    return library.dbClient.query("UPDATE dapp2assets_balances SET others = $status WHERE accountId = $address and dappHash = $dappHash", {
+        type: Sequelize.QueryTypes.UPDATE,
+        bind: {
+            status: data.status,
+            address: address,
+            dappHash: data.dappHash
+        }
+    });
+};
+
 module.exports = AccountAssets;
