@@ -11,7 +11,7 @@
  Target Server Version : 50721
  File Encoding         : 65001
 
- Date: 24/10/2018 11:46:03
+ Date: 15/11/2018 11:38:49
 */
 
 SET NAMES utf8mb4;
@@ -206,6 +206,71 @@ CREATE TABLE `contacts` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ----------------------------
+-- Table structure for dapp2assets
+-- ----------------------------
+DROP TABLE IF EXISTS `dapp2assets`;
+CREATE TABLE `dapp2assets` (
+  `hash` varchar(64) NOT NULL,
+  `transactionHash` varchar(128) NOT NULL,
+  `name` varchar(32) NOT NULL,
+  `symbol` varchar(32) NOT NULL,
+  `decimals` int(10) DEFAULT '0',
+  `totalAmount` bigint(16) unsigned zerofill DEFAULT NULL,
+  `createTime` bigint(16) DEFAULT NULL,
+  `accountId` varchar(64) DEFAULT NULL,
+  `others` varchar(255) DEFAULT NULL,
+  `contract` text,
+  `className` varchar(64) DEFAULT NULL,
+  `issuersAddress` varchar(64) DEFAULT NULL,
+  `abi` text,
+  `tokenList` text,
+  `tokenCode` text,
+  PRIMARY KEY (`hash`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Table structure for dapp2assets_balances
+-- ----------------------------
+DROP TABLE IF EXISTS `dapp2assets_balances`;
+CREATE TABLE `dapp2assets_balances` (
+  `dappHash` varchar(64) NOT NULL,
+  `name` varchar(32) DEFAULT NULL,
+  `symbol` varchar(32) DEFAULT NULL,
+  `balance` bigint(16) DEFAULT NULL,
+  `others` varchar(255) DEFAULT NULL,
+  `accountId` varchar(64) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Table structure for dapp2assets_handle
+-- ----------------------------
+DROP TABLE IF EXISTS `dapp2assets_handle`;
+CREATE TABLE `dapp2assets_handle` (
+  `transactionHash` varchar(255) NOT NULL,
+  `dappHash` varchar(255) NOT NULL,
+  `fun` varchar(32) DEFAULT NULL,
+  `params` varchar(255) DEFAULT NULL,
+  `timestamp` bigint(15) DEFAULT NULL,
+  `accountId` varchar(64) DEFAULT NULL,
+  `recipientId` varchar(64) DEFAULT NULL,
+  `dealResult` int(10) unsigned zerofill DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Table structure for dapp2issuers
+-- ----------------------------
+DROP TABLE IF EXISTS `dapp2issuers`;
+CREATE TABLE `dapp2issuers` (
+  `issuersAddress` varchar(64) NOT NULL,
+  `accountId` varchar(64) DEFAULT NULL,
+  `name` varchar(64) DEFAULT NULL,
+  `desc` text,
+  `timestamp` bigint(15) DEFAULT NULL,
+  `transactionHash` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`issuersAddress`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- ----------------------------
 -- Table structure for dapps
 -- ----------------------------
 DROP TABLE IF EXISTS `dapps`;
@@ -305,7 +370,7 @@ CREATE TABLE `peers` (
   `clock` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `ip_UNIQUE` (`ip`)
-) ENGINE=InnoDB AUTO_INCREMENT=6175386 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=6189387 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for peers_dapp
