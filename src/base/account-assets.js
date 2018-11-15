@@ -127,7 +127,7 @@ AccountAssets.prototype.getDappBalance = function(address, transfers) {
 };
 
 AccountAssets.prototype.getDappBalances = function(dappHash) {
-    let sql = `SELECT a.*, b.accountId as dappAdmin, b.others as defaultOthers, b.className as className, b.contract from dapp2assets_balances a LEFT JOIN dapp2assets as b on a.dappHash = b.hash where a.dappHash = "${dappHash}" `;
+    let sql = `SELECT a.*, b.accountId as dappAdmin, b.others as defaultOthers, b.className as className, b.tokenList from dapp2assets_balances a LEFT JOIN dapp2assets as b on a.dappHash = b.hash where a.dappHash = "${dappHash}" `;
     return library.dbClient.query(sql, {
         type: Sequelize.QueryTypes.SELECT
     });

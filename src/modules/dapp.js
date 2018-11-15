@@ -81,19 +81,7 @@ function Dapp() {
     };
 
     this.applyUnconfirmed = function (txObj, sender, cb) {
-        // setImmediate(cb);
-        library.dbClient.query('SELECT * FROM dapp2issuers WHERE `accountId` = $accountId', {
-            type: Sequelize.QueryTypes.SELECT,
-            bind: {
-                accountId: txObj.senderId
-            }
-        }).then((rows) => {
-            if(!rows[0]) {
-                setImmediate(cb, 'create dapp applyUnconfirmed is error', 'account must is issuers');
-            } else {
-                setImmediate(cb, null, txObj);
-            }
-        });
+        setImmediate(cb);
     };
 
     this.undoUnconfirmed = function (txObj, sender, cb) {
@@ -114,43 +102,51 @@ function Dapp() {
     };
 
     this.save = function (txObj, cb) {
-        library.buna.buna.createContract(txObj, function (err, dappData) {
-
-            if(err || dappData.hadError) {
+        library.buna.buna.getContractTokens(txObj.senderId, txObj.message, function (err, tokens) {
+            if(err) {
                 return cb(err);
             }
-            if(dappData.name && dappData.symbol && dappData.decimals && dappData.totalAmount) {
-                let dapp = txObj.asset.dapp;
-                return library.dbClient.query("INSERT INTO dapp2assets(`hash`, `name`, `symbol`, `decimals`, `totalAmount`, `transactionHash`, `createTime`, `accountId`, `others`, `contract`, `className`, `abi`, `tokenList`, `tokenCode`, `issuersAddress`) VALUES ($hash, $name, $symbol, $decimals, $totalAmount, $transactionHash, $createTime, $accountId, $others, $contract, $className, $abi, $tokenList, $tokenCode, $issuersAddress)", {
-                    type: Sequelize.QueryTypes.INSERT,
-                    bind: {
-                        hash: dapp.hash,
-                        name: dappData.name,
-                        symbol: dappData.symbol,
-                        description: dappData.description,
-                        decimals: dappData.decimals,
-                        totalAmount: dappData.totalAmount,
-                        transactionHash: txObj.hash,
-                        createTime: txObj.timestamp,
-                        accountId: txObj.senderId,
-                        contract: txObj.message,
-                        others: dappData.others,
-                        className: dapp.className,
-                        abi: JSON.stringify(dappData.abi),
-                        tokenList: JSON.stringify(dappData.token),
-                        tokenCode: " ",
-                        issuersAddress: dapp.issuersAddress
-                    },
-                }).then(() => {
-                    return library.base.accountAssets.addDappBalance(txObj.senderId, {dappHash: dapp.hash, name: dappData.name, symbol: dappData.symbol, others: dappData.others}, dappData.totalAmount);
-                }).then(() => {
-                    cb();
-                }).catch((err) => {
-                    cb(err);
-                });
-            } else {
-                return cb("dappData miss params");
-            }
+            //合约tokens and api
+            tokens.token.pop();
+            let cTokens = tokens.token;
+            let cAbi = tokens.abi;
+            library.buna.buna.dealCreateContract(txObj, tokens.token, function (err, dappData) {
+                if(err || dappData.hadError || dappData.hadRuntimeError) {
+                    return cb(err);
+                }
+                if(dappData.name && dappData.symbol && dappData.decimals && dappData.totalAmount) {
+                    let dapp = txObj.asset.dapp;
+                    return library.dbClient.query("INSERT INTO dapp2assets(`hash`, `name`, `symbol`, `decimals`, `totalAmount`, `transactionHash`, `createTime`, `accountId`, `others`, `contract`, `className`, `abi`, `tokenList`, `tokenCode`, `issuersAddress`) VALUES ($hash, $name, $symbol, $decimals, $totalAmount, $transactionHash, $createTime, $accountId, $others, $contract, $className, $abi, $tokenList, $tokenCode, $issuersAddress)", {
+                        type: Sequelize.QueryTypes.INSERT,
+                        bind: {
+                            hash: dapp.hash,
+                            name: dappData.name,
+                            symbol: dappData.symbol,
+                            description: dappData.description,
+                            decimals: dappData.decimals,
+                            totalAmount: dappData.totalAmount,
+                            transactionHash: txObj.hash,
+                            createTime: txObj.timestamp,
+                            accountId: txObj.senderId,
+                            contract: txObj.message,
+                            others: dappData.others,
+                            className: dapp.className,
+                            abi: JSON.stringify(cAbi),
+                            tokenList: JSON.stringify(cTokens),
+                            tokenCode: " ",
+                            issuersAddress: dapp.issuersAddress
+                        },
+                    }).then(() => {
+                        return library.base.accountAssets.addDappBalance(txObj.senderId, {dappHash: dapp.hash, name: dappData.name, symbol: dappData.symbol, others: dappData.others}, dappData.totalAmount);
+                    }).then(() => {
+                        cb();
+                    }).catch((err) => {
+                        cb(err);
+                    });
+                } else {
+                    return cb("dappData miss params");
+                }
+            });
         });
     };
 }
@@ -296,21 +292,34 @@ function DoDapp() {
                             balances[row.accountId] = row.balance;
                             statuses[row.accountId] = JSON.parse(row.others);
                         });
-                        library.buna.buna.doBunaHandleTest({from: txObj.senderId, admin: rows[0].dappAdmin}, dappHash, balances, statuses, fun, params, rows[0].contract, rows[0].className, function (err, dealValue) {
-                            if(err || dealValue.hadRuntimeError || dealValue.hadError) {
-                                // dealResult = 1
-                                // UPDATE peers SET state = 1, clock = null WHERE (state = 0 and clock - $now < 0)
-                                return library.dbClient.query('UPDATE `dapp2assets_handle` SET `dealResult`=1 WHERE transactionHash=$transactionHash', {
-                                    type: Sequelize.QueryTypes.UPDATE,
-                                    bind: {
-                                        transactionHash: txObj.hash
+                        for (let i=0; i<params.length; i++) {
+                            if (typeof params[i] !== "number")
+                                params[i] = `"${params[i]}"`;
+                        }
+                        let messages = rows[0].className + "()." + fun + "(" + params.toString() + ");";
+                        library.buna.buna.getAbiAndTokens({senderId: txObj.senderId, message: messages}, function (err, tokens) {
+                            if(err) {
+                                return cb(err);
+                            } else {
+                                let dealTokens = JSON.parse(rows[0].tokenList);
+                                tokens.token.forEach(item => {
+                                    dealTokens.push(item);
+                                });
+                                library.buna.buna.dealTokenContract({from: txObj.senderId, admin: rows[0].dappAdmin}, balances, statuses, dealTokens, function (err, dealValue) {
+                                    if(err || dealValue.hadRuntimeError || dealValue.hadError) {
+                                        return library.dbClient.query('UPDATE `dapp2assets_handle` SET `dealResult`=1 WHERE transactionHash=$transactionHash', {
+                                            type: Sequelize.QueryTypes.UPDATE,
+                                            bind: {
+                                                transactionHash: txObj.hash
+                                            }
+                                        });
+                                    }
+                                    if(dealValue.tag === 1)
+                                        return library.base.accountAssets.upDateDappBalances(dealValue.balance, dappHash);
+                                    else {
+                                        return library.base.accountAssets.upDateDappStatuses(dealValue.status, dappHash);
                                     }
                                 });
-                            }
-                            if(dealValue.tag === 1)
-                                return library.base.accountAssets.upDateDappBalances(dealValue.balance, dappHash);
-                            else {
-                                return library.base.accountAssets.upDateDappStatuses(dealValue.status, dappHash);
                             }
                         });
                     }).then(() => {
