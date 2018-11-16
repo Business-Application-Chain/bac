@@ -52,7 +52,7 @@ privated.initWebSocket = function () {
         connection.on('message', function(message) {
             if (message.type === 'utf8') {
                 let msg = message.utf8Data;
-                if(!msg.match(/102|201\|{.*}/)) {
+                if(!msg.match(/102|201\|.*\|.*\|{.*}/)) {
                     console.log("正则无法通过");
                     return;
                 }
