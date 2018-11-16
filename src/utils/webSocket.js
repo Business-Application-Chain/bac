@@ -52,11 +52,11 @@ privated.initWebSocket = function () {
         connection.on('message', function(message) {
             if (message.type === 'utf8') {
                 let msg = message.utf8Data;
-                if(!msg.match(/102|201\|\|\|.*\|\|\|.*\|\|\|{.*}/)) {
+                if(!msg.match(/102|201\|{.*}/)) {
                     console.log("正则无法通过");
                     return;
                 }
-                msg = msg.split('|||');
+                msg = msg.split('|');
                 if(msg[0] === "102" && msg[1] === "loader" && msg[2] === "start") {
                     if(JSON.parse(msg[3]).status === 'blocksStatus') {
                         library.notification_center.notify("sendBlockStatus");

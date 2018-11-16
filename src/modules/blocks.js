@@ -1062,7 +1062,7 @@ Blocks.prototype.onHasNewBlock = function(block) {
 };
 
 Blocks.prototype.onSendLastBlock = function(cb) {
-    library.socket.webSocket.send('201|||blocks|||block|||' + JSON.stringify(privated.lastBlock), cb);
+    library.socket.webSocket.send('201|blocks|block|' + JSON.stringify(privated.lastBlock), cb);
 };
 
 Blocks.prototype.onEnd = function (cb) {

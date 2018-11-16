@@ -618,9 +618,9 @@ Accounts.prototype.onBlockchainReady = function() {
 
 Accounts.prototype.onLoginMiner = function() {
     if(accountKey) {
-        library.socket.webSocket.send('201|||account|||miner|||' + JSON.stringify(accountKey));
+        library.socket.webSocket.send('201|account|miner|' + JSON.stringify(accountKey));
     } else {
-        library.socket.webSocket.send('201|||account|||miner|||' + JSON.stringify({account: ''}));
+        library.socket.webSocket.send('201|account|miner|' + JSON.stringify({account: ''}));
     }
 };
 
