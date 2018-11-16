@@ -433,52 +433,53 @@ Delegates.prototype.checkDelegates = function (publicKey, votes, cb) {
             })
         });
     } else {
-        setImmediate(cb, "Please provide an array of votes");
+        setImmediate(cb, "Please provide an array of votes 1111111");
     }
 };
 
 Delegates.prototype.checkUnconfirmedDelegates = function (publicKey, votes, cb) {
-    if (util.isArray(votes)) {
-        library.modules.accounts.getAccount({master_pub: publicKey}, function (err, account) {
-            if (err) {
-                return cb(err);
-            }
-            if (!account) {
-                return cb("Account not found");
-            }
-
-            async.eachSeries(votes, function (action ,cb) {
-                var math = action[0];
-
-                if (math !== '+' && math !== '-') {
-                    return cb("Invalid math operator");
-                }
-
-                var publicKey = action.slice(1);
-
-                if (math == "+" && (account.delegates_unconfirmed !== null && account.delegates_unconfirmed.indexOf(publicKey) != -1)) {
-                    return cb("Failed to add vote, account has already voted for this delgate");
-                }
-                if (math == "-" && (account.delegates_unconfirmed === null || account.delegates_unconfirmed.indexOf(publicKey) === -1)) {
-                    return cb("Failed to remove vote, account has not voted for this delegate");
-                }
-
-                library.modules.accounts.getAccount({master_pub: publicKey, isDelegate: 1}, function (err, account) {
-                    if (err) {
-                        return cb(err);
-                    }
-
-                    if (!account) {
-                        return cb("Delegate not found account");
-                    }
-
-                    cb();
-                });
-            }, cb);
-        });
-    } else {
-        return setImmediate(cb, "Please provide an array of votes");
-    }
+    setImmediate(cb);
+    // if (util.isArray(votes)) {
+    //     library.modules.accounts.getAccount({master_pub: publicKey}, function (err, account) {
+    //         if (err) {
+    //             return cb(err);
+    //         }
+    //         if (!account) {
+    //             return cb("Account not found");
+    //         }
+    //
+    //         async.eachSeries(votes, function (action ,cb) {
+    //             var math = action[0];
+    //
+    //             if (math !== '+' && math !== '-') {
+    //                 return cb("Invalid math operator");
+    //             }
+    //
+    //             var publicKey = action.slice(1);
+    //
+    //             if (math == "+" && (account.delegates_unconfirmed !== null && account.delegates_unconfirmed.indexOf(publicKey) != -1)) {
+    //                 return cb("Failed to add vote, account has already voted for this delgate");
+    //             }
+    //             if (math == "-" && (account.delegates_unconfirmed === null || account.delegates_unconfirmed.indexOf(publicKey) === -1)) {
+    //                 return cb("Failed to remove vote, account has not voted for this delegate");
+    //             }
+    //
+    //             library.modules.accounts.getAccount({master_pub: publicKey, isDelegate: 1}, function (err, account) {
+    //                 if (err) {
+    //                     return cb(err);
+    //                 }
+    //
+    //                 if (!account) {
+    //                     return cb("Delegate not found account");
+    //                 }
+    //
+    //                 cb();
+    //             });
+    //         }, cb);
+    //     });
+    // } else {
+    //     return setImmediate(cb, "Please provide an array of votes 222222222222");
+    // }
 };
 
 Delegates.prototype.fork = function (block, cause) {

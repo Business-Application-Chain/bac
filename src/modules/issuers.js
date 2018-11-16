@@ -80,19 +80,43 @@ function Issuer() {
     };
 
     this.apply = function (txObj, blockObj, sender, cb) {
-        setImmediate(cb);
+        var data = {
+            master_address: sender.master_address,
+            isIssuers: 1,
+            isIssuers_unconfirmed: 0
+        };
+        library.modules.accounts.setAccountAndGet(data, cb);
     };
 
     this.undo = function (txObj, blockObj, sender, cb) {
-        setImmediate(cb);
+        var data = {
+            master_address: sender.master_address,
+            isIssuers: 0,
+            isIssuers_unconfirmed: 1
+        };
+        library.modules.accounts.setAccountAndGet(data, cb);
     };
 
     this.applyUnconfirmed = function (txObj, sender, cb) {
-        setImmediate(cb);
+        if (sender.isIssuers_unconfirmed || sender.isIssuers) {
+            return cb("Account is already been a issuers");
+        }
+        var data = {
+            master_address: sender.master_address,
+            isIssuers_unconfirmed: 1,
+            isIssuers: 0
+        };
+        library.modules.accounts.setAccountAndGet(data, cb);
     };
 
     this.undoUnconfirmed = function (txObj, sender, cb) {
-        setImmediate(cb);
+        // setImmediate(cb);
+        var data = {
+            master_address: sender.master_address,
+            isIssuers_unconfirmed: 0,
+            isIssuers: 0
+        };
+        library.modules.accounts.setAccountAndGet(data, cb);
     };
 
     this.load = function (raw) {
@@ -104,7 +128,6 @@ function Issuer() {
             desc: raw.i_desc,
             issuersAddress: raw.i_issuersAddress,
         };
-
         return {issuers: issuers};
     };
 

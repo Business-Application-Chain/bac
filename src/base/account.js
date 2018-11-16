@@ -380,7 +380,30 @@ function Account(scope, cb) {
             },
             conv: Number,
             default: 0
-        }
+        },
+        {
+            name: 'isIssuers_unconfirmed',
+            type: 'Boolean',
+            filter: {
+                type: 'integer',
+                minimum: -1,
+                maximum: 1
+            },
+            conv: Boolean,
+            default: 0
+        },
+        {
+            name: 'isIssuers',
+            type: 'Boolean',
+            filter: {
+                type: 'integer',
+                minimum: -1,
+                maximum: 1
+            },
+            conv: Boolean,
+            default: 0
+        },
+
     ];
 
     this.fields = this.model.map(field => {
@@ -820,7 +843,7 @@ Account.prototype.findAll = function (filter, fields, cb) {
     }).then(function (data) {
         cb(null, data);
     }, function (err) {
-        cb(err, undefined);
+        cb(err);
     });
 };
 

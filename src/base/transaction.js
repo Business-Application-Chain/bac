@@ -9,7 +9,8 @@ var ed = require('ed25519');
 var ByteBuffer = require('bytebuffer');
 var extend = require('util-extend');
 var bacLib = require('bac-lib');
-var library;
+var library, privated = {};
+
 // constructor
 function Transaction(scope, cb) {
     this.scope = scope;
@@ -18,8 +19,6 @@ function Transaction(scope, cb) {
 
     cb && setImmediate(cb, null, this);
 }
-
-var privated = {};
 
 privated.types = {};
 
@@ -675,10 +674,10 @@ Transaction.prototype.applyUnconfirmed = function (txObj, sender, requester, cb)
             return cb(err);
         }
 
-        privated.types[txObj.type].applyUnconfirmed.call(this, txObj, sender, function (err, data) {
+        privated.types[txObj.type].applyUnconfirmed.call(this, txObj, sender, function (err) {
             if (err) { // once error ocurrs, rollback the balance amount
                 this.scope.account.merge(sender.master_address, {balance_unconfirmed: amount}, function (err2) {
-                    cb(err2);
+                    cb(err);
                 });
             } else {
                 setImmediate(cb, err);

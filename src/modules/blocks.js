@@ -14,7 +14,6 @@ var blockStatus = require('../utils/blockStatus.js');
 var csvtojson = require('csvtojson');
 var	ip = require('ip');
 var Json2csv = require('json2csv').Parser;
-var BluePromise = require("bluebird");
 
 var header = ['b_hash', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward','b_generatorPublicKey','b_blockSignature', 'b_merkleRoot', 'b_difficulty', 'b_basic', 'b_decisionSignature', 'b_decisionAddress', 'b_minerHash',
     't_hash', 't_type','t_timestamp','t_senderPublicKey', 't_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature', 's_publicKey', 'd_address', 'da_hash', 'da_issuersAddress','da_className', 'do_dappHash', 'do_fun', 'do_params', 'i_name', 'i_desc','i_issuersAddress',
@@ -406,7 +405,6 @@ privated.applyTransaction = function (block, transaction, sender, cb) {
                 block: block
             });
         }
-
         library.modules.transactions.apply(transaction, block, sender, function (err) {
             if (err) {
                 return setImmediate(cb, {
@@ -908,7 +906,7 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                         } else {
                             library.modules.accounts.setAccountAndGet({master_pub: transaction.senderPublicKey}, function (err, sender) {
                                 if (err) {
-                                    return cb(err);
+                                    return setImmediate(cb, err);
                                 }
                                 library.base.transaction.verify(transaction, sender, function (err) {
                                     if (err) {
@@ -918,33 +916,26 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                         if (err) {
                                             cb("Failed to apply transaction: " + transaction.hash);
                                         }
-                                        library.modules.transactions.removeUnconfirmedTransaction(transaction.hash);
-                                        library.modules.transactions.applyUnconfirmed(transaction, sender, function (err) {
+                                        appliedTransactions[transaction.hash] = transaction;
+                                        var index = unconfirmedTransactions.indexOf(transaction.hash);
+                                        if (index >= 0) {
+                                            unconfirmedTransactions.splice(index, 1);
+                                        }
+                                        totalAmount += transaction.amount;
+                                        totalFee += transaction.fee;
+                                        if(block.totalAmount < totalAmount) {
+                                            return cb("block.totalAmount < totalAmount");
+                                        } else if(block.fee < totalFee) {
+                                            return cb("block.fee < totalFee");
+                                        }
+                                        library.base.transaction.save(transaction, function (err) {
                                             if (err) {
-                                                // return setImmediate(cb, "Failed to apply transaction: " + transaction.hash);
-                                                cb("Failed to apply transaction: " + transaction.hash);
+                                                library.log.Error("saveBlock", "Error", err.toString());
+                                                return cb("saveBlock", "Error", err.toString());
+                                            } else {
+                                                library.modules.transactions.removeUnconfirmedTransaction(transaction.hash);
+                                                setImmediate(cb);
                                             }
-                                            appliedTransactions[transaction.hash] = transaction;
-                                            var index = unconfirmedTransactions.indexOf(transaction.hash);
-                                            if (index >= 0) {
-                                                unconfirmedTransactions.splice(index, 1);
-                                            }
-                                            totalAmount += transaction.amount;
-                                            totalFee += transaction.fee;
-                                            if(block.totalAmount < totalAmount) {
-                                                return cb("block.totalAmount < totalAmount");
-                                            } else if(block.fee < totalFee) {
-                                                return cb("block.fee < totalFee");
-                                            }
-                                            library.base.transaction.save(transaction, function (err) {
-                                                if (err) {
-                                                    library.log.Error("saveBlock", "Error", err.toString());
-                                                    return cb("saveBlock", "Error", err.toString());
-                                                } else {
-
-                                                    setImmediate(cb);
-                                                }
-                                            });
                                         });
                                     });
                                 });

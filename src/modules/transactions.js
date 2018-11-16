@@ -481,14 +481,11 @@ Transactions.prototype.processUnconfirmedTransaction = function (txObj, broadcas
             if (err) {
                 return cb(err);
             }
-
             privated.addUnconfirmedTransaction(txObj, sender, function (err) {
                 if (err) {
                     return cb(err);
                 }
-
                 library.notification_center.notify('unconfirmedTransaction', txObj, broadcast);
-
                 cb();
             });
         }
@@ -502,21 +499,17 @@ Transactions.prototype.processUnconfirmedTransaction = function (txObj, broadcas
                 if (err) {
                     return done(err);
                 }
-
                 if (!requester) {
                     return cb("Invalid requester");
                 }
-
                 library.base.transaction.process(txObj, sender, requester, function (err, txObj) {
                     if (err) {
                         return done(err);
                     }
-
                     // Check in confirmed transactions
                     if (privated.unconfirmedTransactionsIdIndex[txObj.hash] !== undefined || privated.doubleSpendingTransactions[txObj.hash]) {
                         return cb("Transaction is already existed");
                     }
-
                     library.base.transaction.verify(txObj, sender, done);
                 });
             });
@@ -525,12 +518,10 @@ Transactions.prototype.processUnconfirmedTransaction = function (txObj, broadcas
                 if (err) {
                     return done(err);
                 }
-
                 // Check in confirmed transactions
                 if (privated.unconfirmedTransactionsIdIndex[txObj.hash] !== undefined || privated.doubleSpendingTransactions[txObj.hash]) {
                     return cb("Transaction is already existed");
                 }
-
                 library.base.transaction.verify(txObj, sender, done);
             });
         }
@@ -633,7 +624,7 @@ Transactions.prototype.applyUnconfirmedList = function (ids, cb) {
 };
 
 Transactions.prototype.receiveTransactions = function (transactions, cb) {
-    async.each(transactions, function (txObj, cb) {
+    async.eachSeries(transactions, function (txObj, cb) {
         self.processUnconfirmedTransaction(txObj, true, cb);
     }, function (err) {
         cb(err, transactions);
