@@ -335,6 +335,102 @@ function DoDapp() {
     };
 }
 
+function TransferDapp() {
+    this.calculateFee = function (txObj, sender) {
+        return 1 * constants.fixedPoint;
+    };
+
+    this.create = function (data, txObj) {
+        txObj.amount = 0;
+        txObj.asset.transferDapp = {
+            dappHash: data.dappHash,
+            admin: data.admin
+        };
+        return txObj;
+    };
+
+    this.objectNormalize = function (txObj) {
+        var report = library.schema.validate(txObj.asset.dapp, {
+            type: 'object',
+            properties: {
+                dappHash: {
+                    type: 'string'
+                },
+                admin: {
+                    type: 'string',
+                }
+            },
+            required: ['dappHash', 'admin']
+        });
+        if (!report) {
+            throw new Error(library.schema.getLastError());
+        }
+        return txObj;
+    };
+
+    this.getBytes = function (txObj) {
+        return null;
+    };
+
+    this.ready = function (txObj, sender) {
+        if (sender.multisignatures) {
+            if (!txObj.signatures) {
+                return false;
+            }
+            return txObj.signatures.length >= sender.multisign_min - 1;
+        } else {
+            return true;
+        }
+    };
+
+    this.process = function (txObj, sender, cb) {
+        setImmediate(cb, null, txObj);
+    };
+
+    this.verify = function (txObj, sender, cb) {
+        if (!txObj.asset.transferDapp) {
+            return setImmediate(cb, "Invalid transaction dapp")
+        }
+        if (txObj.amount !== 0) {
+            return setImmediate(cb, "Invalid transaction amount");
+        }
+        setImmediate(cb, null, txObj);
+
+    };
+
+    this.apply = function (txObj, blockObj, sender, cb) {
+        setImmediate(cb);
+    };
+
+    this.undo = function (txObj, blockObj, sender, cb) {
+        setImmediate(cb);
+    };
+
+    this.applyUnconfirmed = function (txObj, sender, cb) {
+        cb();
+    };
+
+    this.undoUnconfirmed = function (txObj, sender, cb) {
+        setImmediate(cb);
+    };
+
+    this.load = function (raw) {
+        if(!(raw.dt_dappHash || raw.dt_admin)) {
+            return null;
+        }
+        let transferDapp = {
+            dappHash: raw.dt_dappHash,
+            admin: raw.dt_admin,
+        };
+        return {transferDapp: transferDapp};
+    };
+
+    this.save = function save(txObj, cb) {
+        // cb();
+
+    }
+}
+
 function Dapps(cb, scope) {
     library = scope;
     self = this;
@@ -364,7 +460,7 @@ privated.checkAccount = function(account, cb) {
         if(rows[0]) {
             cb(null, rows[0].issuersAddress);
         } else {
-            cb('该用户不是商户');
+            cb();
         }
     }).catch(err => {
         cb(err);
@@ -386,6 +482,22 @@ privated.findIssuersAddress = function(issuersAddress, cb) {
     }).catch((err) => {
         cb(err);
     });
+};
+
+privated.getAssetsAdmin = function(address, dappHash, cb) {
+    library.dbClient.query('SELECT * FROM `dapp2assets` WHERE `hash` = $hash and `accountId` = $accountId', {
+        type: Sequelize.QueryTypes.SELECT,
+        bind: {
+            hash: dappHash,
+            accountId: address
+        }
+    }).then(rows => {
+        if(rows[0]) {
+            cb(null, rows[0]);
+        } else {
+            cb("该用户不是此合约的管理员");
+        }
+    })
 };
 
 shared_1_0.upLoadDapp = function(params, cb) {
@@ -470,7 +582,7 @@ shared_1_0.handleDapp = function(params, cb) {
     let param = params[3] || [];
     let secondSecret = params[4] || '';
 
-    if(!(mnemonic || fun || dappHash || recipientId)) {
+    if(!(mnemonic || fun || dappHash)) {
         return cb("miss must params", 11000);
     }
     let keyPair = library.base.account.getKeypair(mnemonic);
@@ -522,6 +634,46 @@ shared_1_0.handleDapp = function(params, cb) {
             return cb(err.toString(), 13009);
         }
         cb(null, 200, {transactionHash: transaction[0].hash});
+    });
+};
+
+shared_1_0.transferDapp = function(params, cb) {
+    let mnemonic = params[0] || '';
+    let dappHash = params[2] || '';
+    let transferAddress = params[3] || '';
+    if(!(mnemonic && dappHash && transferAddress)) {
+        return cb("miss must params", 11000);
+    }
+    let keyPair = library.base.account.getKeypair(mnemonic);
+    let publicKey = keyPair.getPublicKeyBuffer().toString('hex');
+    let query = {
+        master_pub: publicKey
+    };
+    library.balancesSequence.add(function (cb) {
+        library.modules.accounts.getAccount({master_pub: publicKey}, function (err, account) {
+            if (err) {
+                return cb(err.toString(), 11003);
+            }
+            if (!account || !account.master_pub) {
+                return cb("Invalid account", 13007);
+            }
+            if (account.secondsign && !secondSecret) {
+                return cb("Invalid second passphrase", 13008);
+            }
+            var secondKeypair = null;
+            if (account.secondsign) {
+                var secondHash = crypto.createHash('sha256').update(secondSecret, 'utf8').digest();
+                secondKeypair = ed.MakeKeypair(secondHash);
+            }
+            let lastBlock = library.modules.blocks.getLastBlock();
+            let lastBlockHeight = lastBlock.height;
+            if(account.lockHeight > lastBlockHeight) {
+                return cb("Account is locked", 11000);
+            }
+            privated.getAssetsAdmin(account.master_address, dappHash, function (err, data) {
+
+            });
+        });
     });
 };
 
