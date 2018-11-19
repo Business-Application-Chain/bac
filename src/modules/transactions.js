@@ -866,7 +866,6 @@ shared_1_0.addTransaction = function (params, cb) {
                         secondKeypair = ed.MakeKeypair(secondHash);
                     }
                     let lastBlock = library.modules.blocks.getLastBlock();
-                    console.log(lastBlock);
                     let lastBlockHeight = lastBlock.height;
                     if(account.lockHeight > lastBlockHeight) {
                         return cb("Account is locked", 11000);

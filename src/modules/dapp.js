@@ -342,9 +342,9 @@ function TransferDapp() {
 
     this.create = function (data, txObj) {
         txObj.amount = 0;
+        txObj.recipientId = data.recipientId;
         txObj.asset.transferDapp = {
-            dappHash: data.dappHash,
-            admin: data.admin
+            dappHash: data.dappHash
         };
         return txObj;
     };
@@ -355,12 +355,9 @@ function TransferDapp() {
             properties: {
                 dappHash: {
                     type: 'string'
-                },
-                admin: {
-                    type: 'string',
                 }
             },
-            required: ['dappHash', 'admin']
+            required: ['dappHash']
         });
         if (!report) {
             throw new Error(library.schema.getLastError());
@@ -415,19 +412,40 @@ function TransferDapp() {
     };
 
     this.load = function (raw) {
-        if(!(raw.dt_dappHash || raw.dt_admin)) {
+        if(!(raw.dt_dappHash)) {
             return null;
         }
         let transferDapp = {
-            dappHash: raw.dt_dappHash,
-            admin: raw.dt_admin,
+            dappHash: raw.dt_dappHash
         };
         return {transferDapp: transferDapp};
     };
 
     this.save = function save(txObj, cb) {
-        // cb();
-
+        let transferDapp = txObj.asset.transferDapp;
+        library.dbClient.query("INSERT INTO dapp2transfersAdmin(`dappHash`, `transactionHash`, `accountId`, `recipientId`, `timestamp`) VALUES ($dappHash, $transactionHash, $accountId, $recipientId, $timestamp)", {
+            type: Sequelize.QueryTypes.INSERT,
+            bind: {
+                dappHash: transferDapp.dappHash,
+                transactionHash: txObj.hash,
+                accountId: txObj.senderId,
+                recipientId: txObj.recipientId,
+                timestamp: Date.now(),
+            }
+        }).then(() => {
+            return library.dbClient.query('UPDATE dapp2assets SET `accountId`=$recipientId WHERE `hash`=$dappHash and `accountId`=$accountId', {
+                type: Sequelize.QueryTypes.INSERT,
+                bind: {
+                    recipientId: txObj.recipientId,
+                    dappHash: transferDapp.dappHash,
+                    accountId: txObj.senderId
+                }
+            });
+        }).then(() => {
+            cb();
+        }).catch(err => {
+            return cb(err);
+        });
     }
 }
 
@@ -437,6 +455,7 @@ function Dapps(cb, scope) {
     self.__private = privated;
     library.base.transaction.attachAssetType(TransactionTypes.DAPP, new Dapp());
     library.base.transaction.attachAssetType(TransactionTypes.DO_DAPP, new DoDapp());
+    library.base.transaction.attachAssetType(TransactionTypes.DAPP_TRANSFER, new TransferDapp());
     setImmediate(cb, null, self);
 }
 
@@ -493,10 +512,12 @@ privated.getAssetsAdmin = function(address, dappHash, cb) {
         }
     }).then(rows => {
         if(rows[0]) {
-            cb(null, rows[0]);
+            cb();
         } else {
             cb("该用户不是此合约的管理员");
         }
+    }).catch(err => {
+        cb(err);
     })
 };
 
@@ -639,16 +660,14 @@ shared_1_0.handleDapp = function(params, cb) {
 
 shared_1_0.transferDapp = function(params, cb) {
     let mnemonic = params[0] || '';
-    let dappHash = params[2] || '';
-    let transferAddress = params[3] || '';
+    let dappHash = params[1] || '';
+    let transferAddress = params[2] || '';
+    let secondSecret = params[3] || '';
     if(!(mnemonic && dappHash && transferAddress)) {
         return cb("miss must params", 11000);
     }
     let keyPair = library.base.account.getKeypair(mnemonic);
     let publicKey = keyPair.getPublicKeyBuffer().toString('hex');
-    let query = {
-        master_pub: publicKey
-    };
     library.balancesSequence.add(function (cb) {
         library.modules.accounts.getAccount({master_pub: publicKey}, function (err, account) {
             if (err) {
@@ -670,10 +689,32 @@ shared_1_0.transferDapp = function(params, cb) {
             if(account.lockHeight > lastBlockHeight) {
                 return cb("Account is locked", 11000);
             }
-            privated.getAssetsAdmin(account.master_address, dappHash, function (err, data) {
-
+            privated.getAssetsAdmin(account.master_address, dappHash, function (err) {
+                if(err) {
+                    return cb("此账户不是该dapp的管理员", 11000);
+                } else {
+                    try {
+                        var transaction = library.base.transaction.create({
+                            type: TransactionTypes.DAPP_TRANSFER,
+                            admin: transferAddress,
+                            dappHash: dappHash,
+                            keypair: keyPair,
+                            sender: account,
+                            recipientId: transferAddress,
+                            secondKeypair: secondKeypair,
+                        });
+                    } catch (e) {
+                        return cb(e.toString(), 13009);
+                    }
+                    library.modules.transactions.receiveTransactions([transaction], cb);
+                }
             });
         });
+    }, function (err, transaction) {
+        if (err) {
+            return cb(err.toString(), 13009);
+        }
+        cb(null, 200, {transactionHash: transaction[0].hash});
     });
 };
 

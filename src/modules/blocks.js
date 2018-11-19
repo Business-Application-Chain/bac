@@ -16,7 +16,8 @@ var	ip = require('ip');
 var Json2csv = require('json2csv').Parser;
 
 var header = ['b_hash', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward','b_generatorPublicKey','b_blockSignature', 'b_merkleRoot', 'b_difficulty', 'b_basic', 'b_decisionSignature', 'b_decisionAddress', 'b_minerHash',
-    't_hash', 't_type','t_timestamp','t_senderPublicKey', 't_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature', 's_publicKey', 'd_address', 'da_hash', 'da_issuersAddress','da_className', 'da_abi', 'da_tokenList', 'do_dappHash', 'do_fun', 'do_params', 'i_name', 'i_desc','i_issuersAddress',
+    't_hash', 't_type','t_timestamp','t_senderPublicKey', 't_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature', 's_publicKey', 'd_address',
+    'da_hash', 'da_issuersAddress','da_className', 'da_abi', 'da_tokenList', 'do_dappHash', 'do_fun', 'do_params', 'i_name', 'i_desc','i_issuersAddress', 'dt_dappHash', 'dt_dapp',
     'c_address','u_alias', 'm_min','m_lifetime','m_keysgroup','t_requesterPublicKey','t_signatures', 'a_name', 'a_description', 'a_hash', 'a_decimal', 'a_total', 'tr_amount', 'tr_assetsHash', 'tr_assetsName', 'l_lockHeight', 'min_ip', 'min_port'];
 
 require('array.prototype.findindex'); // Old node fix
@@ -65,6 +66,8 @@ privated.blocksDataFields = {
     'do_dappHash': String,
     'do_fun': String,
     'do_params': String,
+    'dt_dappHash': String,
+    'dt_dapp': String,
     'i_name': String,
     'i_desc': String,
     'i_issuersAddress': String,
@@ -97,6 +100,7 @@ privated.serchSql = 'SELECT '+
     'd.address as d_address, ' +
     'da.hash as da_hash, da.className as da_className, da.issuersAddress as da_issuersAddress, da.abi as da_abi, da.tokenList as da_tokenList, ' +
     'do.dappHash as do_dappHash, do.fun as do_fun, do.params as do_params, '+
+    'dt.dappHash as dt_dappHash, ' +
     'i.name as i_name, i.desc as i_desc, i.issuersAddress as i_issuersAddress, '+
     'c.address as c_address, ' +
     'u.username as u_alias,' +
@@ -112,6 +116,7 @@ privated.serchSql = 'SELECT '+
     "left outer join dapp2assets as da on da.transactionHash=t.hash " +
     "left outer join dapp2assets_handle as do on do.transactionHash=t.hash " +
     "left outer join dapp2issuers as i on i.transactionHash=t.hash " +
+    "left outer join dapp2transfersAdmin as dt on dt.transactionHash=t.hash " +
     "left outer join signatures as s on s.transactionHash=t.hash " +
     "left outer join contacts as c on c.transactionHash=t.hash " +
     "left outer join usernames as u on u.transactionHash=t.hash " +
@@ -160,7 +165,6 @@ privated.saveGenesisBlock = function (cb) {
 
 privated.saveBlock = function (blockObj, cb) {
     var save_records = [];
-
     save_records.push(new Promise((resolve, reject) => {
         library.base.block.save(blockObj, function (err) {
             if (err) {
