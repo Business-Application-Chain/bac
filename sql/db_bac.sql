@@ -11,7 +11,7 @@
  Target Server Version : 50721
  File Encoding         : 65001
 
- Date: 19/11/2018 11:59:17
+ Date: 19/11/2018 17:39:46
 */
 
 SET NAMES utf8mb4;
@@ -273,6 +273,18 @@ CREATE TABLE `dapp2issuers` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ----------------------------
+-- Table structure for dapp2transfersAdmin
+-- ----------------------------
+DROP TABLE IF EXISTS `dapp2transfersAdmin`;
+CREATE TABLE `dapp2transfersAdmin` (
+  `dappHash` varchar(64) DEFAULT NULL,
+  `transactionHash` varchar(255) DEFAULT NULL,
+  `accountId` varchar(64) NOT NULL,
+  `recipientId` varchar(64) NOT NULL,
+  `timestamp` bigint(13) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- ----------------------------
 -- Table structure for dapps
 -- ----------------------------
 DROP TABLE IF EXISTS `dapps`;
@@ -372,7 +384,7 @@ CREATE TABLE `peers` (
   `clock` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `ip_UNIQUE` (`ip`)
-) ENGINE=InnoDB AUTO_INCREMENT=6190245 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=6190554 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for peers_dapp
