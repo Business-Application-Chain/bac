@@ -20,7 +20,9 @@ function Dapp() {
         txObj.asset.dapp = {
             hash: address,
             className: data.className,
-            issuersAddress: data.issuersAddress
+            issuersAddress: data.issuersAddress,
+            abi: data.abi,
+            tokens: data.tokens
         };
         return txObj;
     };
@@ -95,58 +97,54 @@ function Dapp() {
         let dapp = {
             hash: raw.da_hash,
             className: raw.da_className,
-            issuersAddress: raw.da_issuersAddress
+            issuersAddress: raw.da_issuersAddress,
+            abi: JSON.parse(raw.da_abi) ,
+            tokens: JSON.parse(raw.da_tokenList)
         };
 
         return {dapp: dapp};
     };
 
     this.save = function (txObj, cb) {
-        library.buna.buna.getContractTokens(txObj.senderId, txObj.message, function (err, tokens) {
-            if(err) {
+        let dapp = txObj.asset.dapp;
+        let cTokens = dapp.tokens;
+        let cAbi = dapp.abi;
+        library.buna.buna.dealCreateContract(txObj, dapp.tokens, function (err, dappData) {
+            if(err || dappData.hadError || dappData.hadRuntimeError) {
                 return cb(err);
             }
-            //合约tokens and api
-            tokens.token.pop();
-            let cTokens = tokens.token;
-            let cAbi = tokens.abi;
-            library.buna.buna.dealCreateContract(txObj, tokens.token, function (err, dappData) {
-                if(err || dappData.hadError || dappData.hadRuntimeError) {
-                    return cb(err);
-                }
-                if(dappData.name && dappData.symbol && dappData.decimals && dappData.totalAmount) {
-                    let dapp = txObj.asset.dapp;
-                    return library.dbClient.query("INSERT INTO dapp2assets(`hash`, `name`, `symbol`, `decimals`, `totalAmount`, `transactionHash`, `createTime`, `accountId`, `others`, `contract`, `className`, `abi`, `tokenList`, `tokenCode`, `issuersAddress`) VALUES ($hash, $name, $symbol, $decimals, $totalAmount, $transactionHash, $createTime, $accountId, $others, $contract, $className, $abi, $tokenList, $tokenCode, $issuersAddress)", {
-                        type: Sequelize.QueryTypes.INSERT,
-                        bind: {
-                            hash: dapp.hash,
-                            name: dappData.name,
-                            symbol: dappData.symbol,
-                            description: dappData.description,
-                            decimals: dappData.decimals,
-                            totalAmount: dappData.totalAmount,
-                            transactionHash: txObj.hash,
-                            createTime: txObj.timestamp,
-                            accountId: txObj.senderId,
-                            contract: txObj.message,
-                            others: dappData.others,
-                            className: dapp.className,
-                            abi: JSON.stringify(cAbi),
-                            tokenList: JSON.stringify(cTokens),
-                            tokenCode: " ",
-                            issuersAddress: dapp.issuersAddress
-                        },
-                    }).then(() => {
-                        return library.base.accountAssets.addDappBalance(txObj.senderId, {dappHash: dapp.hash, name: dappData.name, symbol: dappData.symbol, others: dappData.others}, dappData.totalAmount);
-                    }).then(() => {
-                        cb();
-                    }).catch((err) => {
-                        cb(err);
-                    });
-                } else {
-                    return cb("dappData miss params");
-                }
-            });
+            if(dappData.name && dappData.symbol && dappData.decimals && dappData.totalAmount) {
+
+                return library.dbClient.query("INSERT INTO dapp2assets(`hash`, `name`, `symbol`, `decimals`, `totalAmount`, `transactionHash`, `createTime`, `accountId`, `others`, `contract`, `className`, `abi`, `tokenList`, `tokenCode`, `issuersAddress`) VALUES ($hash, $name, $symbol, $decimals, $totalAmount, $transactionHash, $createTime, $accountId, $others, $contract, $className, $abi, $tokenList, $tokenCode, $issuersAddress)", {
+                    type: Sequelize.QueryTypes.INSERT,
+                    bind: {
+                        hash: dapp.hash,
+                        name: dappData.name,
+                        symbol: dappData.symbol,
+                        description: dappData.description,
+                        decimals: dappData.decimals,
+                        totalAmount: dappData.totalAmount,
+                        transactionHash: txObj.hash,
+                        createTime: txObj.timestamp,
+                        accountId: txObj.senderId,
+                        contract: "",
+                        others: dappData.others,
+                        className: dapp.className,
+                        abi: JSON.stringify(cAbi),
+                        tokenList: JSON.stringify(cTokens),
+                        tokenCode: " ",
+                        issuersAddress: dapp.issuersAddress
+                    },
+                }).then(() => {
+                    return library.base.accountAssets.addDappBalance(txObj.senderId, {dappHash: dapp.hash, name: dappData.name, symbol: dappData.symbol, others: dappData.others}, dappData.totalAmount);
+                }).then(() => {
+                    cb();
+                }).catch((err) => {
+                    cb(err);
+                });
+            } else {
+                return cb("dappData miss params");
+            }
         });
     };
 }
@@ -433,15 +431,17 @@ shared_1_0.upLoadDapp = function(params, cb) {
                             return cb(err || "合约缺少关键属性", 11000);
                         } else {
                             if(dappData.name && dappData.symbol && dappData.decimals && dappData.totalAmount) {
+                                dappData.token.pop();
                                 try {
                                     var transaction = library.base.transaction.create({
                                         type: TransactionTypes.DAPP,
                                         className: className,
                                         sender: account,
-                                        message: msg,
                                         keypair: keyPair,
                                         secondKeypair: secondKeypair,
-                                        issuersAddress: issuersAddress
+                                        tokens: dappData.token,
+                                        abi: dappData.abi,
+                                        issuersAddress: issuersAddress || " "
                                     });
                                 } catch (e) {
                                     return cb(e.toString(), 13009);
