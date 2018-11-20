@@ -41,7 +41,7 @@ Transaction.prototype.create = function (data) {
 
     var txObj = {
         type: data.type,
-        amount: 0,
+        amount: data.amount || 0,
         senderId: data.sender.master_address,
         recipientId: data.recipientId || null,
         senderPublicKey: data.sender.master_pub.toString('hex'),
