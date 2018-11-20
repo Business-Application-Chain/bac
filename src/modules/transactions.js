@@ -103,7 +103,6 @@ function Transaction() {
             }, function (err) {
                 cb(err);
             });
-
         });
     };
 

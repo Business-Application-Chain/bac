@@ -12,7 +12,7 @@ module.exports = {
     ASSETS: 10,
     TRANSFERS: 11,
     BURN: 12,
-    OTHER: 13,
+    OTHER: 13, 
     LOCK_HEIGHT: 14,
     MINER_IP: 15,
     DO_DAPP: 16,

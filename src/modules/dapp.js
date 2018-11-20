@@ -518,9 +518,27 @@ privated.getAssetsAdmin = function(address, dappHash, cb) {
         }
     }).catch(err => {
         cb(err);
-    })
+    });
 };
 
+privated.searchDpaaBalance = function(address, dappHash, cb) {
+    let sql = 'SELECT * FROM `dapp2assets_balances` WHERE `accountId` = $accountId ';
+    if(dappHash) {
+        sql += 'and `dappHash`=$dappHash';
+    }
+    library.dbClient.query(sql, {
+        type: Sequelize.QueryTypes.SELECT,
+        bind: {
+            accountId: address,
+            dappHash: dappHash
+        }
+    }).then((rows) => {
+        cb(null, rows);
+    }).catch(err => {
+        cb(err);
+    })
+};
+// 上传合约
 shared_1_0.upLoadDapp = function(params, cb) {
     let mnemonic = params[0] || '';
     let className = params[1] || '';
@@ -595,7 +613,7 @@ shared_1_0.upLoadDapp = function(params, cb) {
         cb(null, 200, {transactionHash: transaction[0].hash, dappHash: transaction[0].asset.dapp.hash});
     })
 };
-
+// 使用合约方法
 shared_1_0.handleDapp = function(params, cb) {
     let mnemonic = params[0] || '';
     let dappHash = params[1] || '';
@@ -657,7 +675,7 @@ shared_1_0.handleDapp = function(params, cb) {
         cb(null, 200, {transactionHash: transaction[0].hash});
     });
 };
-
+// 转移合约所有人
 shared_1_0.transferDapp = function(params, cb) {
     let mnemonic = params[0] || '';
     let dappHash = params[1] || '';
@@ -715,6 +733,31 @@ shared_1_0.transferDapp = function(params, cb) {
             return cb(err.toString(), 13009);
         }
         cb(null, 200, {transactionHash: transaction[0].hash});
+    });
+};
+// 查询dapp余额
+shared_1_0.searchDappBalance = function(params, cb) {
+    let address = params[0] || '';
+    let dappHash = params[1] || '';
+    if(!address) {
+        return cb(11000, "缺少合约人地址");
+    }
+    privated.searchDpaaBalance(address, dappHash, (err, rows) => {
+        if(err) {
+            return cb(err, 11000);
+        } else {
+            return cb(null, 200, rows);
+        }
+    })
+};
+//查询全部合约列表
+shared_1_0.searchDappList = function(params, cb) {
+    library.dbClient.query('SELECT * FROM `dapp2assets`', {
+        type: Sequelize.QueryTypes.SELECT
+    }).then(rows => {
+        return cb(null, 200, rows);
+    }).catch(err => {
+        return cb(err, 11000);
     });
 };
 

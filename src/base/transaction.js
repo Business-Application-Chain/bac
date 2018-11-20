@@ -46,12 +46,11 @@ Transaction.prototype.create = function (data) {
         recipientId: data.recipientId || null,
         senderPublicKey: data.sender.master_pub.toString('hex'),
         timestamp: Date.now(),
-        asset: {},
     };
 
-    txObj = privated.types[txObj.type].create.call(this, data, txObj);
     txObj.signature = this.sign(txObj, data.keypair);
-
+    txObj.asset = {};
+    txObj = privated.types[txObj.type].create.call(this, data, txObj);
     if (data.sender.secondsign && data.secondKeypair) {
         txObj.signSignature = this.secondSign(txObj, data.secondKeypair);
     }
@@ -255,15 +254,12 @@ Transaction.prototype.process = function (txObj, sender, requester, cb) {
     if (typeof requester === 'function') { // means only input 3 params
         cb = requester;
     }
-
     if (!privated.types[txObj.type]) {
         throw new Error("Unknown transaction type " + txObj.type);
     }
-
     // if (!this.ready(txObj, sender)) {
     //     return setImmediate(cb, "Transaction is not ready: " + txObj.id);
     // }
-
     try {
         var txHash = this.getTrsHash(txObj);
     } catch (err) {
@@ -276,16 +272,13 @@ Transaction.prototype.process = function (txObj, sender, requester, cb) {
     if (!sender) {
         return setImmediate(cb, "Invalid sender");
     }
-
     txObj.senderId = sender.master_address;
-
     // Verify that requester in multisignatures
     if (txObj.requesterPublicKey) {
         if (sender.multisignatures.indexOf(txObj.requesterPublicKey) < 0) {
             return setImmediate(cb, "Failed to verify requester public key as in multisignatures");
         }
     }
-
     if (txObj.requesterPublicKey) {
         if (!this.verifySignature(txObj, txObj.requesterPublicKey, txObj.signature)) {
             return setImmediate(cb, "Failed to verify request public key as signature");
@@ -295,12 +288,10 @@ Transaction.prototype.process = function (txObj, sender, requester, cb) {
             return setImmediate(cb, "Failed to verify sender public key as signature");
         }
     }
-
     privated.types[txObj.type].process.call(this, txObj, sender, function (err, txObj) {
         if (err) {
             return setImmediate(cb, err);
         }
-
         this.scope.dbClient.query('SELECT COUNT(hash) AS count FROM transactions WHERE hash = $hash', {
             type: Sequelize.QueryTypes.SELECT,
             bind: {
@@ -308,11 +299,9 @@ Transaction.prototype.process = function (txObj, sender, requester, cb) {
             }
         }).then(function (rows) {
             var res = rows.length && rows[0];
-
             if (res.count) {
                 return cb("Failed to process already confirmed transaction");
             }
-
             cb(null, txObj);
         }, function (err) {
             cb(err, undefined);
@@ -474,7 +463,7 @@ Transaction.prototype.getTrsJson = function(txObj) {
         recipientId: txObj.recipientId || null,
         senderPublicKey: txObj.senderPublicKey,
         timestamp: txObj.timestamp,
-        asset: txObj.asset
+        // asset: txObj.asset
     };
     return JSON.stringify(data);
 };
@@ -486,7 +475,6 @@ Transaction.prototype.verifySign = function(trsJson, address, signature) {
 };
 
 Transaction.prototype.verifyTrsSignature = function(txObj) {
-
     let data = {
         type: txObj.type,
         amount: txObj.amount,
@@ -494,10 +482,9 @@ Transaction.prototype.verifyTrsSignature = function(txObj) {
         recipientId: txObj.recipientId || null,
         senderPublicKey: txObj.senderPublicKey,
         timestamp: txObj.timestamp,
-        asset: txObj.asset
+        // asset: txObj.asset
     };
     let signature = Buffer.from(txObj.signature, 'hex');
-
     return bacLib.bacSign.verify(JSON.stringify(data), txObj.senderId, signature);
 };
 
@@ -505,32 +492,25 @@ Transaction.prototype.verifySecondSignature = function (txObj, publicKey, signSi
     if (!privated.types[txObj.type]) {
         throw new Error("Unknown transaction type " + txObj.type);
     }
-
     if (!signSignature) return false;
-
     try {
-
         var bytes = this.getBytes(txObj, false, true);
         var res = this.verifyBytes(bytes, publicKey, signSignature);
     } catch (err) {
         throw new Error(err.toString());
     }
-
     return res;
 };
 
 Transaction.prototype.getData = function(txObj) {
-
 };
 
 Transaction.prototype.verifyBytes = function (bytes, master_pub, signature) {
     try {
         var data2 = new Buffer(bytes.length);
-
         for (var i = 0; i < data2.length; i++) {
             data2[i] = bytes[i];
         }
-
         var hash = crypto.createHash('sha256').update(data2).digest();
         var signatureBuffer = new Buffer(signature, 'hex');
         var publicKeyBuffer = new Buffer(master_pub, 'hex');
@@ -538,7 +518,6 @@ Transaction.prototype.verifyBytes = function (bytes, master_pub, signature) {
     } catch (err) {
         throw new Error(err.toString());
     }
-
     return res;
 };
 
