@@ -11,7 +11,7 @@
  Target Server Version : 50721
  File Encoding         : 65001
 
- Date: 19/11/2018 17:39:46
+ Date: 21/11/2018 14:49:22
 */
 
 SET NAMES utf8mb4;
@@ -255,7 +255,7 @@ CREATE TABLE `dapp2assets_handle` (
   `timestamp` bigint(15) DEFAULT NULL,
   `accountId` varchar(64) DEFAULT NULL,
   `recipientId` varchar(64) DEFAULT NULL,
-  `dealResult` int(10) unsigned zerofill DEFAULT NULL
+  `dealResult` int(1) unsigned zerofill DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ----------------------------
@@ -384,7 +384,7 @@ CREATE TABLE `peers` (
   `clock` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `ip_UNIQUE` (`ip`)
-) ENGINE=InnoDB AUTO_INCREMENT=6190554 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=6238970 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for peers_dapp

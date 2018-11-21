@@ -1,7 +1,2 @@
-function foo2() {
-    return {
-        bar: "fffff"
-    };
-}
-
-console.log(foo2())
+let ip=require('ip');
+console.log(ip.fromLong(167835859))

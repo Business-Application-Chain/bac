@@ -256,7 +256,7 @@ function DoDapp() {
         }).then((rows) => {
             if(rows[0]) {
                 if(rows[0].name && rows[0].symbol && rows[0].decimals && rows[0].totalAmount) {
-                    return library.dbClient.query("INSERT INTO dapp2assets_handle(`dappHash`, `transactionHash`, `fun`, `params`, `timestamp`, `accountId`) VALUES ($dappHash, $transactionHash, $fun, $params, $timestamp, $accountId)", {
+                    return library.dbClient.query("INSERT INTO dapp2assets_handle(`dappHash`, `transactionHash`, `fun`, `params`, `timestamp`, `accountId`, `dealResult`) VALUES ($dappHash, $transactionHash, $fun, $params, $timestamp, $accountId, $dealResult)", {
                         type: Sequelize.QueryTypes.INSERT,
                         bind: {
                             dappHash: doDapp.dappHash,
@@ -264,7 +264,8 @@ function DoDapp() {
                             timestamp: txObj.timestamp,
                             accountId: txObj.senderId,
                             fun: doDapp.fun,
-                            params: JSON.stringify(doDapp.params)
+                            params: JSON.stringify(doDapp.params),
+                            dealResult: 0
                         },
                     }).then(() => {
                         return library.base.accountAssets.getDappBalances(doDapp.dappHash);
@@ -538,6 +539,40 @@ privated.searchDpaaBalance = function(address, dappHash, cb) {
         cb(err);
     })
 };
+
+privated.searchHandle = function(data, cb) {
+    let sql = 'SELECT * FROM `dapp2assets_handle` WHERE ';
+    if(data.dappHash) {
+        sql += "`dappHash` = $dappHash ";
+        if(data.transactionHash) {
+            sql += "AND `transactionHash`=$transactionHash "
+        }
+        if(data.address) {
+            sql += 'AND `accountId` = $address ';
+        }
+    } else if(data.transactionHash) {
+        sql += "`transactionHash`=$transactionHash ";
+        if(data.address) {
+            sql += 'AND `accountId` = $address ';
+        }
+    } else if(data.address) {
+        sql += '`accountId` = $address ';
+    } else {
+        cb("data is null");
+    }
+    library.dbClient.query(sql, {
+        type: Sequelize.QueryTypes.SELECT,
+        bind: {
+            address: data.address,
+            transactionHash: data.transactionHash,
+            dappHash: data.dappHash
+        }
+    }).then(rows => {
+       return cb(null, rows);
+    }).catch(err => {
+        return cb(err);
+    });
+};
 // 上传合约
 shared_1_0.upLoadDapp = function(params, cb) {
     let mnemonic = params[0] || '';
@@ -750,7 +785,7 @@ shared_1_0.searchDappBalance = function(params, cb) {
         }
     })
 };
-//查询全部合约列表
+// 查询全部合约列表
 shared_1_0.searchDappList = function(params, cb) {
     library.dbClient.query('SELECT * FROM `dapp2assets`', {
         type: Sequelize.QueryTypes.SELECT
@@ -760,7 +795,39 @@ shared_1_0.searchDappList = function(params, cb) {
         return cb(err, 11000);
     });
 };
-
+// 查询自己的合约
+shared_1_0.searchMineList = function(params, cb) {
+    let address = params[0];
+    library.dbClient.query('SELECT * FROM `dapp2assets` WHERE `accountId`=$accountId', {
+        type: Sequelize.QueryTypes.SELECT,
+        bind: {
+            accountId: address
+        }
+    }).then((rows) => {
+        return cb(null, 200, rows);
+    });
+};
+// 查看操作记录
+shared_1_0.searchDappHandle = function(params, cb) {
+    let dappHash = params[0];
+    let transactionHash = params[1];
+    let address = params[2];
+    if(!(dappHash || transactionHash || address)) {
+        return cb("缺少参数", 11000);
+    }
+    let data = {
+        dappHash: dappHash,
+        transactionHash: transactionHash,
+        address: address
+    };
+    privated.searchHandle(data, function (err, data) {
+        if(err) {
+            return cb(err, 11000);
+        } else {
+            return cb(null, 200,data);
+        }
+    });
+};
 module.exports = Dapps;
 
 
