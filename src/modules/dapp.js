@@ -169,7 +169,7 @@ function DoDapp() {
     };
 
     this.objectNormalize = function (txObj) {
-        var report = library.schema.validate(txObj.asset.dapp, {
+        var report = library.schema.validate(txObj.asset.doDapp, {
             type: 'object',
             properties: {
                 params: {
