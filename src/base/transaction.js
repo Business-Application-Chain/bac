@@ -436,6 +436,10 @@ Transaction.prototype.verify = function (txObj, sender, requester, cb) {
     }
 
     // Spec
+    // txObj.asset = JSON.parse(txObj.asset);
+    if(typeof txObj.asset === "string") {
+        txObj.asset = JSON.parse(txObj.asset)
+    }
     privated.types[txObj.type].verify.call(this, txObj, sender, function (err) {
         cb(err);
     });

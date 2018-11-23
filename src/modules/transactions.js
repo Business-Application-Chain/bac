@@ -626,6 +626,10 @@ Transactions.prototype.receiveTransactions = function (transactions, cb) {
     async.eachSeries(transactions, function (txObj, cb) {
         self.processUnconfirmedTransaction(txObj, true, cb);
     }, function (err) {
+        // transactions.asset = JSON.parse(transactions.asset);
+        transactions.forEach((item) => {
+            item.asset = JSON.parse(item.asset);
+        });
         cb(err, transactions);
     });
 };
