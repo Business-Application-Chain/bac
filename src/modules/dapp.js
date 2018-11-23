@@ -250,12 +250,19 @@ function DoDapp() {
 
     this.save = function (txObj, cb) {
         let doDapp = txObj.asset.doDapp;
+        let balances = {};
+        let statuses = {};
+        // let dappHash = rows[0].dappHash;
+        let dappHash;
+        let fun = doDapp.fun;
+        let params = [];
+        let _rows;
         library.dbClient.query("SELECT * FROM dapp2assets WHERE hash=$hash", {
             type: Sequelize.QueryTypes.SELECT,
             bind: {hash: doDapp.dappHash}
-        }).then((rows) => {
-            if(rows[0]) {
-                if(rows[0].name && rows[0].symbol && rows[0].decimals && rows[0].totalAmount) {
+        }).then((row) => {
+            if(row[0]) {
+                if(row[0].name && row[0].symbol && row[0].decimals && row[0].totalAmount) {
                     return library.dbClient.query("INSERT INTO dapp2assets_handle(`dappHash`, `transactionHash`, `fun`, `params`, `timestamp`, `accountId`, `dealResult`) VALUES ($dappHash, $transactionHash, $fun, $params, $timestamp, $accountId, $dealResult)", {
                         type: Sequelize.QueryTypes.INSERT,
                         bind: {
@@ -272,11 +279,8 @@ function DoDapp() {
                     }).then((rows) => {
                         if(rows.length === 0)
                             return cb("dapp hash is error");
-                        let balances = {};
-                        let statuses = {};
-                        let dappHash = rows[0].dappHash;
-                        let fun = doDapp.fun;
-                        let params = [];
+                        _rows = rows;
+                        dappHash = rows[0].dappHash;
                         doDapp.params.forEach((item) => {
                             item = JSON.parse(item);
                             if(item.type === "number") {
@@ -296,34 +300,31 @@ function DoDapp() {
                                 params[i] = `"${params[i]}"`;
                         }
                         let messages = rows[0].className + "()." + fun + "(" + params.toString() + ");";
-                        library.buna.buna.getAbiAndTokens({senderId: txObj.senderId, message: messages}, function (err, tokens) {
-                            if(err) {
-                                return cb(err);
-                            } else {
-                                let dealTokens = JSON.parse(rows[0].tokenList);
-                                tokens.token.forEach(item => {
-                                    dealTokens.push(item);
-                                });
-                                library.buna.buna.dealTokenContract({from: txObj.senderId, admin: rows[0].dappAdmin}, balances, statuses, dealTokens, function (err, dealValue) {
-                                    if(err || dealValue.hadRuntimeError || dealValue.hadError) {
-                                        return library.dbClient.query('UPDATE `dapp2assets_handle` SET `dealResult`=1 WHERE transactionHash=$transactionHash', {
-                                            type: Sequelize.QueryTypes.UPDATE,
-                                            bind: {
-                                                transactionHash: txObj.hash
-                                            }
-                                        });
-                                    }
-                                    if(dealValue.tag === 1)
-                                        return library.base.accountAssets.upDateDappBalances(dealValue.balance, dappHash);
-                                    else {
-                                        return library.base.accountAssets.upDateDappStatuses(dealValue.status, dappHash);
-                                    }
-                                });
-                            }
+                        return library.buna.buna.getAbiAndTokens({senderId: txObj.senderId, message: messages});
+                    }).then(tokens => {
+                        let dealTokens = JSON.parse(_rows[0].tokenList);
+                        tokens.token.forEach(item => {
+                            dealTokens.push(item);
                         });
+                        return library.buna.buna.dealTokenContract({from: txObj.senderId, admin: _rows[0].dappAdmin}, balances, statuses, dealTokens);
+                    }).then(dealValue => {
+                        if(dealValue.hadRuntimeError || dealValue.hadError) {
+                            return library.dbClient.query('UPDATE `dapp2assets_handle` SET `dealResult`=1 WHERE transactionHash=$transactionHash', {
+                                type: Sequelize.QueryTypes.UPDATE,
+                                bind: {
+                                    transactionHash: txObj.hash
+                                }
+                            });
+                        } else {
+                            if(dealValue.tag === 1)
+                                return library.base.accountAssets.upDateDappBalances(dealValue.balance, dappHash);
+                            else {
+                                return library.base.accountAssets.upDateDappStatuses(dealValue.status, dappHash);
+                            }
+                        }
                     }).then(() => {
-                        setImmediate(cb);
-                    }).catch((err) => {
+                        cb();
+                    }).catch(err => {
                         cb(err);
                     });
                 } else {

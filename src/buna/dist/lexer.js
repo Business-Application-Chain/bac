@@ -63,7 +63,6 @@ Lexer = function () {
 
         tokens, data) {
             data.token = tokens;
-            console.log(tokens.length);
             var parser = new _parser2.default(tokens);
             var statements = parser.parse();
             if (_buna2.default.getInstance().hadError) return;

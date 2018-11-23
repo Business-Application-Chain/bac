@@ -3,6 +3,7 @@ var constants = require('../utils/constants.js');
 var genesisBlock = null;
 var Sequelize = require('sequelize');
 var bacLib = require('bac-lib');
+var Promise = require('bluebird')
 
 var library, self, privated = {};
 
@@ -20,7 +21,6 @@ AccountAssets.prototype.updateAssetBalance = function(transfer, address, cb) {
             }
             let a = assets.balance + transfer.amount;
             if(a < 0) {
-                //余额不足
                 return cb('balance is not enough');
             }
         }
@@ -134,43 +134,60 @@ AccountAssets.prototype.getDappBalances = function(dappHash) {
 };
 
 AccountAssets.prototype.updateDappBalance = function(transfer, address) {
-    self.getDappBalance(address, transfer).then((rows) => {
+    return self.getDappBalance(address, transfer).then((rows) => {
         if(!rows[0]) {
             library.dbClient.query(`SELECT * FROM dapp2assets WHERE hash="${transfer.dappHash}"`, {
                 type: Sequelize.QueryTypes.SELECT
-            }).then((rows) => {
-                return library.dbClient.query("INSERT INTO dapp2assets_balances(dappHash, name, symbol, balance, others, accountId) VALUE($dappHash, $name, $symbol, $balance, $others, $accountId)", {
+            }).then((rowss) => {
+                return library.dbClient.query("INSERT IGNORE INTO dapp2assets_balances(dappHash, name, symbol, balance, others, accountId) VALUE($dappHash, $name, $symbol, $balance, $others, $accountId)", {
                     type: Sequelize.QueryTypes.INSERT,
                     bind: {
-                        dappHash: rows[0].hash,
-                        name: rows[0].name,
-                        symbol: rows[0].symbol,
-                        balance: transfer.amount,
-                        others: rows[0].others,
+                        dappHash: rowss[0].hash,
+                        name: rowss[0].name,
+                        symbol: rowss[0].symbol,
+                        balance: parseInt(transfer.amount),
+                        others: rowss[0].others,
                         accountId: address
                     }
                 });
             });
+        } else {
+            return library.dbClient.query('UPDATE `dapp2assets_balances` SET `balance` = $balance WHERE `accountId` = $accountId and `dappHash` = $dappHash', {
+                type: Sequelize.QueryTypes.UPDATE,
+                bind: {
+                    balance: rows[0].balance + parseInt(transfer.amount),
+                    accountId: address,
+                    dappHash: transfer.dappHash
+                }
+            });
         }
-    });
-    return library.dbClient.query(`UPDATE dapp2assets_balances SET balance = ${transfer.amount} WHERE accountId = "${address}" and dappHash = "${transfer.dappHash}"`, {
-        type:Sequelize.QueryTypes.UPDATE
     });
 };
 
 AccountAssets.prototype.upDateDappBalances = function(balances, dappHash) {
     let address = Object.keys(balances);
-    return address.forEach((item) => {
-        self.updateDappBalance({dappHash: dappHash, amount: balances[item]}, item);
-    });
+    for(let i=0; i<address.length; i++) {
+        library.dbSequence.add(function (cb) {
+            self.updateDappBalance({dappHash: dappHash, amount: balances[address[i]]}, address[i]).then(() => {
+                return cb();
+            }).catch(err => {
+                return cb(err);
+            });
+        });
+    }
 };
 
-AccountAssets.prototype.upDateDappStatuses = function(status, dappHash) {
+AccountAssets.prototype.upDateDappStatuses = function(status, dappHash, cb) {
     let address = Object.keys(status);
-    return address.forEach((item) => {
-        console.log(status[item]);
-        self.upDateDappStatus({dappHash: dappHash, status: JSON.stringify(status[item])}, item);
+    let p = [];
+    address.forEach((item) => {
+        p.push(self.upDateDappStatus({dappHash: dappHash, status: JSON.stringify(status[item])}, item));
     });
+    Promise.all(p).then(() => {
+        cb();
+    }).catch(err => {
+        cb(err);
+    })
 };
 
 AccountAssets.prototype.upDateDappStatus = function(data, address) {

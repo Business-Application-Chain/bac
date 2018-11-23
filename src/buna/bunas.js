@@ -10,17 +10,20 @@ function Bunas(scope, cb) {
     setImmediate(cb, null, self);
 }
 
-Bunas.prototype.getAbiAndTokens = function(datas, cb) {
-    let msg = {
-        from: datas.senderId
-    };
-    try {
-        let tToken = new Buna.default(msg, 0, {});
-        let tt = tToken.runGetToken(datas.message);
-        cb(null, tt);
-    } catch (err) {
-        return cb(err);
-    }
+Bunas.prototype.getAbiAndTokens = function(datas) {
+    return new Promise((resolve, reject) => {
+        let msg = {
+            from: datas.senderId
+        };
+        try {
+            let tToken = new Buna.default(msg, 0, {});
+            let tt = tToken.runGetToken(datas.message);
+            resolve(tt);
+        } catch (err) {
+            reject(err);
+        }
+    });
+
 };
 
 Bunas.prototype.getContractTokens = function(senderId, contract, cb) {
@@ -87,12 +90,14 @@ Bunas.prototype.dealCreateContract = function(txObj, tokens, cb) {
 //     cb(null, handleDapp);
 // }, 100);
 
-Bunas.prototype.dealTokenContract = function(msg, balances, status, tokens, cb) {
-    let handleDapp = new Buna.default(balances, msg, status);
-    handleDapp.runToken(tokens);
-    setTimeout(function () {
-        cb(null, handleDapp);
-    }, 100);
+Bunas.prototype.dealTokenContract = function(msg, balances, status, tokens) {
+    return new Promise((resolve) => {
+        let handleDapp = new Buna.default(balances, msg, status);
+        handleDapp.runToken(tokens);
+        setTimeout(function () {
+            resolve(handleDapp);
+        }, 100);
+    });
 };
 
 Bunas.prototype.dealContract = function(contractTokens, dealFun, msg, balances, status, cb) {

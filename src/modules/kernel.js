@@ -46,7 +46,6 @@ Kernel.prototype.broadcast = function (config, options, cb) {
         if (!err) {
             async.eachLimit(peers, 3, function (peer, cb) {
                 self.getFromPeerNews(peer, options);
-
                 setImmediate(cb);
             }, function () {
                 cb && cb(null, {body: null, peer: peers});
@@ -57,13 +56,12 @@ Kernel.prototype.broadcast = function (config, options, cb) {
     });
 };
 
-Kernel.prototype.broadcastNew = function(config, options, cb) {
+Kernel.prototype.broadcastNew = function (config, options, cb) {
     config.limit = config.limit || 1;
     library.modules.peer.list(config, function (err, peers) {
         if (!err) {
             async.eachLimit(peers, 3, function (peer, cb) {
                 self.getFromPeerNews(peer, options);
-
                 setImmediate(cb);
             }, function () {
                 cb && cb(null, {body: null, peer: peers});
@@ -144,7 +142,6 @@ Kernel.prototype.getFromPeerNews = function (peer, options, cb) {
     };
     request(req, function (err, response, body) {
         if (err || response.statusCode !== 200) {
-
             // library.log.Debug("Request", "Error", err);
             if (peer) {
                 if (err && (err.code == 'ETIMEOUT' || err.code == 'ESOCKETTIMEOUT' || err.code == 'ECONNREFUSED')) {
@@ -163,7 +160,6 @@ Kernel.prototype.getFromPeerNews = function (peer, options, cb) {
                     }
                 }
             }
-
             return cb && cb(err || ("Request status code " + response.statusCode));
 
         }
@@ -210,7 +206,7 @@ Kernel.prototype.getFromPeerNews = function (peer, options, cb) {
                 version: response.headers['version']
             });
         }
-        if(body.code !== 200) {
+        if (body.code !== 200) {
             return cb && cb(body.err, {error: body.error, code: body.code, peer: peer});
         }
 
@@ -325,12 +321,12 @@ Kernel.prototype.onInit = function (scope) {
     }
 };
 
-Kernel.prototype.onNewBlock = function(block, broadcast) {
+Kernel.prototype.onNewBlock = function (block, broadcast) {
     if (broadcast) {
         self.broadcast({limit: 100}, {api: '/blocks', data: {block: block}, method: "POST"});
         library.socket.webSocket.send('201|blocks|block|' + JSON.stringify(block), null);
         let peerCount = library.modules.peer.getCount();
-        library.socket.webSocket.send('201|kernel|status|' +  JSON.stringify({
+        library.socket.webSocket.send('201|kernel|status|' + JSON.stringify({
             height: block.height,
             peerHeight: block.height,
             peerCount: peerCount
@@ -346,10 +342,10 @@ Kernel.prototype.onUnconfirmedTransaction = function (transaction, broadcast) {
     if (broadcast) {
         // self.broadcast({limit: 100}, {api: '/transactions', data: {transaction: transaction}, method: "POST"});
         self.broadcastNew({limit: 100}, {
-            api:'kernel',
-            method:'POST',
-            func:'addTransactions',
-            data: { transaction: transaction },
+            api: 'kernel',
+            method: 'POST',
+            func: 'addTransactions',
+            data: {transaction: transaction},
             id: Math.random(),
             jsonrpc: '1.0'
         });
@@ -358,11 +354,11 @@ Kernel.prototype.onUnconfirmedTransaction = function (transaction, broadcast) {
     }
 };
 
-Kernel.prototype.onShouldSign = function(msg) {
+Kernel.prototype.onShouldSign = function (msg) {
     try {
         let accountPath = path.join(__dirname, '../../accountKey.json');
         fs.readFile(accountPath, function (err, data) {
-            if(err) {
+            if (err) {
                 console.log(err);
             } else {
                 let mnemonic = JSON.parse(data.toString()).mnemonic;
@@ -374,7 +370,7 @@ Kernel.prototype.onShouldSign = function(msg) {
                 library.socket.webSocket.send('201|kernel|shouldSign|' + JSON.stringify(signMsg));
             }
         });
-    } catch(e) {
+    } catch (e) {
         let signMsg = {
             msg: "sign message error"
         };
@@ -382,7 +378,7 @@ Kernel.prototype.onShouldSign = function(msg) {
     }
 };
 
-Kernel.prototype.onShouldVerify = function(signMsg) {
+Kernel.prototype.onShouldVerify = function (signMsg) {
     let signJson = JSON.parse(signMsg);
     let res = bacLib.bacSign.verify(signJson.msg, signJson.address, new Buffer.from(signJson.sign, 'hex'));
     let verifyRes = {
@@ -397,10 +393,10 @@ Kernel.prototype.onAddressNewBlock = function (addMap) {
 
 shared_1_0.list = function (req, cb) {
     library.modules.peer.list({limit: 100}, function (err, peers) {
-        if(err) {
+        if (err) {
             return cb(err, 16001);
         } else {
-           return cb(null, 200, peers);
+            return cb(null, 200, peers);
         }
     });
 };
@@ -460,11 +456,11 @@ shared_1_0.blocks_common = function (params, cb) {
     });
 };
 
-shared_1_0.getTransactions = function(req, cb) {
+shared_1_0.getTransactions = function (req, cb) {
     return cb(null, 200, {transactions: library.modules.transactions.getUnconfirmedTransactionList()});
 };
 
-shared_1_0.addTransactions = function(params, cb) {
+shared_1_0.addTransactions = function (params, cb) {
     try {
         var transaction = library.base.transaction.objectNormalize(params.transaction);
     } catch (e) {
@@ -491,7 +487,7 @@ shared_1_0.addTransactions = function(params, cb) {
 
 };
 
-shared_1_0.version = function(params, cb) {
+shared_1_0.version = function (params, cb) {
     let version = library.modules.system.getVersion();
     cb(null, 200, version);
 };
@@ -534,10 +530,10 @@ shared_1_0.transactions = function (req, cb) {
     });
 };
 
-shared_1_0.getUnconfirmedTransactions = function(req, cb) {
+shared_1_0.getUnconfirmedTransactions = function (req, cb) {
     let unTransactions = library.modules.transactions.getUnconfirmedTransactionList();
     let data = {
-        unconfirmedTransactions : unTransactions
+        unconfirmedTransactions: unTransactions
     };
     return cb(null, 200, data);
 };

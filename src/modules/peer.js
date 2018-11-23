@@ -36,17 +36,14 @@ privated.updatePeerList = function (cb) {
         if (err) {
             return cb();
         }
-
         let peers = data.result || [];
         if(!peers) {
             return cb();
         }
-
         async.eachLimit(peers, 2, function (peer, cb) {
             library.schema.validate(peer, {
                 type: 'object',
                 properties: {
-
                     ip: {
                         type: 'integer'
                     },
@@ -77,17 +74,13 @@ privated.updatePeerList = function (cb) {
                 if (err) {
                     return setImmediate(cb, "Invalid peer: " + err.toString());
                 }
-
                 peer.ip = parseInt(peer.ip);
-
                 if (isNaN(peer.ip)) {
                     return setImmediate(cb);
                 }
-
                 if (ip.toLong("127.0.0.1") === peer.ip || peer.port === 0 || peer.port > 65535) {
                     return setImmediate(cb);
                 }
-
                 self.update(peer, cb);
             });
         }, cb);
@@ -132,7 +125,6 @@ privated.banManager = function (cb) {
 };
 
 privated.getByFilter = function (filter, cb) {
-
 };
 
 Peer.prototype.getCount = function() {
@@ -372,10 +364,6 @@ shared_1_0.count = function(req, cb) {
         return cb(null, errorCode.server.SUCCESS, count);
     });
 };
-
-// shared.peer_getVersion = function (req, cb) {
-//
-// };
 
 shared_1_0.version = function(req, cb) {
     return cb(null, errorCode.server.SUCCESS, library.config.version);

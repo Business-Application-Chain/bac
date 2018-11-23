@@ -168,7 +168,7 @@ Transaction.prototype.getHash = function (txObj) {
     return crypto.createHash('sha256').update(this.getBytes(txObj)).digest();
 };
 
-Transaction.prototype.getTrsHash = function(txObj) {
+Transaction.prototype.getTrsHash = function (txObj) {
     let hash = this.getHash(txObj);
     return hash.toString('hex');
 };
@@ -314,7 +314,7 @@ Transaction.prototype.sign = function (txObj, keypair) {
     return sign;
 };
 
-Transaction.prototype.secondSign = function(txObj, keypair) {
+Transaction.prototype.secondSign = function (txObj, keypair) {
     var hash = this.getHash(txObj);
     return ed.Sign(hash, keypair).toString('hex');
 };
@@ -455,7 +455,7 @@ Transaction.prototype.verifySignature = function (txObj, publicKey, signature) {
     return res;
 };
 
-Transaction.prototype.getTrsJson = function(txObj) {
+Transaction.prototype.getTrsJson = function (txObj) {
     let data = {
         type: txObj.type,
         amount: txObj.amount,
@@ -468,13 +468,13 @@ Transaction.prototype.getTrsJson = function(txObj) {
     return JSON.stringify(data);
 };
 
-Transaction.prototype.verifySign = function(trsJson, address, signature) {
+Transaction.prototype.verifySign = function (trsJson, address, signature) {
     let signBuffer = Buffer.from(signature, 'hex');
     let res = bacLib.bacSign.verify(trsJson, address, signBuffer);
     return res;
 };
 
-Transaction.prototype.verifyTrsSignature = function(txObj) {
+Transaction.prototype.verifyTrsSignature = function (txObj) {
     let data = {
         type: txObj.type,
         amount: txObj.amount,
@@ -502,7 +502,7 @@ Transaction.prototype.verifySecondSignature = function (txObj, publicKey, signSi
     return res;
 };
 
-Transaction.prototype.getData = function(txObj) {
+Transaction.prototype.getData = function (txObj) {
 };
 
 Transaction.prototype.verifyBytes = function (bytes, master_pub, signature) {
