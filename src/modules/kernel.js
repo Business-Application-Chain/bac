@@ -341,6 +341,7 @@ Kernel.prototype.onBlockchainReady = function () {
 Kernel.prototype.onUnconfirmedTransaction = function (transaction, broadcast) {
     if (broadcast) {
         // self.broadcast({limit: 100}, {api: '/transactions', data: {transaction: transaction}, method: "POST"});
+        transaction.asset = JSON.stringify(transaction.asset);
         self.broadcastNew({limit: 100}, {
             api: 'kernel',
             method: 'POST',
@@ -463,10 +464,12 @@ shared_1_0.getTransactions = function (req, cb) {
 shared_1_0.addTransactions = function (params, cb) {
     console.log("addTransactions");
     console.log(params);
+    params.transaction.asset = JSON.parse(params.transaction.asset);
     try {
         var transaction = library.base.transaction.objectNormalize(params.transaction);
     } catch (e) {
         console.log("kernel addTransactions is error");
+        console.log(e);
         return cb(16004, "Invalid transaction body");
     }
     library.balancesSequence.add(function (cb) {
