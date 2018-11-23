@@ -628,7 +628,8 @@ Transactions.prototype.receiveTransactions = function (transactions, cb) {
     }, function (err) {
         // transactions.asset = JSON.parse(transactions.asset);
         transactions.forEach((item) => {
-            item.asset = JSON.parse(item.asset);
+            if(typeof item.asset === "string")
+                item.asset = JSON.parse(item.asset);
         });
         cb(err, transactions);
     });
