@@ -163,7 +163,7 @@ function DoDapp() {
         txObj.asset.doDapp = {
             dappHash: data.dappHash,
             fun: data.fun,
-            params: param,
+            params: JSON.stringify(param),
         };
         return txObj;
     };
@@ -271,7 +271,7 @@ function DoDapp() {
                             timestamp: txObj.timestamp,
                             accountId: txObj.senderId,
                             fun: doDapp.fun,
-                            params: JSON.stringify(doDapp.params),
+                            params: doDapp.params,
                             dealResult: 0
                         },
                     }).then(() => {
@@ -281,6 +281,7 @@ function DoDapp() {
                             return cb("dapp hash is error");
                         _rows = rows;
                         dappHash = rows[0].dappHash;
+                        doDapp.params = JSON.parse(doDapp.params);
                         doDapp.params.forEach((item) => {
                             item = JSON.parse(item);
                             if(item.type === "number") {
