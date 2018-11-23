@@ -462,13 +462,10 @@ shared_1_0.getTransactions = function (req, cb) {
 };
 
 shared_1_0.addTransactions = function (params, cb) {
-    console.log("addTransactions");
     params.transaction.asset = JSON.parse(params.transaction.asset);
-    console.log(params.transaction);
     try {
         var transaction = library.base.transaction.objectNormalize(params.transaction);
     } catch (e) {
-        console.log("kernel addTransactions is error");
         console.log(e);
         return cb(16004, "Invalid transaction body");
     }
@@ -480,7 +477,6 @@ shared_1_0.addTransactions = function (params, cb) {
             console.log(err);
             return cb(err, 16005);
         } else {
-            console.log("success");
             return cb(null, 200, "success");
         }
     });
