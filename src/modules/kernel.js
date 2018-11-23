@@ -461,26 +461,23 @@ shared_1_0.getTransactions = function (req, cb) {
 };
 
 shared_1_0.addTransactions = function (params, cb) {
+    console.log("addTransactions");
+    console.log(params);
     try {
         var transaction = library.base.transaction.objectNormalize(params.transaction);
     } catch (e) {
-        // var peerIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-        // var peerStr = peerIp ? peerIp + ":" + (isNaN(req.headers.port) ? 'unknown' : req.headers.port) : 'unknown';
-        // library.logger.log('Received transaction ' + (transaction ? transaction.id : 'null') + ' is not valid, ban 60 min', peerStr);
-        //
-        // if (peerIp && report) {
-        //     modules.peer.state(ip.toLong(peerIp), req.headers.port, 0, 3600);
-        // }
-
-        // return res.status(200).json({success: false, message: "Invalid transaction body"});
+        console.log("kernel addTransactions is error");
         return cb(16004, "Invalid transaction body");
     }
     library.balancesSequence.add(function (cb) {
         library.modules.transactions.receiveTransactions([transaction], cb);
     }, function (err) {
         if (err) {
+            console.log("err");
+            console.log(err);
             return cb(err, 16005);
         } else {
+            console.log("success");
             return cb(null, 200, "success");
         }
     });
