@@ -442,7 +442,6 @@ shared_1_0.blocks_common = function (params, cb) {
     let escapedIds = ids.map(function (id) {
         return "'" + id + "'";
     });
-
     let sql = `SELECT height, hash, previousBlock, timestamp from blocks where hash in ( ${escapedIds.join(",")} ) and height >= ${min} and height <= ${max} ORDER BY height DESC LIMIT 1`;
     library.dbClient.query(sql, {
         type: Sequelize.QueryTypes.SELECT,
