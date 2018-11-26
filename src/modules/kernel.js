@@ -462,7 +462,6 @@ shared_1_0.getTransactions = function (req, cb) {
 };
 
 shared_1_0.addTransactions = function (params, cb) {
-    console.log("addTransactions addTransactions addTransactions");
     if(typeof params.transaction.asset === "string")
         params.transaction.asset = JSON.parse(params.transaction.asset);
     try {

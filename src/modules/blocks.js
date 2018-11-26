@@ -893,10 +893,6 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                     return done("Invalid amount of block assets: " + block.hash);
                 }
                 var totalAmount = 0, totalFee = 0, appliedTransactions = {};
-                var saveTask = [];
-                saveTask.push(new Promise((resolve, reject) => {
-
-                }));
                 async.each(block.transactions, function (transaction, cb) {
                     transaction.blockHash = block.hash;
                     library.dbClient.query(`SELECT hash FROM transactions WHERE hash="${transaction.hash}"`,{
@@ -982,8 +978,10 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                             else {
                                 privated.lastBlock = block;
                                 library.log.Debug("saveBlock success");
+
                                 library.notification_center.notify('sendLastBlock');
-                                cb();
+                                library.modules.round.tick(block, done);
+                                // cb();
                             }
                         });
                     }
