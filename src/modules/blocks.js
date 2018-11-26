@@ -457,14 +457,19 @@ Blocks.prototype.getCommonBlock = function(peer, height, cb) {
                 if(err) {
                     return next(err);
                 }
-                let max = lastBlockHeight;
-                lastBlockHeight = data.firstHeight;
+                let max = data[0].firstHeight;
+                lastBlockHeight = data[data.length-1].firstHeight;
+                let ids = "";
+                data.forEach((item) => {
+                    ids += item.ids + ",";
+                });
+                ids = ids.substring(0, ids.length - 1);
                 library.modules.kernel.getFromPeerNews(peer, {
                     api:'kernel',
                     method:'POST',
                     func:'blocks_common',
                     data: JSON.stringify({
-                        ids: data.ids,
+                        ids: ids,
                         max: max,
                         min: lastBlockHeight
                     }),
