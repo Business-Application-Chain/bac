@@ -69,20 +69,20 @@ Round.prototype.getVotes = function (round, cb) {
 };
 
 Round.prototype.flush = function (round, cb) {
-    library.dbClient.query("DELETE FROM accounts_round WHERE round = $round", {
-        type: Sequelize.QueryTypes.DELETE,
-        bind: {
-            round: round
-        }
-    }).then(function (rows) {
-        cb();
-    }, function (err) {
-        cb(err, undefined);
-    });
+    // library.dbClient.query("DELETE FROM accounts_round WHERE round = $round", {
+    //     type: Sequelize.QueryTypes.DELETE,
+    //     bind: {
+    //         round: round
+    //     }
+    // }).then(function (rows) {
+    //     cb();
+    // }, function (err) {
+    //     cb(err, undefined);
+    // });
 };
 
 Round.prototype.directionSwap = function (direction, lastBlockObj, cb) {
-    if (direction == 'backward') {
+    if (direction === 'backward') {
         privated.feesByRound = {};
         privated.rewardsByRound = {};
         privated.delegatesByRound = {};
@@ -128,23 +128,23 @@ Round.prototype.backwardTick = function (blockObj, previousBlockObj, cb) {
                 var outsiders = [];
 
                 async.series([
-                    function (cb) {
-                        if (blockObj.height != 1) {
-                            library.modules.delegates.generateDelegateList(blockObj.height, function (err, roundDelegates) {
-                                if (err) {
-                                    return cb(err);
-                                }
-                                for (var i = 0; i < roundDelegates.length; i++) {
-                                    if (privated.unDelegatesByRound[round].indexOf(roundDelegates[i]) == -1) {
-                                        outsiders.push(library.modules.accounts.generateAddressByPubKey(roundDelegates[i]));
-                                    }
-                                }
-                                cb();
-                            });
-                        } else {
-                            cb();
-                        }
-                    },
+                    // function (cb) {
+                    //     if (blockObj.height !== 1) {
+                    //         library.modules.delegates.generateDelegateList(blockObj.height, function (err, roundDelegates) {
+                    //             if (err) {
+                    //                 return cb(err);
+                    //             }
+                    //             for (var i = 0; i < roundDelegates.length; i++) {
+                    //                 if (privated.unDelegatesByRound[round].indexOf(roundDelegates[i]) == -1) {
+                    //                     outsiders.push(library.modules.accounts.generateAddressByPubKey(roundDelegates[i]));
+                    //                 }
+                    //             }
+                    //             cb();
+                    //         });
+                    //     } else {
+                    //         cb();
+                    //     }
+                    // },
                     function (cb) {
                         if (!outsiders.length) {
                             return cb();

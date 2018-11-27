@@ -142,7 +142,7 @@ Transaction.prototype.objectNormalize = function (txObj) {
                 type: 'string',
             },
             asset: {
-                type: 'object'
+                type: 'string'
             },
             message: {
                 type: 'string'
@@ -156,6 +156,9 @@ Transaction.prototype.objectNormalize = function (txObj) {
     }
 
     try {
+        if(typeof txObj.asset === "string") {
+            txObj.asset = JSON.parse(txObj.asset);
+        }
         txObj = privated.types[txObj.type].objectNormalize.call(this, txObj);
     } catch (err) {
         throw new Error(err.toString());

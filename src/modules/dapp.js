@@ -169,6 +169,9 @@ function DoDapp() {
     };
 
     this.objectNormalize = function (txObj) {
+        if(typeof txObj.asset.doDapp.params === 'object') {
+            txObj.asset.doDapp.params = JSON.stringify(txObj.asset.doDapp.params);
+        }
         var report = library.schema.validate(txObj.asset.doDapp, {
             type: 'object',
             properties: {
