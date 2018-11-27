@@ -142,7 +142,6 @@ Transaction.prototype.objectNormalize = function (txObj) {
                 type: 'string',
             },
             asset: {
-                type: 'string'
             },
             message: {
                 type: 'string'
