@@ -126,10 +126,25 @@ AccountAssets.prototype.getDappBalance = function(address, transfers) {
     });
 };
 
-AccountAssets.prototype.getDappBalances = function(dappHash) {
-    let sql = `SELECT a.*, b.accountId as dappAdmin, b.others as defaultOthers, b.className as className, b.tokenList from dapp2assets_balances a LEFT JOIN dapp2assets as b on a.dappHash = b.hash where a.dappHash = "${dappHash}" `;
+AccountAssets.prototype.getDappBalances = function(dappHash, senderId, params) {
+    let _params = JSON.parse(params);
+    let address = [];
+    _params.forEach((item) => {
+        item = JSON.parse(item);
+        if(item.type === "string") {
+            address.push('"' + item.data + '"');
+        }
+    });
+    let sql = "SELECT a.*, b.accountId as dappAdmin, b.others as defaultOthers, b.className as className, b.tokenList " +
+        "from dapp2assets_balances a LEFT JOIN dapp2assets as b on a.dappHash = b.hash where a.dappHash = $dappHash and " +
+        " (a.accountId = $address or a.accountId IN ($searchAddress))";
     return library.dbClient.query(sql, {
-        type: Sequelize.QueryTypes.SELECT
+        type: Sequelize.QueryTypes.SELECT,
+        bind: {
+            dappHash: dappHash,
+            address: senderId,
+            searchAddress: address.join(",")
+        }
     });
 };
 

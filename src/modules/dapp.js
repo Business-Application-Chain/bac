@@ -5,6 +5,7 @@ var Sequelize = require('sequelize');
 var bip39 = require('bip39');
 var bacLib = require('bac-lib');
 var library, self, privated = {}, shared_1_0 = {};
+var ed = require('ed25519');
 
 function Dapp() {
     this.calculateFee = function (txObj, sender) {
@@ -278,7 +279,7 @@ function DoDapp() {
                             dealResult: 0
                         },
                     }).then(() => {
-                        return library.base.accountAssets.getDappBalances(doDapp.dappHash);
+                        return library.base.accountAssets.getDappBalances(doDapp.dappHash, txObj.senderId, doDapp.params);
                     }).then((rows) => {
                         if(rows.length === 0)
                             return cb("dapp hash is error");
@@ -687,6 +688,16 @@ shared_1_0.handleDapp = function(params, cb) {
             if(account.lockHeight > lastBlockHeight) {
                 return cb("Account is locked", 11000);
             }
+            for(let i=0; i<param.length; i++) {
+                if(param[i] === account.master_address) {
+                    return cb("合约参数错误", 11000);
+                }
+            }
+            // param.forEach((item) => {
+            //     if(item === account.master_address) {
+            //         return cb("合约参数错误", 11000);
+            //     }
+            // });
             privated.findIssuersAddress(dappHash, function (err) {
                 if(err) {
                     return cb(err, 11000);
