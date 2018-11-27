@@ -110,42 +110,40 @@ function Dapp() {
         let dapp = txObj.asset.dapp;
         let cTokens = dapp.tokens;
         let cAbi = dapp.abi;
+        let dappState = 0;
         library.buna.buna.dealCreateContract(txObj, dapp.tokens, function (err, dappData) {
             if(err || dappData.hadError || dappData.hadRuntimeError) {
-                return cb(err);
+                // return cb(err);
+                dappState = 1;
             }
-            if(dappData.name && dappData.symbol && dappData.decimals && dappData.totalAmount) {
-
-                return library.dbClient.query("INSERT INTO dapp2assets(`hash`, `name`, `symbol`, `decimals`, `totalAmount`, `transactionHash`, `createTime`, `accountId`, `others`, `contract`, `className`, `abi`, `tokenList`, `tokenCode`, `issuersAddress`) VALUES ($hash, $name, $symbol, $decimals, $totalAmount, $transactionHash, $createTime, $accountId, $others, $contract, $className, $abi, $tokenList, $tokenCode, $issuersAddress)", {
-                    type: Sequelize.QueryTypes.INSERT,
-                    bind: {
-                        hash: dapp.hash,
-                        name: dappData.name,
-                        symbol: dappData.symbol,
-                        description: dappData.description,
-                        decimals: dappData.decimals,
-                        totalAmount: dappData.totalAmount,
-                        transactionHash: txObj.hash,
-                        createTime: txObj.timestamp,
-                        accountId: txObj.senderId,
-                        contract: "",
-                        others: dappData.others,
-                        className: dapp.className,
-                        abi: JSON.stringify(cAbi),
-                        tokenList: JSON.stringify(cTokens),
-                        tokenCode: " ",
-                        issuersAddress: dapp.issuersAddress
-                    },
-                }).then(() => {
-                    return library.base.accountAssets.addDappBalance(txObj.senderId, {dappHash: dapp.hash, name: dappData.name, symbol: dappData.symbol, others: dappData.others}, dappData.totalAmount);
-                }).then(() => {
-                    cb();
-                }).catch((err) => {
-                    cb(err);
-                });
-            } else {
-                return cb("dappData miss params");
-            }
+            return library.dbClient.query("INSERT INTO dapp2assets(`hash`, `name`, `symbol`, `decimals`, `totalAmount`, `transactionHash`, `createTime`, `accountId`, `others`, `contract`, `className`, `abi`, `tokenList`, `tokenCode`, `issuersAddress`, `status`) VALUES ($hash, $name, $symbol, $decimals, $totalAmount, $transactionHash, $createTime, $accountId, $others, $contract, $className, $abi, $tokenList, $tokenCode, $issuersAddress, $status)", {
+                type: Sequelize.QueryTypes.INSERT,
+                bind: {
+                    hash: dapp.hash,
+                    name: dappData.name || '',
+                    symbol: dappData.symbol || '',
+                    description: dappData.description,
+                    decimals: dappData.decimals || 1,
+                    totalAmount: dappData.totalAmount || 0,
+                    transactionHash: txObj.hash,
+                    createTime: txObj.timestamp,
+                    accountId: txObj.senderId,
+                    contract: "",
+                    others: dappData.others,
+                    className: dapp.className,
+                    abi: JSON.stringify(cAbi),
+                    tokenList: JSON.stringify(cTokens),
+                    tokenCode: " ",
+                    issuersAddress: dapp.issuersAddress,
+                    status: dappState
+                },
+            }).then(() => {
+                return library.base.accountAssets.addDappBalance(txObj.senderId, {dappHash: dapp.hash, name: dappData.name, symbol: dappData.symbol, others: dappData.others}, dappData.totalAmount);
+            }).then(() => {
+                cb();
+            }).catch((err) => {
+                cb(err);
+            });
         });
     };
 }
@@ -233,7 +231,12 @@ function DoDapp() {
     };
 
     this.applyUnconfirmed = function (txObj, sender, cb) {
-        cb();
+        setImmediate(cb);
+        // for(let i=0; i<param.length; i++) {
+        //     if(param[i] === account.master_address) {
+        //         return cb("合约参数错误", 11000);
+        //     }
+        // }
     };
 
     this.undoUnconfirmed = function (txObj, sender, cb) {
@@ -688,16 +691,11 @@ shared_1_0.handleDapp = function(params, cb) {
             if(account.lockHeight > lastBlockHeight) {
                 return cb("Account is locked", 11000);
             }
-            for(let i=0; i<param.length; i++) {
-                if(param[i] === account.master_address) {
-                    return cb("合约参数错误", 11000);
-                }
-            }
-            // param.forEach((item) => {
-            //     if(item === account.master_address) {
+            // for(let i=0; i<param.length; i++) {
+            //     if(param[i] === account.master_address) {
             //         return cb("合约参数错误", 11000);
             //     }
-            // });
+            // }
             privated.findIssuersAddress(dappHash, function (err) {
                 if(err) {
                     return cb(err, 11000);

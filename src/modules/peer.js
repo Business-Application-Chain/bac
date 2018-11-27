@@ -147,24 +147,31 @@ Peer.prototype.callApi = function (call, rpcjson, args, cb) {
 };
 
 
-Peer.prototype.state = function (pip, port, state, timeout, cb) {
+Peer.prototype.state = function (pip, port, state, timeout) {
     var exist = library.config.peers.list.find(function (peer) {
         return peer.ip == ip.fromLong(pip) && peer.port == port;
     });
-    if (exist != undefined) return cb && cb("Peer in config peer list");
+    if (exist != undefined)
+        return;
     if (state == 0) {
         var clock = (timeout || 1) * 1000;
         clock = Date.now() + clock;
     } else {
         clock = null;
     }
-    library.dbClient.query(`UPDATE peers SET state = ${state}, clock = ${clock} WHERE ip = ${pip} AND ${port} = $port`, {
+    library.dbClient.query(`UPDATE peers SET state = $state, clock = $clock WHERE ip = $pip AND port = $port`, {
         type: Sequelize.QueryTypes.UPDATE,
-    }).then(function (data) {
-        cb(null, "update successed");
-    }).catch((err) => {
-        cb(err);
-    });
+        bind: {
+            state: state,
+            clock: clock,
+            pip: pip,
+            port: port
+        }
+    }).then(function () {
+        console.log("update success");
+    }).catch(err => {
+        console.log("update ip status error");
+    })
 };
 
 Peer.prototype.remove = function (pip, port, cb) {
