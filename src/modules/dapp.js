@@ -116,6 +116,7 @@ function Dapp() {
                 // return cb(err);
                 dappState = 1;
             }
+            console.log(JSON.stringify(cAbi));
             return library.dbClient.query("INSERT INTO dapp2assets(`hash`, `name`, `symbol`, `decimals`, `totalAmount`, `transactionHash`, `createTime`, `accountId`, `others`, `contract`, `className`, `abi`, `tokenList`, `tokenCode`, `issuersAddress`, `status`) VALUES ($hash, $name, $symbol, $decimals, $totalAmount, $transactionHash, $createTime, $accountId, $others, $contract, $className, $abi, $tokenList, $tokenCode, $issuersAddress, $status)", {
                 type: Sequelize.QueryTypes.INSERT,
                 bind: {
