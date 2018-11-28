@@ -476,7 +476,8 @@ Transactions.prototype.processUnconfirmedTransaction = function (txObj, broadcas
     library.modules.accounts.setAccountAndGet({master_pub: txObj.senderPublicKey}, function (err, sender) {
         function done(err) {
             if (err) {
-                privated.removeUnconfirmedTransaction(privated.unconfirmedTransactionsIdIndex[txObj.hash]);
+                if(privated.unconfirmedTransactionsIdIndex[txObj.hash])
+                    privated.removeUnconfirmedTransaction(privated.unconfirmedTransactionsIdIndex[txObj.hash]);
                 // return library.base.transaction.undoUnconfirmed(txObj, sender, cb);
                 return cb(err);
             }
