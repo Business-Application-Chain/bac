@@ -476,6 +476,8 @@ Transactions.prototype.processUnconfirmedTransaction = function (txObj, broadcas
     library.modules.accounts.setAccountAndGet({master_pub: txObj.senderPublicKey}, function (err, sender) {
         function done(err) {
             if (err) {
+                privated.removeUnconfirmedTransaction(privated.unconfirmedTransactionsIdIndex[txObj.hash]);
+                // return library.base.transaction.undoUnconfirmed(txObj, sender, cb);
                 return cb(err);
             }
             privated.addUnconfirmedTransaction(txObj, sender, function (err) {
@@ -483,7 +485,7 @@ Transactions.prototype.processUnconfirmedTransaction = function (txObj, broadcas
                     return cb(err);
                 }
                 library.notification_center.notify('unconfirmedTransaction', txObj, broadcast);
-                cb();
+                setImmediate(cb);
             });
         }
 
