@@ -43,9 +43,12 @@ privated.blocksDataFields = {
     'b_generatorPublicKey': String,
     'b_blockSignature': String,
     'b_merkleRoot': String,
+    'b_difficulty': String,
+    'b_basic': Number,
     'b_decisionSignature': String,
     'b_decisionAddress': String,
     'b_minerHash': String,
+
     't_hash': String,
     't_type': Number,
     't_timestamp': Number,
@@ -60,17 +63,21 @@ privated.blocksDataFields = {
     't_signSignature': String,
     's_publicKey': String,
     'd_address': String,
+
     'da_hash': String,
-    'da_className': String,
     'da_issuersAddress': String,
+    'da_className': String,
+    'da_abi': String,
+    'da_tokenList': String,
     'do_dappHash': String,
     'do_fun': String,
     'do_params': String,
-    'dt_dappHash': String,
-    'dt_dapp': String,
     'i_name': String,
     'i_desc': String,
     'i_issuersAddress': String,
+    'dt_dappHash': String,
+    'dt_dapp': String,
+
     'c_address': String,
     'u_alias': String,
     'm_min': Number,
@@ -89,8 +96,7 @@ privated.blocksDataFields = {
     'l_lockHeight': Number,
     'min_ip': Number,
     'min_port': Number,
-    'b_difficulty': String,
-    'b_basic': Number
+
 };
 
 privated.serchSql = 'SELECT '+
