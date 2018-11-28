@@ -852,7 +852,11 @@ shared_1_0.getDappInfo = function(params, cb) {
             dappHash: dappHash
         }
     }).then((rows) => {
-        cb(null, 200, rows);
+        if(rows) {
+            return cb(null, 200, rows[0]);
+        } else {
+            return cb(null, 200, "");
+        }
     }).catch((err) => {
         cb("获取dapp详情失败", 11000);
     });
