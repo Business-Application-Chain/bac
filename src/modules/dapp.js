@@ -1,3 +1,5 @@
+import dapp from "../../public/src/js/api/dapp";
+
 var TransactionTypes = require('../utils/transaction-types.js');
 var constants = require('../utils/constants.js');
 var crypto = require('crypto');
@@ -842,6 +844,27 @@ shared_1_0.searchDappHandle = function(params, cb) {
         }
     });
 };
+
+//拉取dapp详情
+shared_1_0.getDappInfo = function(params, cb) {
+    let dappHash = params[0];
+    library.dbClient.query('SELECT * FROM `dapp2assets` WHERE `hash`=$dappHash', {
+        type: Sequelize.QueryTypes.SELECT,
+        bind: {
+            dappHash: dappHash
+        }
+    }).then((rows) => {
+        cb(null, 200, rows);
+    }).catch((err) => {
+        cb("获取dapp详情失败", 11000);
+    });
+};
+// 创建合约费用
+shared_1_0.getCreateDappFee = function(params, cb) {
+    let fee = 1 * constants.fixedPoint;
+    return cb(200, fee);
+};
+
 module.exports = Dapps;
 
 
