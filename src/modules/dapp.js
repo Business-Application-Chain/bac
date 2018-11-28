@@ -1,5 +1,3 @@
-import dapp from "../../public/src/js/api/dapp";
-
 var TransactionTypes = require('../utils/transaction-types.js');
 var constants = require('../utils/constants.js');
 var crypto = require('crypto');
