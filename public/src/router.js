@@ -18,8 +18,11 @@ import ContactIndex from './views/contact/Index.vue'
 import SettingsIndex from './views/settings/Index.vue'
 import MessageIndex from './views/message/Index.vue'
 import ContactDetail from './views/contact/Detail.vue'
+import AssetsIndex from './views/assets/Index.vue'
+import AssetsTransactions from './views/assets/Transactions.vue'
 import DappIndex from './views/dapp/Index.vue'
-import DappTransactions from './views/dapp/Transactions.vue'
+import DappDetail from './views/dapp/Detail.vue'
+import CreateDapp from './views/dapp/Create.vue'
 
 Vue.use(Router)
 
@@ -90,14 +93,14 @@ export default new Router({
 					]
                 },
                 {
-                    path: 'dapp',
-                    name: 'dapp',
-                    component: DappIndex
+                    path: 'assets',
+                    name: 'assets',
+                    component: AssetsIndex
                 },
                 {
-                    path: 'dapp/transactions',
-                    name: 'dappTransactions',
-                    component: DappTransactions
+                    path: 'assets/transactions',
+                    name: 'assetsTransactions',
+                    component: AssetsTransactions
                 },
 				{
 					path: 'account',
@@ -126,7 +129,24 @@ export default new Router({
 					path: 'message',
 					name: 'message',
 					component: MessageIndex
-				}
+                },
+                {
+					path: 'dapp',
+					name: 'dapp',
+					component: DappIndex
+                },
+                {
+					path: 'dapp/detail/:hash',
+					name: 'dappDetail',
+					component: DappDetail
+                },
+                
+                {
+					path: 'dapp/create',
+					name: 'createDapp',
+					component: CreateDapp
+				},
+                
 			]
 		}
   	]

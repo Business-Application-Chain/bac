@@ -1,14 +1,15 @@
 <template>
     <div class="tabs-comp">
+        
         <div class="comp-header">
             <div v-for="(item, index) in tabs" :key="index" @click="$emit('input', item.name)" class="comp-header_item" :class="{active: item.name == value}">{{item.label}}</div>
         </div>
         <div><slot></slot></div>
+        <!-- <TabsBody :tabs="tabs" :value="value" /> -->
     </div>
 </template>
 
 <script>
-    
 
     export default {
         
@@ -22,11 +23,8 @@
         },
         mounted () {
             if (!this.value){
-                this.$emit('input', this.tabs[0].value)
+                this.$emit('input', this.tabs[0].name)
             }
-        },
-
-        components: {
         },
 
         methods: {

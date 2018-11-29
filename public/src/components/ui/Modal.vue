@@ -3,7 +3,7 @@
         <x-mask v-if="compVisible" @click.native="maskHandle"></x-mask>
         
         <transition name="fade-in-down" @after-leave="leave">
-            <div v-if="compVisible" class="comp-wrap" :class="{small: size == 'small'}">
+            <div v-if="compVisible" class="comp-wrap" :class="{small: size == 'small'}" :style="{width: width}">
                 <div class="comp-header">
                     <span>{{title}}</span>
                     <div @click="close" class="header-close">
@@ -81,6 +81,9 @@
 
             closeable: {  //是否点击mask隐藏
                 default: true
+            },
+            width: {
+                default: '600px'
             }
         },
 
@@ -123,9 +126,8 @@
 
         .comp-wrap{
             position: fixed;
-            width: 600px;
             z-index:1000;
-            top: 50%;
+            top:50%;
             left: 50%;
             transform: translate(-50%, -50%);
             background: #fff;

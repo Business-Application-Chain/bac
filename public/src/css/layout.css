@@ -46,3 +46,8 @@ a{
 [v-cloak]{
     display: none
 }
+
+.link{
+    color: #55A8FD;
+    cursor: pointer;
+}

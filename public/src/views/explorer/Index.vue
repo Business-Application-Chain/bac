@@ -1,7 +1,7 @@
 <template>
     <div class="explorer-index-page">
-        <div class="page-search">
-            <input v-model.trim="searchTxt" @keyup.enter="search" placeholder="区块高度 / 交易HASH " type="text" class="search-input">
+        <div class="page-search" :class="{active: isActive}">
+            <input v-model.trim="searchTxt" @keyup.enter="search" @focus="isActive = true" @blur="isActive = false" placeholder="区块高度 / 交易HASH " type="text" class="search-input">
             <div v-if="searchTxt" @click="clear" class="search-close"><i class="iconfont">&#xe60f;</i></div>
             <div @click="search" class="search-btn">搜索</div>
         </div>
@@ -18,7 +18,8 @@
     export default {
         data () {
             return {
-                searchTxt: ''
+                searchTxt: '',
+                isActive: false
             }
         },
 
@@ -64,12 +65,17 @@
         .page-search{
             height: 50px;
             line-height: 50px;
-            border: 1px solid rgba(63,128,250,0.50);
+            
             border-radius: 4px;
             display: flex;
             align-items: center;
             margin-bottom: 20px;
             position: relative;
+            border: 1px solid #F5F7FC;
+
+            &.active{    
+                border: 1px solid rgba(63,128,250,0.50);
+            }
         }
 
         .search-input{
@@ -81,6 +87,8 @@
             &::-webkit-input-placeholder{
                 color: #CBCBCB;
             }
+
+            
         }
 
         .search-btn{

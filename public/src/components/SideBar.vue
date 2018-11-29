@@ -9,21 +9,25 @@
             核心数据
         </div>
 
-        <router-link :to="{name: 'account'}" class="comp-item" :class="{active: name == 'account'}">
+        <router-link :to="{name: 'account'}" class="comp-item" >
             <img class="comp-item_hd" src="../assets/images/account@3x.png" />
             <div class="comp-item_ft">账户</div>
         </router-link>
-        <router-link :to="{name: 'contact'}" class="comp-item" :class="{active: name == 'contact'}">
+        <router-link :to="{name: 'contact'}" class="comp-item">
             <img class="comp-item_hd" src="../assets/images/contact@3x.png" />
             <div class="comp-item_ft">联系人</div>
         </router-link>
-        <router-link :to="{name: 'explorer'}" class="comp-item" :class="{active: name == 'browser'}">
+        <router-link :to="{name: 'explorer'}" class="comp-item">
             <img class="comp-item_hd" src="../assets/images/browser@3x.png" />
             <div class="comp-item_ft">浏览器</div>
         </router-link>
-        <router-link :to="{name: 'dapp'}" class="comp-item">
+        <router-link :to="{name: 'assets'}" class="comp-item">
             <img class="comp-item_hd" src="../assets/images/dapp@3x.png" />
             <div class="comp-item_ft">资产</div>
+        </router-link>
+        <router-link :to="{name: 'dapp'}" class="comp-item">
+            <img class="comp-item_hd" src="../assets/images/dapp@3x.png" />
+            <div class="comp-item_ft">Dapp</div>
         </router-link>
 
         <div class="network-sec">

@@ -1,5 +1,5 @@
 <template>
-    <div class="dapp-transactions-page">
+    <div class="assets-transactions-page">
 
         <div class="sec">
             <x-table :list="list">
@@ -81,7 +81,7 @@
             StatusTag
         },
         created () {
-            api.dapp.getTransfers([this.account.address[0], this.hash, this.curPage, this.pageSize]).then(res => {
+            api.assets.getTransfers([this.account.address[0], this.hash, this.curPage, this.pageSize]).then(res => {
                 if (res === null) return;
                 res.data.forEach(item => {
                     
@@ -95,7 +95,7 @@
 
 <style lang="scss" scoped>
     @import "~/css/utils.scss";
-    .dapp-transactions-page{
+    .assets-transactions-page{
         
         .arrow-icon{
             font-size: 10px;
