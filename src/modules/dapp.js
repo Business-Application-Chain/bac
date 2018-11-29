@@ -92,14 +92,14 @@ function Dapp() {
     };
 
     this.load = function (raw) {
-        if(!(raw.da_hash)) {
+        if (!(raw.da_hash)) {
             return null;
         }
         let dapp = {
             hash: raw.da_hash,
             className: raw.da_className,
             issuersAddress: raw.da_issuersAddress,
-            abi: JSON.parse(raw.da_abi) ,
+            abi: JSON.parse(raw.da_abi),
             tokens: JSON.parse(raw.da_tokenList)
         };
 
@@ -112,7 +112,7 @@ function Dapp() {
         let cAbi = dapp.abi;
         let dappState = 0;
         library.buna.buna.dealCreateContract(txObj, dapp.tokens, function (err, dappData) {
-            if(err || dappData.hadError || dappData.hadRuntimeError) {
+            if (err || dappData.hadError || dappData.hadRuntimeError) {
                 // return cb(err);
                 dappState = 1;
             }
@@ -139,7 +139,12 @@ function Dapp() {
                     status: dappState
                 },
             }).then(() => {
-                return library.base.accountAssets.addDappBalance(txObj.senderId, {dappHash: dapp.hash, name: dappData.name, symbol: dappData.symbol, others: dappData.others}, dappData.totalAmount);
+                return library.base.accountAssets.addDappBalance(txObj.senderId, {
+                    dappHash: dapp.hash,
+                    name: dappData.name,
+                    symbol: dappData.symbol,
+                    others: dappData.others
+                }, dappData.totalAmount);
             }).then(() => {
                 cb();
             }).catch((err) => {
@@ -169,7 +174,7 @@ function DoDapp() {
     };
 
     this.objectNormalize = function (txObj) {
-        if(typeof txObj.asset.doDapp.params === 'object') {
+        if (typeof txObj.asset.doDapp.params === 'object') {
             txObj.asset.doDapp.params = JSON.stringify(txObj.asset.doDapp.params);
         }
         var report = library.schema.validate(txObj.asset.doDapp, {
@@ -245,7 +250,7 @@ function DoDapp() {
     };
 
     this.load = function (raw) {
-        if(!(raw.do_dappHash || raw.do_fun || raw.do_params)) {
+        if (!(raw.do_dappHash || raw.do_fun || raw.do_params)) {
             return null;
         }
         let doDapp = {
@@ -269,8 +274,8 @@ function DoDapp() {
             type: Sequelize.QueryTypes.SELECT,
             bind: {hash: doDapp.dappHash}
         }).then((row) => {
-            if(row[0]) {
-                if(row[0].name && row[0].symbol && row[0].decimals && row[0].totalAmount) {
+            if (row[0]) {
+                if (row[0].name && row[0].symbol && row[0].decimals && row[0].totalAmount) {
                     return library.dbClient.query("INSERT INTO dapp2assets_handle(`dappHash`, `transactionHash`, `fun`, `params`, `timestamp`, `accountId`, `dealResult`) VALUES ($dappHash, $transactionHash, $fun, $params, $timestamp, $accountId, $dealResult)", {
                         type: Sequelize.QueryTypes.INSERT,
                         bind: {
@@ -285,14 +290,14 @@ function DoDapp() {
                     }).then(() => {
                         return library.base.accountAssets.getDappBalances(doDapp.dappHash, txObj.senderId, doDapp.params);
                     }).then((rows) => {
-                        if(rows.length === 0)
+                        if (rows.length === 0)
                             return cb("dapp hash is error");
                         _rows = rows;
                         dappHash = rows[0].dappHash;
                         doDapp.params = JSON.parse(doDapp.params);
                         doDapp.params.forEach((item) => {
                             item = JSON.parse(item);
-                            if(item.type === "number") {
+                            if (item.type === "number") {
                                 params.push(parseInt(item.data));
                             } else {
                                 balances[item.data] = 0;
@@ -304,7 +309,7 @@ function DoDapp() {
                             balances[row.accountId] = row.balance;
                             statuses[row.accountId] = JSON.parse(row.others);
                         });
-                        for (let i=0; i<params.length; i++) {
+                        for (let i = 0; i < params.length; i++) {
                             if (typeof params[i] !== "number")
                                 params[i] = `"${params[i]}"`;
                         }
@@ -315,9 +320,12 @@ function DoDapp() {
                         tokens.token.forEach(item => {
                             dealTokens.push(item);
                         });
-                        return library.buna.buna.dealTokenContract({from: txObj.senderId, admin: _rows[0].dappAdmin}, balances, statuses, dealTokens);
+                        return library.buna.buna.dealTokenContract({
+                            from: txObj.senderId,
+                            admin: _rows[0].dappAdmin
+                        }, balances, statuses, dealTokens);
                     }).then(dealValue => {
-                        if(dealValue.hadRuntimeError || dealValue.hadError) {
+                        if (dealValue.hadRuntimeError || dealValue.hadError) {
                             return library.dbClient.query('UPDATE `dapp2assets_handle` SET `dealResult`=1 WHERE transactionHash=$transactionHash', {
                                 type: Sequelize.QueryTypes.UPDATE,
                                 bind: {
@@ -325,7 +333,7 @@ function DoDapp() {
                                 }
                             });
                         } else {
-                            if(dealValue.tag === 1)
+                            if (dealValue.tag === 1)
                                 return library.base.accountAssets.upDateDappBalances(dealValue.balance, dappHash);
                             else {
                                 return library.base.accountAssets.upDateDappStatuses(dealValue.status, dappHash);
@@ -423,7 +431,7 @@ function TransferDapp() {
     };
 
     this.load = function (raw) {
-        if(!(raw.dt_dappHash)) {
+        if (!(raw.dt_dappHash)) {
             return null;
         }
         let transferDapp = {
@@ -480,14 +488,14 @@ Dapps.prototype.callApi = function (call, rpcjson, args, cb) {
     }
 };
 
-privated.checkAccount = function(account, cb) {
+privated.checkAccount = function (account, cb) {
     library.dbClient.query('SELECT * FROM dapp2issuers WHERE `accountId`=$accountId', {
         type: Sequelize.QueryTypes.SELECT,
         bind: {
             accountId: account.master_address
         }
     }).then(rows => {
-        if(rows[0]) {
+        if (rows[0]) {
             cb(null, rows[0].issuersAddress);
         } else {
             cb();
@@ -497,14 +505,14 @@ privated.checkAccount = function(account, cb) {
     });
 };
 
-privated.findIssuersAddress = function(issuersAddress, cb) {
-    library.dbClient.query('SELECT * FROM dapp2assets WHERE `hash`=$dappHash',{
+privated.findIssuersAddress = function (issuersAddress, cb) {
+    library.dbClient.query('SELECT * FROM dapp2assets WHERE `hash`=$dappHash', {
         type: Sequelize.QueryTypes.SELECT,
         bind: {
             dappHash: issuersAddress
         }
     }).then((rows) => {
-        if(!rows[0]) {
+        if (!rows[0]) {
             cb("issuers applyUnconfirmed is error")
         } else {
             cb();
@@ -514,7 +522,7 @@ privated.findIssuersAddress = function(issuersAddress, cb) {
     });
 };
 
-privated.getAssetsAdmin = function(address, dappHash, cb) {
+privated.getAssetsAdmin = function (address, dappHash, cb) {
     library.dbClient.query('SELECT * FROM `dapp2assets` WHERE `hash` = $hash and `accountId` = $accountId', {
         type: Sequelize.QueryTypes.SELECT,
         bind: {
@@ -522,7 +530,7 @@ privated.getAssetsAdmin = function(address, dappHash, cb) {
             accountId: address
         }
     }).then(rows => {
-        if(rows[0]) {
+        if (rows[0]) {
             cb();
         } else {
             cb("该用户不是此合约的管理员");
@@ -532,9 +540,9 @@ privated.getAssetsAdmin = function(address, dappHash, cb) {
     });
 };
 
-privated.searchDpaaBalance = function(address, dappHash, cb) {
+privated.searchDpaaBalance = function (address, dappHash, cb) {
     let sql = 'SELECT * FROM `dapp2assets_balances` WHERE `accountId` = $accountId ';
-    if(dappHash) {
+    if (dappHash) {
         sql += 'and `dappHash`=$dappHash';
     }
     library.dbClient.query(sql, {
@@ -550,46 +558,49 @@ privated.searchDpaaBalance = function(address, dappHash, cb) {
     })
 };
 
-privated.searchHandle = function(data, cb) {
+privated.searchHandle = function (data, cb) {
     let sql = 'SELECT * FROM `dapp2assets_handle` WHERE ';
-    if(data.dappHash) {
+    if (data.dappHash) {
         sql += "`dappHash` = $dappHash ";
-        if(data.transactionHash) {
+        if (data.transactionHash) {
             sql += "AND `transactionHash`=$transactionHash "
         }
-        if(data.address) {
+        if (data.address) {
             sql += 'AND `accountId` = $address ';
         }
-    } else if(data.transactionHash) {
+    } else if (data.transactionHash) {
         sql += "`transactionHash`=$transactionHash ";
-        if(data.address) {
+        if (data.address) {
             sql += 'AND `accountId` = $address ';
         }
-    } else if(data.address) {
+    } else if (data.address) {
         sql += '`accountId` = $address ';
     } else {
-        cb("data is null");
+        return cb("data is null");
     }
+    sql += " ORDER BY `timestamp` DESC LIMIT $height, $size ";
     library.dbClient.query(sql, {
         type: Sequelize.QueryTypes.SELECT,
         bind: {
             address: data.address,
             transactionHash: data.transactionHash,
-            dappHash: data.dappHash
+            dappHash: data.dappHash,
+            height: data.height,
+            size: data.size
         }
     }).then(rows => {
-       return cb(null, rows);
+        return cb(null, rows);
     }).catch(err => {
         return cb(err);
     });
 };
 // 上传合约
-shared_1_0.upLoadDapp = function(params, cb) {
+shared_1_0.upLoadDapp = function (params, cb) {
     let mnemonic = params[0] || '';
     let className = params[1] || '';
     let msg = params[2] || '';
     let secondSecret = params[3] || '';
-    if(!(mnemonic && msg && className)) {
+    if (!(mnemonic && msg && className)) {
         return cb("miss must params", 11000);
     }
     let keyPair = library.base.account.getKeypair(mnemonic);
@@ -615,18 +626,22 @@ shared_1_0.upLoadDapp = function(params, cb) {
             }
             let lastBlock = library.modules.blocks.getLastBlock();
             let lastBlockHeight = lastBlock.height;
-            if(account.lockHeight > lastBlockHeight) {
+            if (account.lockHeight > lastBlockHeight) {
                 return cb("Account is locked", 11000);
             }
             privated.checkAccount(account, function (err, issuersAddress) {
-                if(err) {
+                if (err) {
                     cb(err, 11000);
                 } else {
-                    library.buna.buna.testContract({accountId: account.master_address, message: msg, className: className}, function (err, dappData) {
-                        if(err || dappData.hadError) {
+                    library.buna.buna.testContract({
+                        accountId: account.master_address,
+                        message: msg,
+                        className: className
+                    }, function (err, dappData) {
+                        if (err || dappData.hadError) {
                             return cb(err || "合约缺少关键属性", 11000);
                         } else {
-                            if(dappData.name && dappData.symbol && dappData.decimals && dappData.totalAmount) {
+                            if (dappData.name && dappData.symbol && dappData.decimals && dappData.totalAmount) {
                                 dappData.token.pop();
                                 try {
                                     var transaction = library.base.transaction.create({
@@ -659,14 +674,14 @@ shared_1_0.upLoadDapp = function(params, cb) {
     })
 };
 // 使用合约方法
-shared_1_0.handleDapp = function(params, cb) {
+shared_1_0.handleDapp = function (params, cb) {
     let mnemonic = params[0] || '';
     let dappHash = params[1] || '';
     let fun = params[2] || '';
     let param = params[3] || [];
     let secondSecret = params[4] || '';
 
-    if(!(mnemonic || fun || dappHash)) {
+    if (!(mnemonic || fun || dappHash)) {
         return cb("miss must params", 11000);
     }
     let keyPair = library.base.account.getKeypair(mnemonic);
@@ -689,7 +704,7 @@ shared_1_0.handleDapp = function(params, cb) {
             }
             let lastBlock = library.modules.blocks.getLastBlock();
             let lastBlockHeight = lastBlock.height;
-            if(account.lockHeight > lastBlockHeight) {
+            if (account.lockHeight > lastBlockHeight) {
                 return cb("Account is locked", 11000);
             }
             // for(let i=0; i<param.length; i++) {
@@ -698,7 +713,7 @@ shared_1_0.handleDapp = function(params, cb) {
             //     }
             // }
             privated.findIssuersAddress(dappHash, function (err) {
-                if(err) {
+                if (err) {
                     return cb(err, 11000);
                 } else {
                     try {
@@ -726,12 +741,12 @@ shared_1_0.handleDapp = function(params, cb) {
     });
 };
 // 转移合约所有人
-shared_1_0.transferDapp = function(params, cb) {
+shared_1_0.transferDapp = function (params, cb) {
     let mnemonic = params[0] || '';
     let dappHash = params[1] || '';
     let transferAddress = params[2] || '';
     let secondSecret = params[3] || '';
-    if(!(mnemonic && dappHash && transferAddress)) {
+    if (!(mnemonic && dappHash && transferAddress)) {
         return cb("miss must params", 11000);
     }
     let keyPair = library.base.account.getKeypair(mnemonic);
@@ -754,11 +769,11 @@ shared_1_0.transferDapp = function(params, cb) {
             }
             let lastBlock = library.modules.blocks.getLastBlock();
             let lastBlockHeight = lastBlock.height;
-            if(account.lockHeight > lastBlockHeight) {
+            if (account.lockHeight > lastBlockHeight) {
                 return cb("Account is locked", 11000);
             }
             privated.getAssetsAdmin(account.master_address, dappHash, function (err) {
-                if(err) {
+                if (err) {
                     return cb("此账户不是该dapp的管理员", 11000);
                 } else {
                     try {
@@ -786,14 +801,14 @@ shared_1_0.transferDapp = function(params, cb) {
     });
 };
 // 查询dapp余额
-shared_1_0.searchDappBalance = function(params, cb) {
+shared_1_0.searchDappBalance = function (params, cb) {
     let address = params[0] || '';
     let dappHash = params[1] || '';
-    if(!address) {
+    if (!address) {
         return cb(11000, "缺少合约人地址");
     }
     privated.searchDpaaBalance(address, dappHash, (err, rows) => {
-        if(err) {
+        if (err) {
             return cb(err, 11000);
         } else {
             return cb(null, 200, rows);
@@ -801,9 +816,17 @@ shared_1_0.searchDappBalance = function(params, cb) {
     })
 };
 // 查询全部合约列表
-shared_1_0.searchDappList = function(params, cb) {
-    library.dbClient.query('SELECT * FROM `dapp2assets`', {
-        type: Sequelize.QueryTypes.SELECT
+shared_1_0.searchDappList = function (params, cb) {
+    let page = params[0] || 1;
+    let size = params[1] || 10;
+    let height = (page - 1) * size;
+
+    library.dbClient.query('SELECT * FROM `dapp2assets` ORDER BY `timestamp` LIMIT $height, $size', {
+        type: Sequelize.QueryTypes.SELECT,
+        bind: {
+            height: height,
+            size: size
+        }
     }).then(rows => {
         return cb(null, 200, rows);
     }).catch(err => {
@@ -811,41 +834,51 @@ shared_1_0.searchDappList = function(params, cb) {
     });
 };
 // 查询自己的合约
-shared_1_0.searchMineList = function(params, cb) {
+shared_1_0.searchMineList = function (params, cb) {
     let address = params[0];
-    library.dbClient.query('SELECT * FROM `dapp2assets` WHERE `accountId`=$accountId', {
+    let page = params[1] || 1;
+    let size = params[2] || 10;
+    let height = (page-1)*size;
+    library.dbClient.query('SELECT * FROM `dapp2assets` WHERE `accountId`=$accountId ORDER BY `timestamp` LIMIT $height, $size', {
         type: Sequelize.QueryTypes.SELECT,
         bind: {
-            accountId: address
+            accountId: address,
+            height: height,
+            size: size
         }
     }).then((rows) => {
         return cb(null, 200, rows);
     });
 };
 // 查看操作记录
-shared_1_0.searchDappHandle = function(params, cb) {
+shared_1_0.searchDappHandle = function (params, cb) {
     let dappHash = params[0];
     let transactionHash = params[1];
     let address = params[2];
-    if(!(dappHash || transactionHash || address)) {
+    let page = params[3] || 1;
+    let size = params[4] || 10;
+    let height = (page - 1) * size;
+    if (!(dappHash || transactionHash || address)) {
         return cb("缺少参数", 11000);
     }
     let data = {
         dappHash: dappHash,
         transactionHash: transactionHash,
-        address: address
+        address: address,
+        height: height,
+        size: size
     };
     privated.searchHandle(data, function (err, data) {
-        if(err) {
+        if (err) {
             return cb(err, 11000);
         } else {
-            return cb(null, 200,data);
+            return cb(null, 200, data);
         }
     });
 };
 
 //拉取dapp详情
-shared_1_0.getDappInfo = function(params, cb) {
+shared_1_0.getDappInfo = function (params, cb) {
     let dappHash = params[0];
     library.dbClient.query('SELECT * FROM `dapp2assets` WHERE `hash`=$dappHash', {
         type: Sequelize.QueryTypes.SELECT,
@@ -853,7 +886,7 @@ shared_1_0.getDappInfo = function(params, cb) {
             dappHash: dappHash
         }
     }).then((rows) => {
-        if(rows) {
+        if (rows) {
             return cb(null, 200, rows[0]);
         } else {
             return cb(null, 200, "");
@@ -863,7 +896,7 @@ shared_1_0.getDappInfo = function(params, cb) {
     });
 };
 // 创建合约费用
-shared_1_0.getCreateDappFee = function(params, cb) {
+shared_1_0.getCreateDappFee = function (params, cb) {
     let fee = 1 * constants.fixedPoint;
     return cb(200, fee);
 };
