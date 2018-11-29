@@ -824,7 +824,7 @@ shared_1_0.searchDappList = function (params, cb) {
     // let sql = "SELECT * FROM `dapp2assets` WHERE `dappHash` = $searchData or `name`=$searchData ORDER BY `createTime` DESC LIMIT $height, $size";
     let sql = "SELECT * FROM `dapp2assets`";
     if(searchData) {
-        sql += " WHERE `dappHash` = $searchData or `name`=$searchData";
+        sql += " WHERE `hash` = $searchData or `name`=$searchData";
     }
     sql += " ORDER BY `createTime` DESC LIMIT $height, $size";
     library.dbClient.query(sql, {
