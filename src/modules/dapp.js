@@ -821,7 +821,7 @@ shared_1_0.searchDappList = function (params, cb) {
     let size = params[1] || 10;
     let height = (page - 1) * size;
 
-    library.dbClient.query('SELECT * FROM `dapp2assets` ORDER BY `timestamp` LIMIT $height, $size', {
+    library.dbClient.query('SELECT * FROM `dapp2assets` ORDER BY `createTime` DESC LIMIT $height, $size', {
         type: Sequelize.QueryTypes.SELECT,
         bind: {
             height: height,
@@ -839,7 +839,7 @@ shared_1_0.searchMineList = function (params, cb) {
     let page = params[1] || 1;
     let size = params[2] || 10;
     let height = (page-1)*size;
-    library.dbClient.query('SELECT * FROM `dapp2assets` WHERE `accountId`=$accountId ORDER BY `timestamp` LIMIT $height, $size', {
+    library.dbClient.query('SELECT * FROM `dapp2assets` WHERE `accountId`=$accountId ORDER BY `createTime` DESC LIMIT $height, $size', {
         type: Sequelize.QueryTypes.SELECT,
         bind: {
             accountId: address,
