@@ -71,7 +71,6 @@ function Transaction() {
     };
 
     this.apply = function (txObj, blockObj, sender, cb) {
-
         library.modules.accounts.setAccountAndGet({master_address: txObj.recipientId}, function (err, recipient) {
             if (err) {
                 return cb(err);
@@ -89,7 +88,6 @@ function Transaction() {
     };
 
     this.undo = function (txObj, blockObj, sender, cb) {
-
         library.modules.accounts.setAccountAndGet({master_address: txObj.recipientId}, function (err, recipient) {
             if (err) {
                 return cb(err);
@@ -478,6 +476,9 @@ Transactions.prototype.processUnconfirmedTransaction = function (txObj, broadcas
     library.modules.accounts.setAccountAndGet({master_pub: txObj.senderPublicKey}, function (err, sender) {
         function done(err) {
             if (err) {
+                if(privated.unconfirmedTransactionsIdIndex[txObj.hash])
+                    privated.removeUnconfirmedTransaction(privated.unconfirmedTransactionsIdIndex[txObj.hash]);
+                // return library.base.transaction.undoUnconfirmed(txObj, sender, cb);
                 return cb(err);
             }
             privated.addUnconfirmedTransaction(txObj, sender, function (err) {
@@ -485,7 +486,7 @@ Transactions.prototype.processUnconfirmedTransaction = function (txObj, broadcas
                     return cb(err);
                 }
                 library.notification_center.notify('unconfirmedTransaction', txObj, broadcast);
-                cb();
+                setImmediate(cb);
             });
         }
 
@@ -626,7 +627,11 @@ Transactions.prototype.receiveTransactions = function (transactions, cb) {
     async.eachSeries(transactions, function (txObj, cb) {
         self.processUnconfirmedTransaction(txObj, true, cb);
     }, function (err) {
-        cb(err, transactions);
+        transactions.forEach((item) => {
+            if(typeof item.asset === "string")
+                item.asset = JSON.parse(item.asset);
+        });
+        return cb(err, transactions);
     });
 };
 
@@ -758,13 +763,10 @@ shared_1_0.addTransaction = function (params, cb) {
     var secondSecret = params[4] || '';
     var msg = params[5] || '';
     var multisigAccountPublicKey = params[6] || undefined;
-
     if (!(amount && publicKey && recipientId && mnemonic)) {
         return cb("miss must params", 11000);
     }
-
     let keyPair = library.base.account.getKeypair(mnemonic);
-
     if (publicKey) {
         if (keyPair.getPublicKeyBuffer().toString('hex') !== publicKey) {
             return cb("Invalid passphrase", 13005);
@@ -797,11 +799,9 @@ shared_1_0.addTransaction = function (params, cb) {
                     if (!account || !account.publicKey) {
                         return cb("Multisignature account not found");
                     }
-
                     if (!account || !account.multisignatures) {
                         return cb("Account does not have multisignatures enabled");
                     }
-
                     let lastHeight = library.modules.blocks.getLastBlock().height;
                     if(account.lockHeight > lastHeight) {
                         return cb("Account is locked", 11000);

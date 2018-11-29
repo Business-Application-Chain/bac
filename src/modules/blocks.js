@@ -17,7 +17,7 @@ var Json2csv = require('json2csv').Parser;
 
 var header = ['b_hash', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward','b_generatorPublicKey','b_blockSignature', 'b_merkleRoot', 'b_difficulty', 'b_basic', 'b_decisionSignature', 'b_decisionAddress', 'b_minerHash',
     't_hash', 't_type','t_timestamp','t_senderPublicKey', 't_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature', 's_publicKey', 'd_address',
-    'da_hash', 'da_issuersAddress','da_className', 'da_abi', 'da_tokenList', 'do_dappHash', 'do_fun', 'do_params', 'i_name', 'i_desc','i_issuersAddress', 'dt_dappHash', 'dt_dapp',
+    'da_hash', 'da_issuersAddress','da_className', 'da_abi', 'da_tokenList', 'do_dappHash', 'do_fun', 'do_params', 'i_name', 'i_desc','i_issuersAddress', 'dt_dappHash',
     'c_address','u_alias', 'm_min','m_lifetime','m_keysgroup','t_requesterPublicKey','t_signatures', 'a_name', 'a_description', 'a_hash', 'a_decimal', 'a_total', 'tr_amount', 'tr_assetsHash', 'tr_assetsName', 'l_lockHeight', 'min_ip', 'min_port'];
 
 require('array.prototype.findindex'); // Old node fix
@@ -43,9 +43,12 @@ privated.blocksDataFields = {
     'b_generatorPublicKey': String,
     'b_blockSignature': String,
     'b_merkleRoot': String,
+    'b_difficulty': String,
+    'b_basic': Number,
     'b_decisionSignature': String,
     'b_decisionAddress': String,
     'b_minerHash': String,
+
     't_hash': String,
     't_type': Number,
     't_timestamp': Number,
@@ -60,17 +63,20 @@ privated.blocksDataFields = {
     't_signSignature': String,
     's_publicKey': String,
     'd_address': String,
+
     'da_hash': String,
-    'da_className': String,
     'da_issuersAddress': String,
+    'da_className': String,
+    'da_abi': String,
+    'da_tokenList': String,
     'do_dappHash': String,
     'do_fun': String,
     'do_params': String,
-    'dt_dappHash': String,
-    'dt_dapp': String,
     'i_name': String,
     'i_desc': String,
     'i_issuersAddress': String,
+    'dt_dappHash': String,
+
     'c_address': String,
     'u_alias': String,
     'm_min': Number,
@@ -89,19 +95,18 @@ privated.blocksDataFields = {
     'l_lockHeight': Number,
     'min_ip': Number,
     'min_port': Number,
-    'b_difficulty': String,
-    'b_basic': Number
-};
 
+};
 privated.serchSql = 'SELECT '+
-    'b.hash as b_hash, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward,  b.generatorPublicKey as b_generatorPublicKey, b.blockSignature as b_blockSignature, b.merkleRoot as b_merkleRoot, b.difficulty as b_difficulty, b.basic as b_basic, b.decisionSignature as b_decisionSignature, b.decisionAddress as b_decisionAddress, b.minerHash as b_minerHash, ' +
+    'b.hash as b_hash, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward,  b.generatorPublicKey as b_generatorPublicKey, b.blockSignature as b_blockSignature,' +
+    'b.merkleRoot as b_merkleRoot, b.difficulty as b_difficulty, b.basic as b_basic, b.decisionSignature as b_decisionSignature, b.decisionAddress as b_decisionAddress, b.minerHash as b_minerHash, ' +
     't.hash as t_hash, t.type as t_type, t.timestamp as t_timestamp, t.senderPublicKey as t_senderPublicKey, t.senderId as t_senderId, t.recipientId as t_recipientId, t.senderUsername as t_senderUsername, t.recipientUsername as t_recipientUsername, t.amount as t_amount, t.fee as t_fee, t.signature as t_signature, t.signSignature as t_signSignature,  ' +
     's.publicKey as s_publicKey, ' +
     'd.address as d_address, ' +
-    'da.hash as da_hash, da.className as da_className, da.issuersAddress as da_issuersAddress, da.abi as da_abi, da.tokenList as da_tokenList, ' +
+    'da.hash as da_hash, da.issuersAddress as da_issuersAddress, da.className as da_className, da.abi as da_abi, da.tokenList as da_tokenList, ' +
     'do.dappHash as do_dappHash, do.fun as do_fun, do.params as do_params, '+
-    'dt.dappHash as dt_dappHash, ' +
     'i.name as i_name, i.desc as i_desc, i.issuersAddress as i_issuersAddress, '+
+    'dt.dappHash as dt_dappHash, ' +
     'c.address as c_address, ' +
     'u.username as u_alias,' +
     'm.min as m_min, m.lifetime as m_lifetime, m.keysgroup as m_keysgroup, ' +
@@ -354,13 +359,48 @@ privated.getBlocks = function(option, cb) {
 };
 
 privated.popLastBlock = function (oldLastBlock, cb) {
+    library.balancesSequence.add(function (cb) {
+        self.loadBlocksPart({hash: oldLastBlock.previousBlock}, function (err, previousBlock) {
+            if (err || !previousBlock.length) {
+                return cb(err || 'previousBlock is null');
+            }
+            previousBlock = previousBlock[0];
+
+            async.eachSeries(oldLastBlock.transactions.reverse(), function (transaction, cb) {
+                async.series([
+                    function (cb) {
+                        library.modules.accounts.getAccount({publicKey: transaction.senderPublicKey}, function (err, sender) {
+                            if (err) {
+                                return cb(err);
+                            }
+                            library.modules.transactions.undo(transaction, oldLastBlock, sender, cb);
+                        });
+                    }, function (cb) {
+                        library.modules.transactions.undoUnconfirmed(transaction, cb);
+                    }, function (cb) {
+                        library.modules.transactions.pushHiddenTransaction(transaction);
+                        setImmediate(cb);
+                    }
+                ], cb);
+            }, function (err) {
+                library.modules.round.backwardTick(oldLastBlock, previousBlock, function () {
+                    privated.deleteBlock(oldLastBlock.hash, function (err) {
+                        if (err) {
+                            return cb(err);
+                        }
+                        cb(null, previousBlock);
+                    });
+                });
+            });
+        });
+    }, cb);
 };
 
 privated.getIdSequence = function (height, cb) {
-    library.dbClient.query('SELECT height AS firstHeight, hash AS ids FROM blocks ORDER BY height DESC LIMIT 5', {
+    library.dbClient.query('SELECT height AS firstHeight, hash AS ids FROM blocks ORDER BY height DESC LIMIT 10', {
         type: Sequelize.QueryTypes.SELECT
     }).then((rows) => {
-        cb(null, rows[0]);
+        cb(null, rows);
     }).catch((error) => {
         cb(error);
     });
@@ -457,14 +497,19 @@ Blocks.prototype.getCommonBlock = function(peer, height, cb) {
                 if(err) {
                     return next(err);
                 }
-                let max = lastBlockHeight;
-                lastBlockHeight = data.firstHeight;
+                let max = data[0].firstHeight;
+                lastBlockHeight = data[data.length-1].firstHeight;
+                let ids = "";
+                data.forEach((item) => {
+                    ids += item.ids + ",";
+                });
+                ids = ids.substring(0, ids.length - 1);
                 library.modules.kernel.getFromPeerNews(peer, {
                     api:'kernel',
                     method:'POST',
                     func:'blocks_common',
                     data: JSON.stringify({
-                        ids: data.ids,
+                        ids: ids,
                         max: max,
                         min: lastBlockHeight
                     }),
@@ -508,7 +553,7 @@ Blocks.prototype.deleteBlocksBefore = function (block, cb) {
             return !(block.height >= privated.lastBlock.height);
         },
         function (next) {
-            blocks.unshift(privated.lastBlock);
+            // blocks.unshift(privated.lastBlock);
             privated.popLastBlock(privated.lastBlock, function (err, newLastBlock) {
                 privated.lastBlock = newLastBlock;
                 next(err);
@@ -524,62 +569,28 @@ Blocks.prototype.getLastBlock = function() {
     return privated.lastBlock;
 };
 
-privated.popLastBlock = function(oldLastBlock, cb) {
-    library.dbWorkQueue.add(function (cb) {
-        self.loadBlocksPart({id: oldLastBlock.previousBlock}, function (err, previousBlock) {
-            if (err || !previousBlock.length) {
-                return cb(err || 'previousBlock is null');
-            }
-            previousBlock = previousBlock[0];
-            async.eachSeries(oldLastBlock.transactions.reverse(), function (transaction, cb) {
-                async.series([
-                    function (cb) {
-                        library.modules.accounts.getAccount({publicKey: transaction.senderPublicKey}, function (err, sender) {
-                            if (err) {
-                                return cb(err);
-                            }
-                            library.modules.transactions.undo(transaction, oldLastBlock, sender, cb);
-                        });
-                    }, function (cb) {
-                        library.modules.transactions.undoUnconfirmed(transaction, cb);
-                    }, function (cb) {
-                        library.modules.transactions.pushHiddenTransaction(transaction);
-                        setImmediate(cb);
-                    }
-                ], cb);
-            }, function (err) {
-                library.modules.round.backwardTick(oldLastBlock, previousBlock, function () {
-                    privated.deleteBlock(oldLastBlock.id, function (err) {
-                        if (err) {
-                            return cb(err);
-                        }
-
-                        cb(null, previousBlock);
-                    });
-                });
-            });
-        });
-    }, cb);
-};
 
 Blocks.prototype.loadBlocksPart = function (filter, cb) {
     self.loadBlocksData(filter, function (err, rows) {
-        self.loadBlocksData(filter, function (err, rows) {
-            // Notes:
-            // If while loading we encounter an error, for example, an invalid signature on
-            // a block & transaction, then we need to stop loading and remove all blocks
-            // after the last good block. We also need to process all transactions within
-            // the block.
-
-            var blocks = [];
-
-            if (!err) {
-                blocks = privated.readDbRows(rows);
-            }
-
-            cb(err, blocks);
+        let blocks = [];
+        let blocksTemp = [];
+        csvtojson({
+            noheader: true,
+            headers: header
+        }).fromString(rows).subscribe((csvLine) => {
+            blocksTemp.push(csvLine);
+        }).then(() => {
+            blocks = privated.readDbRows(blocksTemp);
+            // cb(null, blocks, data);
+            return cb(null, blocks);
+        }).catch((err) => {
+            return cb(err);
         });
-    })
+        // _rows.push(rows);
+        // if (!err) {
+        //     blocks = privated.readDbRows(blocksTemp);
+        // }
+    });
 }
 
 Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
@@ -642,7 +653,7 @@ Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
                                 library.log.Info('Block ' + (block ? block.hash : 'null') + ' is not valid, ban 60 min', peerStr);
                                 library.modules.peer.state(peer.ip, peer.port, 0, 3600);
                                 console.log(err);
-                                cb();
+                                cb(err);
                                 // cb(err);
                             }
                         });
@@ -893,10 +904,6 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                     return done("Invalid amount of block assets: " + block.hash);
                 }
                 var totalAmount = 0, totalFee = 0, appliedTransactions = {};
-                var saveTask = [];
-                saveTask.push(new Promise((resolve, reject) => {
-
-                }));
                 async.each(block.transactions, function (transaction, cb) {
                     transaction.blockHash = block.hash;
                     library.dbClient.query(`SELECT hash FROM transactions WHERE hash="${transaction.hash}"`,{
@@ -982,8 +989,10 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                             else {
                                 privated.lastBlock = block;
                                 library.log.Debug("saveBlock success");
+
                                 library.notification_center.notify('sendLastBlock');
-                                cb();
+                                library.modules.round.tick(block, done);
+                                // cb();
                             }
                         });
                     }
@@ -1019,8 +1028,13 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
         method = false;
     }
     library.dbSequence.add(function (cb) {
-        library.dbClient.query(`SELECT height as Number FROM blocks WHERE hash = "${filter.lastBlockHash || null}"`, {
-            type: Sequelize.QueryTypes.SELECT
+        let sql = "SELECT height as Number FROM `blocks` WHERE `hash` = $hash";
+        // library.dbClient.query(`SELECT height as Number FROM blocks WHERE hash = "${filter.lastBlockHash || null}"`, {
+        library.dbClient.query(sql, {
+            type: Sequelize.QueryTypes.SELECT,
+            bind: {
+                hash: filter.lastBlockHash? filter.lastBlockHash: filter.hash
+            }
         }).then((rows) => {
             var height = rows.length ? rows[0].Number : 0;
             if(height === 0) {

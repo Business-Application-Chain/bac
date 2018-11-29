@@ -105,6 +105,7 @@ Block.prototype.objectNormalize = function (block) {
 
     try {
         for (var i = 0; i < block.transactions.length; i++) {
+            block.transactions[i].asset = JSON.stringify(block.transactions[i].asset);
             block.transactions[i] = this.scope.transaction.objectNormalize(block.transactions[i]);
         }
     } catch (err) {

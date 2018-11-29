@@ -277,7 +277,7 @@ d.run(function () {
             cb(null, new ncenter);
         },
 
-        base: ['config', 'genesisblock', 'dbClient', 'schema', 'notification_center', function (scope, cb) {
+        base: ['config', 'genesisblock', 'dbClient', 'schema', 'notification_center', 'dbSequence', function (scope, cb) {
             var Account = require('../src/base/account.js');
             var Block = require('../src/base/block.js');
             var Transaction = require('../src/base/transaction.js');
@@ -298,6 +298,9 @@ d.run(function () {
                 notification_center: function (cb) {
                     cb(null, scope.notification_center);
                 },
+                dbSequence: function (cb) {
+                    cb(null, scope.dbSequence);
+                },
                 account: ['config', 'dbClient', 'notification_center', function (scope, cb) {
                     new Account(scope, cb);
                 }],
@@ -307,7 +310,7 @@ d.run(function () {
                 transaction: ['config', 'dbClient', 'notification_center', function (scope, cb) {
                     new Transaction(scope, cb);
                 }],
-                accountAssets: ['config', 'dbClient', 'notification_center', function (scope, cb) {
+                accountAssets: ['config', 'dbClient', 'notification_center', 'dbSequence', function (scope, cb) {
                     new AccountAssets(scope, cb);
                 }],
             }, cb);

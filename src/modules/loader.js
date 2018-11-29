@@ -273,9 +273,11 @@ privated.findUpdate = function(lastBlock, peer, cb) {
             }
             async.series([
                 function (cb) {
-                    if (commonBlock.hash != lastBlock.hash) {
-                        library.modules.round.directionSwap('backward', lastBlock, cb);
-                        console.log('modules.round.directionSwap -> backward')
+                    if (commonBlock.hash !== lastBlock.hash) {
+                        // library.modules.round.directionSwap('backward', lastBlock, cb);
+                        console.log('modules.round.directionSwap -> backward');
+                        // library.modules.blocks.deleteBlocksBefore
+                        cb();
                     } else {
                         cb();
                     }
@@ -286,14 +288,14 @@ privated.findUpdate = function(lastBlock, peer, cb) {
 
                     library.modules.blocks.deleteBlocksBefore(commonBlock, cb);
                 },
-                function (cb) {
-                    if (commonBlock.hash != lastBlock.hash) {
-                        console.log('modules.round.directionSwap -> forward');
-                        library.modules.round.directionSwap('backward', lastBlock, cb);
-                    } else {
-                        cb();
-                    }
-                },
+                // function (cb) {
+                //     if (commonBlock.hash != lastBlock.hash) {
+                //         console.log('modules.round.directionSwap -> forward');
+                //         library.modules.round.directionSwap('backward', lastBlock, cb);
+                //     } else {
+                //         cb();
+                //     }
+                // },
                 function (cb) {
                     library.log.Debug("Loading blocks from peer " + peerStr);
                     library.modules.blocks.loadBlocksFromPeer(peer, commonBlock.hash, function (err, lastValidBlock) {
@@ -301,7 +303,7 @@ privated.findUpdate = function(lastBlock, peer, cb) {
                             console.log(err);
                             //撤销操作
                             console.log('loadBlocksFromPeer is error!!!!!!!!!!!!!');
-                            cb();
+                            return cb(err);
                         } else {
                             for (var i = 0; i < overTransactionList.length; i++) {
                                 library.modules.transactions.pushHiddenTransaction(overTransactionList[i]);
@@ -322,7 +324,7 @@ privated.findUpdate = function(lastBlock, peer, cb) {
                         }
                     });
                 }
-            ], cb)
+            ], cb);
         });
     });
 };

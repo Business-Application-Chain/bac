@@ -482,7 +482,7 @@ function LockHeight() {
             return null;
         } else {
             let lock = {
-                height: raw.l_lockHeight,
+                height: parseInt(raw.l_lockHeight),
             };
 
             return {lock: lock};
