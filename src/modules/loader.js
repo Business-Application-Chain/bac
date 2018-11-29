@@ -303,7 +303,7 @@ privated.findUpdate = function(lastBlock, peer, cb) {
                             console.log(err);
                             //撤销操作
                             console.log('loadBlocksFromPeer is error!!!!!!!!!!!!!');
-                            cb(err);
+                            return cb(err);
                         } else {
                             for (var i = 0; i < overTransactionList.length; i++) {
                                 library.modules.transactions.pushHiddenTransaction(overTransactionList[i]);
