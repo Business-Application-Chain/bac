@@ -324,7 +324,7 @@ privated.findUpdate = function(lastBlock, peer, cb) {
                         }
                     });
                 }
-            ], cb)
+            ], cb);
         });
     });
 };
