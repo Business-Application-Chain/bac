@@ -825,7 +825,6 @@ shared_1_0.searchDappList = function (params, cb) {
     // if(searchData) {
     //     sql += " WHERE `hash` = $searchData or `name`=$searchData";
     // }
-    sql += " ORDER BY `createTime` DESC LIMIT $height, $size";
     library.dbClient.query(sql, {
         type: Sequelize.QueryTypes.SELECT,
         bind: {
