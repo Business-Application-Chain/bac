@@ -156,7 +156,7 @@ function Dapp() {
 
 function DoDapp() {
     this.calculateFee = function (txObj, sender) {
-        return 1 * constants.fixedPoint;
+        return 0.01 * constants.fixedPoint;
     };
 
     this.create = function (data, txObj) {
@@ -917,9 +917,19 @@ shared_1_0.getDappInfo = function (params, cb) {
 // 创建合约费用
 shared_1_0.getCreateDappFee = function (params, cb) {
     let fee = 1 * constants.fixedPoint;
-    return cb(200, fee);
+    return cb(null, 200, fee);
 };
 
+//调用合约费用
+shared_1_0.getHandleDappFee = function(params, cb) {
+    let fee = 0.01 * constants.fixedPoint;
+    return cb(null, 200, fee);
+};
+
+shared_1_0.transferDappFee = function(params, cb) {
+    let fee = 0.01 * constants.fixedPoint;
+    return cb(null, 200, fee);
+};
 module.exports = Dapps;
 
 
