@@ -840,6 +840,20 @@ shared_1_0.searchDappList = function (params, cb) {
         return cb(err, 11000);
     });
 };
+
+shared_1_0.searchDappHash = function (params, cb) {
+    let hash = params[0] || '';
+    if(!hash) {
+        return cb("dapp hash is empty", 11000);
+    } else {
+        library.dbClient.query(`SELECT hash from dapp2assets WHERE hash like "%${hash}%"`, {
+            type: Sequelize.QueryTypes.SELECT
+        }).then((rows) => {
+            return cb(null, 200, rows);
+        });
+    }
+};
+
 // 查询自己的合约
 shared_1_0.searchMineList = function (params, cb) {
     let address = params[0];
