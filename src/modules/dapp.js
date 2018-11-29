@@ -815,24 +815,22 @@ shared_1_0.searchDappBalance = function (params, cb) {
         }
     })
 };
-// 查询全部合约列表
+// 拉取全部合约列表
 shared_1_0.searchDappList = function (params, cb) {
-    let searchData = [0] || '';
-    let page = params[1] || 1;
-    let size = params[2] || 10;
+    let page = params[0] || 1;
+    let size = params[1] || 10;
     let height = (page - 1) * size;
     // let sql = "SELECT * FROM `dapp2assets` WHERE `dappHash` = $searchData or `name`=$searchData ORDER BY `createTime` DESC LIMIT $height, $size";
-    let sql = "SELECT * FROM `dapp2assets`";
-    if(searchData) {
-        sql += " WHERE `hash` = $searchData or `name`=$searchData";
-    }
+    let sql = "SELECT * FROM `dapp2assets` ORDER BY `createTime` DESC LIMIT $height, $size";
+    // if(searchData) {
+    //     sql += " WHERE `hash` = $searchData or `name`=$searchData";
+    // }
     sql += " ORDER BY `createTime` DESC LIMIT $height, $size";
     library.dbClient.query(sql, {
         type: Sequelize.QueryTypes.SELECT,
         bind: {
             height: height,
             size: size,
-            searchData: searchData
         }
     }).then(rows => {
         return cb(null, 200, rows);
