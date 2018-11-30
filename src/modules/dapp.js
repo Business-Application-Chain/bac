@@ -552,7 +552,7 @@ privated.searchDpaaBalance = function (address, dappHash, cb) {
             dappHash: dappHash
         }
     }).then((rows) => {
-        cb(null, rows);
+        cb(null, rows[0]);
     }).catch(err => {
         cb(err);
     })
@@ -578,20 +578,34 @@ privated.searchHandle = function (data, cb) {
     } else {
         return cb("data is null");
     }
+    let totalCountSql = sql;
     sql += " ORDER BY `timestamp` DESC LIMIT $height, $size ";
-    library.dbClient.query(sql, {
+    library.dbClient.query(totalCountSql, {
         type: Sequelize.QueryTypes.SELECT,
         bind: {
             address: data.address,
             transactionHash: data.transactionHash,
-            dappHash: data.dappHash,
-            height: data.height,
-            size: data.size
+            dappHash: data.dappHash
         }
-    }).then(rows => {
-        return cb(null, rows);
-    }).catch(err => {
-        return cb(err);
+    }).then(counts => {
+        if(counts) {
+            library.dbClient.query(sql, {
+                type: Sequelize.QueryTypes.SELECT,
+                bind: {
+                    address: data.address,
+                    transactionHash: data.transactionHash,
+                    dappHash: data.dappHash,
+                    height: data.height,
+                    size: data.size
+                }
+            }).then(rows => {
+                return cb(null, {data: rows, totalCount: counts.length});
+            }).catch(err => {
+                return cb(err);
+            });
+        } else {
+            return cb(null, {data: [], totalCount: 0});
+        }
     });
 };
 // 上传合约
@@ -707,11 +721,6 @@ shared_1_0.handleDapp = function (params, cb) {
             if (account.lockHeight > lastBlockHeight) {
                 return cb("Account is locked", 11000);
             }
-            // for(let i=0; i<param.length; i++) {
-            //     if(param[i] === account.master_address) {
-            //         return cb("合约参数错误", 11000);
-            //     }
-            // }
             privated.findIssuersAddress(dappHash, function (err) {
                 if (err) {
                     return cb(err, 11000);
@@ -820,22 +829,29 @@ shared_1_0.searchDappList = function (params, cb) {
     let page = params[0] || 1;
     let size = params[1] || 10;
     let height = (page - 1) * size;
-    // let sql = "SELECT * FROM `dapp2assets` WHERE `dappHash` = $searchData or `name`=$searchData ORDER BY `createTime` DESC LIMIT $height, $size";
     let sql = "SELECT * FROM `dapp2assets` ORDER BY `createTime` DESC LIMIT $height, $size";
-    // if(searchData) {
-    //     sql += " WHERE `hash` = $searchData or `name`=$searchData";
-    // }
-    library.dbClient.query(sql, {
-        type: Sequelize.QueryTypes.SELECT,
-        bind: {
-            height: height,
-            size: size,
+    library.dbClient.query("SELECT COUNT(*) AS number from dapp2assets WHERE status=0", {
+        type: Sequelize.QueryTypes.SELECT
+    }).then((number) => {
+        if(number[0]) {
+            return library.dbClient.query(sql, {
+                type: Sequelize.QueryTypes.SELECT,
+                bind: {
+                    height: height,
+                    size: size,
+                }
+            }).then(rows => {
+                return cb(null, 200, {data:rows, totalCount: number[0].number});
+            }).catch(err => {
+                return cb(err, 11000);
+            });
+        } else {
+            return cb(null, 200, {data:[], totalCount: 0});
         }
-    }).then(rows => {
-        return cb(null, 200, rows);
-    }).catch(err => {
+    }).catch((err) => {
         return cb(err, 11000);
-    });
+    })
+
 };
 
 shared_1_0.searchDappHash = function (params, cb) {
@@ -857,16 +873,33 @@ shared_1_0.searchMineList = function (params, cb) {
     let page = params[1] || 1;
     let size = params[2] || 10;
     let height = (page-1)*size;
-    library.dbClient.query('SELECT * FROM `dapp2assets` WHERE `accountId`=$accountId ORDER BY `createTime` DESC LIMIT $height, $size', {
+    if(!address) {
+        return cb("缺少查询地址", 11000);
+    }
+    library.dbClient.query('SELECT COUNT(*) AS number FROM `dapp2assets` WHERE `accountId`=$accountId AND status=0', {
         type: Sequelize.QueryTypes.SELECT,
         bind: {
-            accountId: address,
-            height: height,
-            size: size
+            accountId: address
         }
-    }).then((rows) => {
-        return cb(null, 200, rows);
+    }).then((number) => {
+        if(number[0]) {
+            library.dbClient.query('SELECT * FROM `dapp2assets` WHERE `accountId`=$accountId AND status=0 ORDER BY `createTime` DESC LIMIT $height, $size', {
+                type: Sequelize.QueryTypes.SELECT,
+                bind: {
+                    accountId: address,
+                    height: height,
+                    size: size
+                }
+            }).then((rows) => {
+                return cb(null, 200, {data: rows, totalCount: number[0].number});
+            }).catch(err => {
+                return cb(err, 11000);
+            });
+        } else {
+            return cb(null, 200, {data: [], totalCount: 0});
+        }
     });
+
 };
 // 查看操作记录
 shared_1_0.searchDappHandle = function (params, cb) {
@@ -925,7 +958,7 @@ shared_1_0.getHandleDappFee = function(params, cb) {
     let fee = 0.01 * constants.fixedPoint;
     return cb(null, 200, fee);
 };
-
+// 转移合约费用
 shared_1_0.transferDappFee = function(params, cb) {
     let fee = 0.01 * constants.fixedPoint;
     return cb(null, 200, fee);
