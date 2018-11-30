@@ -3,6 +3,7 @@ import account from './account'
 import transactions from './transactions'
 import contacts from './contacts'
 import kernel from './kernel'
+import assets from './assets'
 import dapp from './dapp'
 
 export default {
@@ -11,5 +12,6 @@ export default {
     transactions,
     contacts,
     kernel,
+    assets,
     dapp
 }

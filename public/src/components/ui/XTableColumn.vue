@@ -14,11 +14,11 @@
             }
         },
         created () {
-            const obj = assign(this.$props, {
+            const obj = assign({
                 renderBody: data => {
                     return this.$scopedSlots.default ?  this.$scopedSlots.default(data) :  data[this.prop]
                 }
-            })
+            }, this.$props)
 
             obj.realStyle = {
                 width: obj.width ? obj.width + 'px' : '',

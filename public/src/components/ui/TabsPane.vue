@@ -20,6 +20,8 @@
             name: String
         },
 
+        
+
         mounted () {
             this.$parent.insertChild(this)
         },
@@ -33,5 +35,8 @@
 </script>
 
 <style lang="scss" scoped>
+    .tabs-pane-comp{
+        background: #fff;
+    }
 </style>
 

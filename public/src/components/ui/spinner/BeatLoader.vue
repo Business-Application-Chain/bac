@@ -48,9 +48,11 @@ export default {
 </script>
 
 <style>
+.v-beat{
+    vertical-align: middle
+}
 .v-spinner .v-beat
 {
-    -webkit-animation: v-beatStretchDelay 0.7s infinite linear;
             animation: v-beatStretchDelay 0.7s infinite linear;
     -webkit-animation-fill-mode: both;
 	          animation-fill-mode: both;

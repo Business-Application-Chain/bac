@@ -1,74 +1,94 @@
 import io from './io'
 
 export default {
-    //添加资产   params: [资产名称，描述，发行总量，小数位，助记词，支付密码]
-    addAssets (params) {
+    //上传合约  params: [助记词，合约类名，合约代码，密码]
+    uploadDapp (params) {
         return io.post({
-            api: 'assets',
-            method: 'addAssets',
+            api: 'dapp',
+            method: 'upLoadDapp',
             params
-        })
+        }) 
     },
-    
-    //获取用户的资产 params: [address]
-    getAccountAssets (params) {
+
+    //获取上传合约所需费用  params: [合约代码]
+    getCreateDappFee (params) {
         return io.post({
-            api: 'assets',
-            method: 'getAccountAssets',
+            api: 'dapp',
+            method: 'getCreateDappFee',
+            params
+        }) 
+    },
+
+    //执行合约 params: [mnemonic, dappHash, func, param, secondSecret]
+    handleDapp (params) {
+        return io.post({
+            api: 'dapp',
+            method: 'handleDapp',
             params
         })
     },
 
-    //获取用户发布的资产 params:[address]
-    getAssets (params){
+    //获取合约详情 params: [dappHash]
+    getDappInfo (params) {
         return io.post({
-            api: 'assets',
-            method: 'getAssets',
+            api: 'dapp',
+            method: 'getDappInfo',
             params
         })
     },
 
-    //获取新增资产所需的费用\
-    getFee () {
+    //转移合约所有人  params: [mnemonic,dappHash,transferAddress,secondSecret]
+    transferDapp (params) {
         return io.post({
-            api: 'assets',
-            method: 'getFee'
-        })
-    },
-    
-    //发送资产  params:[发送金额，接受者地址，助记词，资产hash，备注，支付密码]
-    send (params) {
-        return io.post({
-            api: 'transfers',
-            method: 'sendTransfers',
+            api: 'dapp',
+            method: 'transferDapp',
             params
         })
     },
 
-    //获取发送资产所需的费用
-    getSendFee () {
+    //查询dapp余额  params: [address, dappHash]
+    searchDappBalance (params) {
         return io.post({
-            api: 'transfers',
-            method: 'getFee'
-        })
-    },
-
-    //燃烧代币 params: [销毁金额，助记词，资产hash，信息，密码]
-    burnAssets (params) {
-        return io.post({
-            api: 'transfers',
-            method: 'burnAssets',
+            api: 'dapp',
+            method: 'searchDappBalance',
             params
         })
     },
 
-    //转账记录  params: [地址，资产hash，curPage，pageSize]
-    getTransfers (params) {
+    //查询dapp列表 params: [页码，页面大小]
+    searchDappList (params) {
         return io.post({
-            api: 'transfers',
-            method: 'transfers',
+            api: 'dapp',
+            method: 'searchDappList',
             params
         })
     },
-    
+
+    //根据hash搜索dapp params: [dappHash]
+    searchDappHash (params) {
+        return io.post({
+            api: 'dapp',
+            method: 'searchDappHash',
+            params
+        })
+    },
+
+     //查询自己发布的合约  params: [address]
+    searchMineList (params) {
+        return io.post({
+            api: 'dapp',
+            method: 'searchMineList',
+            params
+        })
+    },
+
+    //查询合约操作记录  params: [dappHash, transactionHash, address]
+    searchDappHandle (params) {
+        return io.post({
+            api: 'dapp',
+            method: 'searchDappHandle',
+            params
+        })
+    },
+
 }
