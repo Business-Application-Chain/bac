@@ -640,15 +640,35 @@ Transactions.prototype.onInit = function (scope) {
     modules_loaded = scope && scope != undefined ? true : false;
 };
 
+Transactions.prototype.getUnconfirmedTransactionHash = function(hash) {
+    let index = privated.unconfirmedTransactionsIdIndex[hash];
+    let unconfirmedTransaction = privated.unconfirmedTransactions[index];
+    if(unconfirmedTransaction) {
+        unconfirmedTransaction.unconfirmed = 0;
+        return unconfirmedTransaction;
+    }
+};
+
 shared_1_0.transaction = function (params, cb) {
     let tHash = params[0] || undefined;
     if (!tHash) {
         return cb('missing params', 11000);
     }
+    let index = privated.unconfirmedTransactionsIdIndex[tHash];
+    console.log(index);
+
+    let unconfirmedTransaction = privated.unconfirmedTransactions[index];
+    if(unconfirmedTransaction) {
+        unconfirmedTransaction.unconfirmed = 0;
+        return cb(null, 200, unconfirmedTransaction);
+    }
+    // console.log(unconfirmedTransaction);
+
     privated.getByHash(tHash, function (err, data) {
         if (err) {
             return cb(err.msg, err.code);
         }
+        data.unconfirmed = library.modules.blocks.getLastBlock.height - data.height;
         return cb(null, 200, data);
     });
 };

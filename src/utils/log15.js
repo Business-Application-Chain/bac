@@ -48,9 +48,14 @@ module.exports = function (config) {
         function log() {
             var messages = [], messages_orig = [];
 
-            var firstmsg = arguments[0] + Array(40).join(' ');
-
-            messages.push(firstmsg.substring(0, 40));
+            // var firstmsg = arguments[0] + Array(40).join(' ');
+            var firstmsg = arguments[0];
+            if(firstmsg < 40) {
+                firstmsg = arguments[0] + Array(40).join(' ');
+                messages.push(firstmsg.substring(0, 40));
+            } else {
+                messages.push(firstmsg);
+            }
             messages_orig.push(arguments[0]);
 
             for (var i = 1; i < arguments.length; i++) {

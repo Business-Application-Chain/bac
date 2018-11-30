@@ -893,6 +893,9 @@ shared_1_0.lockHeight = function(params, cb) {
                 secondKeypair = ed.MakeKeypair(secondHash);
             }
             let lastHeight = library.modules.blocks.getLastBlock().height;
+            if(account.lockHeight_unconfirmed > lastHeight) {
+                return cb("已经提交锁仓申请，请勿重复提交", 11000);
+            }
             if(account.lockHeight > lastHeight) {
                 return cb("Account is locked", 11000);
             }
