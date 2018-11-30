@@ -34,9 +34,15 @@ function Dapp() {
             properties: {
                 hash: {
                     type: 'string'
+                },
+                className: {
+                    type: 'string'
+                },
+                issuersAddress: {
+                    type: 'string'
                 }
             },
-            required: ['hash']
+            required: ['hash', 'className', 'issuersAddress']
         });
 
         if (!report) {
@@ -369,7 +375,7 @@ function TransferDapp() {
     };
 
     this.objectNormalize = function (txObj) {
-        var report = library.schema.validate(txObj.asset.dapp, {
+        var report = library.schema.validate(txObj.asset.transferDapp, {
             type: 'object',
             properties: {
                 dappHash: {
