@@ -1,5 +1,5 @@
 <template>
-    <div class="x-input-comp">
+    <div class="x-input-comp" :style="{height: noError ? 'auto' : '60px'}">
         <input class="x-input_input" :disabled="disabeld" :value="value" @input="$emit('input', $event.target.value)" :placeholder="placeholder" :class="{error: status == 'error'}" :type="type" />
         <div v-if="status == 'error'" class="x-input_err">{{errorMsg}}</div>
         <div v-if="status == 'success'" class="x-input_success"><x-circle type="primary"></x-circle></div>
@@ -25,6 +25,9 @@
                 default: ''
             },
             disabeld:{
+                default: false
+            },
+            noError: {
                 default: false
             }
         },

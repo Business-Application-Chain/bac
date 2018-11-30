@@ -21,6 +21,8 @@
                     value: this.value,
                     label: this.label
                 })
+
+                this.$emit('change')
             }
         }
     }

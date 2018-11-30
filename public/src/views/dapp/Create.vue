@@ -110,14 +110,7 @@
                 const res = await api.dapp.uploadDapp([this.key.mnemonic, this.dappClass, this.code, sha256(this.password).toString()])
                 this.btnLoading = false
                 if (res === null) return;
-                Toast.success('创建合约成功', () => {
-                    this.$router.push({
-                        name:'dappDetail',
-                        params: {
-                            hash: res.dappHash
-                        }
-                    })
-                })
+                Toast.success('创建合约成功,等待区块打包后查看')
                 
                 
             },
