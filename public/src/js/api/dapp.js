@@ -73,7 +73,7 @@ export default {
         })
     },
 
-     //查询自己发布的合约  params: [address]
+     //查询自己发布的合约  params: [address,page, size]
     searchMineList (params) {
         return io.post({
             api: 'dapp',
@@ -82,7 +82,7 @@ export default {
         })
     },
 
-    //查询合约操作记录  params: [dappHash, transactionHash, address]
+    //查询合约操作记录  params: [dappHash, transactionHash, address, page, size]
     searchDappHandle (params) {
         return io.post({
             api: 'dapp',
@@ -90,5 +90,23 @@ export default {
             params
         })
     },
+
+    //获取转让合约所需的费用
+    transferDappFee (params = []) {
+        return io.post({
+            api: 'dapp',
+            method: 'transferDappFee',
+            params
+        })
+    },
+
+    //获取执行合约代码所需费用
+    getHandleDappFee (params = []) {
+        return io.post({
+            api: 'dapp',
+            method: 'getHandleDappFee',
+            params
+        })
+    }
 
 }

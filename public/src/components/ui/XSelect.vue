@@ -1,11 +1,11 @@
 <template>
-    <div @click="optionsVisible = !optionsVisible" class="x-select-comp">
+    <div @click="optionsVisible = !optionsVisible" class="x-select-comp" :style="{width}">
         <div class="comp-placeholder" v-if="!label">{{placeholder}}</div>
         <div class="comp-label" v-if="label">{{label}}</div>
         <div class="comp-arrow"></div>
 
         <transition name="zoom-in-top">
-            <div v-if="optionsVisible" class="comp-list">
+            <div v-if="optionsVisible" class="comp-list" :style="{width}">
                 <slot></slot>
             </div>
         </transition>
@@ -26,6 +26,9 @@
             },
             placeholder: {
                 default: '请选择'
+            },
+            width: {
+                default: '200px'
             }
         },
 
@@ -37,6 +40,7 @@
             change (item) {
                 this.label = item.label
                 this.$emit('input', item.value)
+                
             }
         }
     }
@@ -50,18 +54,19 @@
         position: relative;
         height: 45px;
         line-height: 45px;
-        padding: 0 20px;
         box-sizing: border;
         cursor: pointer;
 
         .comp-placeholder{
             font-size: 16px;
             color: #CBCBCB;
+            margin-left: 20px;
         }
 
         .comp-label{
             font-size: 16px;
             color: #4A4A4A;
+            margin-left: 20px;
         }
 
         .comp-arrow{
@@ -73,7 +78,7 @@
 
             position: absolute;
             z-index: 9;
-            right: 12px;
+            right: 10px;
             top: 50%;
             transform: translate(0, -50%)
         }
@@ -85,7 +90,7 @@
             position: absolute;
             z-index:99;
             left: 0px;
-            right: 0px;
+            
             top: 50px;
         }
         

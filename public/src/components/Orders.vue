@@ -14,12 +14,12 @@
             </div>
             <div class="comp-t2">
                 <router-link :to="{name: 'contactDetail', params:{id: item.senderId}}" class="comp-link" replace>{{item.senderId}}</router-link>
-                <!-- <div @click="go(item.senderId)" class="comp-link">{{item.senderId}}</div> -->
+                
             </div>
             <div class="comp-t3">
                 <router-link v-if="item.recipientId" :to="{name: 'contactDetail', params:{id: item.recipientId}}" class="comp-link" replace>{{item.recipientId}}</router-link>
                 <div v-else>-</div>
-                <!-- <div @click="go(item.recipientId)" class="comp-link">{{item.recipientId}}</div> -->
+                
             </div>
             <div class="comp-t4">{{item.timestamp | date}}</div>
             <div class="comp-t5">

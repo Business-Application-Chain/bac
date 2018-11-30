@@ -32,49 +32,98 @@
                         </x-table-column>
                         <x-table-column min-width="3" prop="accountId" label="创建者"></x-table-column>
                     </x-table>
+                    <pagination :current-page="allCurPage" :page-count="allPageCount" @currentPage="fetchAll"></pagination>
                 </tabs-pane>
                 <tabs-pane label="我的" name="my">
                     <x-table :list="myList">
                         <x-table-column width="40"></x-table-column>
                         <x-table-column min-width="1" label="名称">
                             <template slot-scope="scope">
-                                {{scope.symbol}} ({{scope.name}})
+                                <router-link :to="{name: 'dappDetail', params:{hash: scope.hash}}" class="link">{{scope.symbol}} ({{scope.name}})</router-link>
                             </template>
                         </x-table-column>
-                        <x-table-column min-width="2" prop="hash" label="hash"></x-table-column>
+                        <x-table-column min-width="2" prop="hash" label="hash">
+                            <template slot-scope="scope">
+                                <router-link :to="{name: 'dappDetail', params:{hash: scope.hash}}" class="link">{{scope.hash}}</router-link>
+                            </template>
+                        </x-table-column>
                         <x-table-column min-width="1" prop="decimals" label="小数位"></x-table-column>
                         <x-table-column min-width="1" prop="totalAmount" label="总量">
                             <template slot-scope="scope">
                                 {{parseInt(scope.totalAmount)}}
                             </template>
                         </x-table-column>
+                        <x-table-column label="操作" min-width="1">
+                            <template slot-scope="scope">
+                                <x-btn height="35px" font-size="14px" @click="transferDapp(scope)">合约转让</x-btn>
+                            </template>
+                        </x-table-column>
                     </x-table>
+
+                    <pagination :current-page="myCurPage" :page-count="myPageCount" @currentPage="fetchMy"></pagination>
                 </tabs-pane>
             </tabs>
         </div>
+
+        <modal 
+            v-if="transferVisible"
+            :visible.sync="transferVisible"
+            title="转让合约"
+            hint="转让合约需要手续费且不可修改"
+            @ok="transferSubmit"
+            :okLoading="okLoading"
+        >
+            <div class="modal-label">接收方地址</div>
+            <x-input v-model="transferAdress" placeholder="请输入接收方地址"></x-input>
+            <div v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1" class="add-title">支付密码</div> 
+            <x-input 
+                v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1" 
+                v-model.trim="transferPassword" 
+                type="password"
+                placeholder="请输入支付密码">
+            </x-input>
+            <div class="modal-fee">费用： {{transferFee | bac}} BAC</div>
+
+        </modal>
     </div>
 </template>
 
 <script>
     import XBtn from '~/components/ui/XBtn.vue'
+    import XInput from '~/components/ui/XInput.vue'
     import Tabs from '~/components/ui/Tabs.vue'
     import TabsPane from '~/components/ui/TabsPane.vue'
     import XTable from '~/components/ui/XTable.vue'
     import XTableColumn from '~/components/ui/XTableColumn.vue'
+    import Pagination from '~/components/ui/Pagination.vue'
     import SearchBar from '~/components/ui/SearchBar.vue'
+    import Modal from '~/components/ui/Modal.vue'
     import Toast from '~/components/ui/toast'
     import {mapState} from 'vuex'
-
     import api from '~/js/api'
+    import sha256 from 'crypto-js/sha256'
 
     export default {
         data () {
             return {
                 tabActive: 'all',
                 allList: [],
+                allCurPage:1,
+                allPageCount: 1,
+                allPageSize: 10,
                 myList: [],
+                myCurPage: 1,
+                myPageCount: 1,
+                myPageSize:10,
+
                 isActive: false,
                 searchTxt: '',
+                transferVisible: false,
+                transferFee: 0,
+                transferAdress: '',
+                transferPassword: '',
+                transferHash: '',
+                okLoading: false
             }
         },
 
@@ -96,20 +145,25 @@
             TabsPane,
             XTable,
             XTableColumn,
-            SearchBar                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+            SearchBar,
+            Modal,
+            XInput,
+            Pagination                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
         },
 
         methods: {
             async fetchAll () {
-                const list = await api.dapp.searchDappList()
-                if (list === null) return;
-                this.allList = list
+                const res = await api.dapp.searchDappList([this.allCurPage, this.allPageSize])
+                if (res === null) return;
+                this.allList = res.data
+                this.allPageCount = Math.ceil(res.totalCount / this.allPageSize)
             },
 
             async fetchMy () {
-                const list = await api.dapp.searchMineList([this.key.mnemonic])
-                if (list === null) return;
-                this.myList = list
+                const res = await api.dapp.searchMineList([this.account.address[0], this.myCurPage, this.myPageSize])
+                if (res === null) return;
+                this.myList = res.data
+                this.myPageCount = Math.ceil(res.totalCount / this.myPageSize)
             },
 
             async search (txt) {
@@ -122,8 +176,30 @@
                 this.$router.push({name: 'dappDetail', params:{hash: res[0].hash}})
             },
 
-            createSubmit () {
-                console.log('submit')
+            async getTransferDappFee () {
+                const res = await api.dapp.transferDappFee()
+                if (res === null) return;;
+                
+                this.transferFee = res
+            },
+
+            transferDapp ({hash}) {
+
+                this.transferVisible = true
+                this.transferHash = hash
+                if (this.transferFee == 0) {
+                    this.getTransferDappFee()
+                }
+            },
+
+            async transferSubmit () {
+                this.okLoading = true
+                const res = await api.dapp.transferDapp([this.key.mnemonic, this.transferHash, this.transferAdress, sha256(this.transferPassword).toString()])
+                this.okLoading = false;
+                if (res === null) return;
+                
+                this.transferVisible = false;
+                Toast.success('合约转让成功')
             }
         }
     }
