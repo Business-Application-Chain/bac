@@ -1112,6 +1112,9 @@ shared_1_0.block = function(params, cb) {
     if(!bId) {
         return cb('missing block id', 11000);
     }
+    let tra = library.modules.transactions.getUnconfirmedTransactionHash(bId);
+    if(tra)
+        return cb(null, 200, tra);
     privated.getById(bId, function (err, block) {
         if(err) {
             return cb(err.message, 12001);
