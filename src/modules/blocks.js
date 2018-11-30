@@ -1083,10 +1083,6 @@ Blocks.prototype.onSendLastBlock = function(cb) {
     library.socket.webSocket.send('201|blocks|block|' + JSON.stringify(privated.lastBlock), cb);
 };
 
-Blocks.prototype.onEnd = function (cb) {
-
-};
-
 shared_1_0.height = function(req, cb) {
     return cb(null, 200, privated.lastBlock.height);
 };
