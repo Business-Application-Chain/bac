@@ -100,7 +100,7 @@ privated.blocksDataFields = {
 privated.serchSql = 'SELECT '+
     'b.hash as b_hash, b.version as b_version, b.timestamp as b_timestamp, b.height as b_height, b.previousBlock as b_previousBlock, b.numberOfTransactions as b_numberOfTransactions, b.totalAmount as b_totalAmount, b.totalFee as b_totalFee, b.reward as b_reward,  b.generatorPublicKey as b_generatorPublicKey, b.blockSignature as b_blockSignature,' +
     'b.merkleRoot as b_merkleRoot, b.difficulty as b_difficulty, b.basic as b_basic, b.decisionSignature as b_decisionSignature, b.decisionAddress as b_decisionAddress, b.minerHash as b_minerHash, ' +
-    't.hash as t_hash, t.type as t_type, t.timestamp as t_timestamp, t.senderPublicKey as t_senderPublicKey, t.senderId as t_senderId, t.recipientId as t_recipientId, t.senderUsername as t_senderUsername, t.recipientUsername as t_recipientUsername, t.amount as t_amount, t.fee as t_fee, t.signature as t_signature, t.signSignature as t_signSignature,  ' +
+    't.hash as t_hash, t.type as t_type, t.timestamp as t_timestamp, t.senderPublicKey as t_senderPublicKey, t.senderId as t_senderId, t.recipientId as t_recipientId, t.senderUsername as t_senderUsername, t.recipientUsername as t_recipientUsername, t.amount as t_amount, t.fee as t_fee, t.signature as t_signature, t.signSignature as t_signSignature, ' +
     's.publicKey as s_publicKey, ' +
     'd.address as d_address, ' +
     'da.hash as da_hash, da.issuersAddress as da_issuersAddress, da.className as da_className, da.abi as da_abi, da.tokenList as da_tokenList, ' +
@@ -591,7 +591,7 @@ Blocks.prototype.loadBlocksPart = function (filter, cb) {
         //     blocks = privated.readDbRows(blocksTemp);
         // }
     });
-}
+};
 
 Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
     var loaded = false;
@@ -1075,7 +1075,6 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
 
 
 Blocks.prototype.onHasNewBlock = function(block) {
-    // console.log(block);
     self.processBlock(block, true);
 };
 

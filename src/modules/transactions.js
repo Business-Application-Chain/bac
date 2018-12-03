@@ -302,7 +302,7 @@ privated.getByBlockHash = function (hash, cb) {
     }).then((rows) => {
         if (!rows.length) {
             return cb({
-                msg : ("Can't find transaction: " + hash),
+                msg: ("Can't find transaction: " + hash),
                 code: 23003
             });
         }
@@ -330,7 +330,7 @@ privated.addUnconfirmedTransaction = function (txObj, sender, cb) {
     });
 };
 
-privated.transactionGetBytes = function(trs) {
+privated.transactionGetBytes = function (trs) {
     try {
         let assetBytes = null;
         let assetSize = assetBytes ? assetBytes.length : 0;
@@ -387,7 +387,7 @@ Transactions.prototype.sandboxApi = function (call, args, cb) {
     sandboxHelper.callMethod(shared, call, args, cb);
 };
 
-privated.getPackageTransactions = function() {
+privated.getPackageTransactions = function () {
     let unconfirmedTransactions = privated.unconfirmedTransactions;
     let transactions = unconfirmedTransactions.sort(function compare(a, b) { // 把交易進行排序
         if (a.type < b.type) return -1;
@@ -476,7 +476,7 @@ Transactions.prototype.processUnconfirmedTransaction = function (txObj, broadcas
     library.modules.accounts.setAccountAndGet({master_pub: txObj.senderPublicKey}, function (err, sender) {
         function done(err) {
             if (err) {
-                if(privated.unconfirmedTransactionsIdIndex[txObj.hash])
+                if (privated.unconfirmedTransactionsIdIndex[txObj.hash])
                     privated.removeUnconfirmedTransaction(privated.unconfirmedTransactionsIdIndex[txObj.hash]);
                 // return library.base.transaction.undoUnconfirmed(txObj, sender, cb);
                 return cb(err);
@@ -573,8 +573,8 @@ Transactions.prototype.getUnconfirmedTransaction = function (id) {
 
 Transactions.prototype.removeUnconfirmedTransaction = function (id) {
     var index = privated.unconfirmedTransactionsIdIndex[id];
-    delete privated.unconfirmedTransactionsIdIndex[id];
     privated.unconfirmedTransactions[index] = false;
+    delete privated.unconfirmedTransactionsIdIndex[id];
 };
 
 Transactions.prototype.addDoubleSpending = function (transaction) {
@@ -589,14 +589,19 @@ Transactions.prototype.revertUnconfirmedTransactions = function (transactions) {
     });
 };
 
-Transactions.prototype.onSendUnconfirmedTrs = function() {
-    let unconfirmedTrs = privated.unconfirmedTransactions;
-    let send = [];
-    unconfirmedTrs.forEach(function (item) {
-        if(item) {
-            send.push(item);
-        }
+Transactions.prototype.onSendUnconfirmedTrs = function () {
+    // let unconfirmedTrs = privated.unconfirmedTransactions;
+    let unconfirmedTrs = [];
+    privated.unconfirmedTransactions.forEach(item => {
+        if(item)
+            unconfirmedTrs.push(item);
     });
+    console.log("unconfirmedTrs.length -> ", unconfirmedTrs.length);
+    let send = [];
+    let maxCount = unconfirmedTrs.length > 1000 ? 1000 : unconfirmedTrs.length;
+    for (let i = 0; i < maxCount; i++) {
+        send.push(unconfirmedTrs[i]);
+    }
     library.socket.webSocket.send('201|transactions|unconfirmed|' + JSON.stringify({send}));
 };
 
@@ -604,7 +609,7 @@ Transactions.prototype.applyUnconfirmedList = function (ids, cb) {
     async.each(ids, function (id, cb) {
         let transaction = self.getUnconfirmedTransaction(id);
         // library.modules.accounts.setAccountAndGet({publicKey: transaction.senderPublicKey}, function (err, sender) {
-        library.modules.accounts.getAccount({master_pub:transaction.senderPublicKey}, function (err, sender) {
+        library.modules.accounts.getAccount({master_pub: transaction.senderPublicKey}, function (err, sender) {
             if (err) {
                 console.log('applyUnconfirmedList getAccount err', err);
                 self.removeUnconfirmedTransaction(id);
@@ -628,7 +633,7 @@ Transactions.prototype.receiveTransactions = function (transactions, cb) {
         self.processUnconfirmedTransaction(txObj, true, cb);
     }, function (err) {
         transactions.forEach((item) => {
-            if(typeof item.asset === "string")
+            if (typeof item.asset === "string")
                 item.asset = JSON.parse(item.asset);
         });
         return cb(err, transactions);
@@ -640,10 +645,10 @@ Transactions.prototype.onInit = function (scope) {
     modules_loaded = scope && scope != undefined ? true : false;
 };
 
-Transactions.prototype.getUnconfirmedTransactionHash = function(hash) {
+Transactions.prototype.getUnconfirmedTransactionHash = function (hash) {
     let index = privated.unconfirmedTransactionsIdIndex[hash];
     let unconfirmedTransaction = privated.unconfirmedTransactions[index];
-    if(unconfirmedTransaction) {
+    if (unconfirmedTransaction) {
         unconfirmedTransaction.unconfirmed = 0;
         return unconfirmedTransaction;
     }
@@ -658,7 +663,7 @@ shared_1_0.transaction = function (params, cb) {
     console.log(index);
 
     let unconfirmedTransaction = privated.unconfirmedTransactions[index];
-    if(unconfirmedTransaction) {
+    if (unconfirmedTransaction) {
         unconfirmedTransaction.unconfirmed = 0;
         return cb(null, 200, unconfirmedTransaction);
     }
@@ -716,10 +721,10 @@ shared_1_0.getAllTransactions = function (params, cb) {
         }
         let send = [];
         let transactions = self.getUnconfirmedTransactionList(true);
-        if(height === 0) {
+        if (height === 0) {
             for (let i = 0; i < transactions.length; i++) {
                 transactions[i].isUnconfirmed = true;
-                if(transactions[i]) {
+                if (transactions[i]) {
                     send.push(transactions[i]);
                 }
             }
@@ -746,10 +751,10 @@ shared_1_0.transactions = function (params, cb) {
         }
         let transactions = self.getUnconfirmedTransactionList(true);
         let send = [];
-        if(page === 1) {
+        if (page === 1) {
             for (let i = 0; i < transactions.length; i++) {
-                if(transactions[i].senderId === address || transactions.recipientId) {
-                    if(transactions[i].senderId === address && transactions[i].recipientId === address) {
+                if (transactions[i].senderId === address || transactions.recipientId) {
+                    if (transactions[i].senderId === address && transactions[i].recipientId === address) {
                         transactions[i].senderType = 'self';
                     } else if (transactions[i].recipientId === address) {
                         transactions[i].senderType = 'in';
@@ -762,7 +767,7 @@ shared_1_0.transactions = function (params, cb) {
             }
         }
         data.forEach(function (item) {
-            if(item.senderId === address && item.recipientId === address) {
+            if (item.senderId === address && item.recipientId === address) {
                 item.senderType = 'self';
             } else if (item.recipientId === address) {
                 item.senderType = 'in';
@@ -823,7 +828,7 @@ shared_1_0.addTransaction = function (params, cb) {
                         return cb("Account does not have multisignatures enabled");
                     }
                     let lastHeight = library.modules.blocks.getLastBlock().height;
-                    if(account.lockHeight > lastHeight) {
+                    if (account.lockHeight > lastHeight) {
                         return cb("Account is locked", 11000);
                     }
                     if (account.multisignatures.indexOf(keypair.publicKey.toString('hex')) < 0) {
@@ -886,7 +891,7 @@ shared_1_0.addTransaction = function (params, cb) {
                     }
                     let lastBlock = library.modules.blocks.getLastBlock();
                     let lastBlockHeight = lastBlock.height;
-                    if(account.lockHeight > lastBlockHeight) {
+                    if (account.lockHeight > lastBlockHeight) {
                         return cb("Account is locked", 11000);
                     }
                     try {
@@ -914,7 +919,7 @@ shared_1_0.addTransaction = function (params, cb) {
     });
 };
 
-shared_1_0.getPackageTransactions = function(params, cb) {
+shared_1_0.getPackageTransactions = function (params, cb) {
     let blockTransactions = privated.getPackageTransactions();
     return cb(null, 200, blockTransactions);
 };

@@ -1,2 +1,1 @@
-let a = Math.random();
-console.log(parseInt(a*5000))
+let a = [1,2,3,4,5,6,7,8,9];

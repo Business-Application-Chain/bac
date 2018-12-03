@@ -8,28 +8,29 @@ var path = require('path');
 var fs = require('fs');
 var root = require('app-root-path');
 
-function getTimestamp(){
-    return '['+strftime('%m-%d|%H:%M:%S', new Date())+']';
+function getTimestamp() {
+    return '[' + strftime('%m-%d|%H:%M:%S', new Date()) + ']';
 }
+
 module.exports = function (config) {
     config = config || {};
 
     config.levels = config.levels || {
-        'Trace':    0,
-        'Debug':    1,
-        'Info':     2,
-        'Warn':     3,
-        'Error':    4,
-        'Fatal':    5
+        'Trace': 0,
+        'Debug': 1,
+        'Info': 2,
+        'Warn': 3,
+        'Error': 4,
+        'Fatal': 5
     };
 
     config.colors = config.colors || {
-        'Trace':    gray,
-        'Debug':    blue,
-        'Info':     green,
-        'Warn':     yellow,
-        'Error':    red,
-        'Fatal':    red
+        'Trace': gray,
+        'Debug': blue,
+        'Info': green,
+        'Warn': yellow,
+        'Error': red,
+        'Fatal': red
     }
 
     config.filepath = config.filepath || root + '/default.log';
@@ -50,7 +51,7 @@ module.exports = function (config) {
 
             // var firstmsg = arguments[0] + Array(40).join(' ');
             var firstmsg = arguments[0];
-            if(firstmsg < 40) {
+            if (firstmsg.length < 40) {
                 firstmsg = arguments[0] + Array(40).join(' ');
                 messages.push(firstmsg.substring(0, 40));
             } else {
@@ -58,10 +59,10 @@ module.exports = function (config) {
             }
             messages_orig.push(arguments[0]);
 
-            for (var i = 1; i < arguments.length; i++) {
-                if (i%2 != 0) {
-                    messages.push(config.colors[level](arguments[i]) + '=' + arguments[i+1]);
-                    messages_orig.push(arguments[i] + '=' + arguments[i+1]);
+            for (let i = 1; i < arguments.length; i++) {
+                if (i % 2 !== 0) {
+                    messages.push(config.colors[level](arguments[i]) + '=' + arguments[i + 1]);
+                    messages_orig.push(arguments[i] + '=' + arguments[i + 1]);
                 } else {
                     continue;
                 }
@@ -74,7 +75,7 @@ module.exports = function (config) {
             };
 
             if (level.length > 4) {
-                params.level = level.toUpperCase().substring(0,2) + level.toUpperCase().substring(level.length - 2, level.length);
+                params.level = level.toUpperCase().substring(0, 2) + level.toUpperCase().substring(level.length - 2, level.length);
             }
 
             if (arguments[0] && arguments[0].length > 0) {
