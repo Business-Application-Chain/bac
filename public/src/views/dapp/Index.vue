@@ -102,6 +102,7 @@
     import {mapState} from 'vuex'
     import api from '~/js/api'
     import sha256 from 'crypto-js/sha256'
+    
 
     export default {
         data () {
@@ -137,6 +138,10 @@
                 account: state => state.account,
                 key: state => state.key
             })
+        },
+
+        mounted () {
+            
         },
 
         components: {
