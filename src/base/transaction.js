@@ -766,6 +766,37 @@ Transaction.prototype.save = function (txObj, cb) {
     });
 };
 
+Transaction.prototype.dbSave = function (txObj, t) {
+    if (!privated.types[txObj.type]) {
+        throw new Error("Unknown transaction type " + txObj.type);
+    }
+
+    return library.dbClient.query("INSERT INTO transactions (hash, blockHash, type, timestamp, senderPublicKey, requesterPublicKey, senderId, recipientId, senderUsername, recipientUsername, amount, fee, signature, signSignature, signatures, message) VALUES ($hash, $blockHash, $type, $timestamp, $senderPublicKey, $requesterPublicKey, $senderId, $recipientId, $senderUsername, $recipientUsername, $amount, $fee, $signature, $signSignature, $signatures, $message)", {
+        bind: {
+            hash: txObj.hash,
+            blockHash: txObj.blockHash,
+            type: txObj.type,
+            timestamp: txObj.timestamp,
+            senderPublicKey: txObj.senderPublicKey,
+            requesterPublicKey: txObj.requesterPublicKey ? txObj.requesterPublicKey : null,
+            senderId: txObj.senderId,
+            recipientId: txObj.recipientId || null,
+            senderUsername: txObj.senderUsername || null,
+            recipientUsername: txObj.recipientUsername || null,
+            amount: txObj.amount,
+            fee: txObj.fee,
+            signature: txObj.signature ? txObj.signature : null,
+            signSignature: txObj.signSignature ? txObj.signSignature : null,
+            signatures: txObj.signatures ? txObj.signatures.join(',') : null,
+            message: txObj.message ? txObj.message : ""
+        },
+        type: Sequelize.QueryTypes.INSERT,
+        transaction: t
+    }).then(function () {
+        privated.types[txObj.type].save.call(this, txObj, cb);
+    });
+};
+
 Transaction.prototype.dbRead = function (raw) {
     if (!raw.t_hash) {
         return null

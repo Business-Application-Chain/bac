@@ -608,7 +608,8 @@ Transactions.prototype.onSendUnconfirmedTrs = function () {
 Transactions.prototype.applyUnconfirmedList = function (ids, cb) {
     async.each(ids, function (id, cb) {
         let transaction = self.getUnconfirmedTransaction(id);
-        // library.modules.accounts.setAccountAndGet({publicKey: transaction.senderPublicKey}, function (err, sender) {
+        if(!transaction)
+            return cb();
         library.modules.accounts.getAccount({master_pub: transaction.senderPublicKey}, function (err, sender) {
             if (err) {
                 console.log('applyUnconfirmedList getAccount err', err);

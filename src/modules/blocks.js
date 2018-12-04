@@ -167,7 +167,6 @@ privated.saveGenesisBlock = function (cb) {
     });
 };
 
-
 privated.saveBlock = function (blockObj, cb) {
     var save_records = [];
     save_records.push(new Promise((resolve, reject) => {
@@ -204,6 +203,19 @@ privated.saveBlock = function (blockObj, cb) {
         }).catch((err) => {
             library.log.Error("saveBlock failed", "Error", err);
             cb(err);
+        });
+    });
+};
+
+privated.saveBlocks = function (blockObj, cb) {
+    library.dbClient.transaction(t => {
+        return library.base.block.dbSave(blockObj, t);
+    }).then(() => {
+        async.eachSeries(blockObj.transactions, function (transaction, cb) {
+            transaction.blockHash = blockObj.hash;
+            library.base.transaction.save(transaction, cb);
+        }, function (err) {
+            return cb(err);
         });
     });
 };
@@ -461,6 +473,16 @@ privated.applyTransaction = function (block, transaction, sender, cb) {
         });
     });
 };
+
+privated.checkBlocks = function (blockHash, cb) {
+    library.dbClient.query('SELECT * FROM `blocks` WHERE hash = $blockHash', {
+        blockHash: blockHash
+    }).then(rows => {
+        if(!rows[0]) {
+
+        }
+    })
+}
 
 // public methods
 Blocks.prototype.sandboxApi = function (call, args, cb) {
@@ -768,7 +790,7 @@ Blocks.prototype.loadBlocksOffset = function(limit, offset, verify, cb) {
                                 // library.log.Error(err.message.stack);
                                 console.log(err.message);
                                 var lastValidTransaction = block.transactions.findIndex(function (trs) {
-                                    return trs.hash == err.transaction.hash;
+                                    return trs.hash === err.transaction.hash;
                                 });
                                 var transactions = block.transactions.slice(0, lastValidTransaction + 1);
                                 async.eachSeries(transactions.reverse(), function (transaction, cb) {
@@ -823,10 +845,6 @@ Blocks.prototype.count = function(cb) {
 };
 
 Blocks.prototype.processBlock = function(block, broadcast, cb) {
-    // if (!privated.loaded) {
-    //     return setImmediate(cb, "Blockchain is loading");
-    // }
-
     privated.isActive = true;
     library.balancesSequence.add(function (cb) {
         try {
@@ -836,7 +854,6 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
             return setImmediate(cb, e.toString());
         }
         block.height = privated.lastBlock.height + 1;
-
         library.modules.transactions.undoUnconfirmedList(function (err, unconfirmedTransactions) {
             if (err) {
                 privated.isActive = false;
@@ -904,6 +921,7 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                     return done("Invalid amount of block assets: " + block.hash);
                 }
                 var totalAmount = 0, totalFee = 0, appliedTransactions = {};
+
                 async.each(block.transactions, function (transaction, cb) {
                     transaction.blockHash = block.hash;
                     library.dbClient.query(`SELECT hash FROM transactions WHERE hash="${transaction.hash}"`,{
@@ -911,11 +929,11 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                     }).then((rows) => {
                         var tId = rows.length && rows[0].hash;
                         if (tId) {
-                            // Fork transactions already exist
+                            // privated.checkBlocks();
                             library.modules.delegates.fork(block, 2);
                             setImmediate(cb, "Transaction already exists: " + transaction.hash);
                         } else {
-                            library.modules.accounts.setAccountAndGet({master_pub: transaction.senderPublicKey}, function (err, sender) {
+                            library.modules.accounts.getAccount({master_pub: transaction.senderPublicKey}, function (err, sender) {
                                 if (err) {
                                     return setImmediate(cb, err);
                                 }
@@ -923,31 +941,13 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                     if (err) {
                                        return cb(err);
                                     }
-                                    library.modules.transactions.apply(transaction, block, sender, function (err) {
+                                    library.modules.transactions.applyUnconfirmed(transaction, sender, function (err) {
                                         if (err) {
-                                            cb("Failed to apply transaction: " + transaction.hash);
-                                        }
-                                        appliedTransactions[transaction.hash] = transaction;
-                                        var index = unconfirmedTransactions.indexOf(transaction.hash);
-                                        if (index >= 0) {
-                                            unconfirmedTransactions.splice(index, 1);
+                                            return setImmediate(cb, "Failed to apply transaction: " + transaction.hash);
                                         }
                                         totalAmount += transaction.amount;
                                         totalFee += transaction.fee;
-                                        if(block.totalAmount < totalAmount) {
-                                            return cb("block.totalAmount < totalAmount");
-                                        } else if(block.fee < totalFee) {
-                                            return cb("block.fee < totalFee");
-                                        }
-                                        library.base.transaction.save(transaction, function (err) {
-                                            if (err) {
-                                                library.log.Error("saveBlock", "Error", err.toString());
-                                                return cb("saveBlock", "Error", err.toString());
-                                            } else {
-                                                library.modules.transactions.removeUnconfirmedTransaction(transaction.hash);
-                                                setImmediate(cb);
-                                            }
-                                        });
+                                        setImmediate(cb);
                                     });
                                 });
                             });
@@ -956,44 +956,63 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                         cb(err);
                     });
                 }, function (err) {
-                    if(err) {
-                        library.log.Error("Failed to save block...");
-                        library.log.Error(err);
-                        return cb(err);
-                        // process.exit(0);
-                    }
                     var errors = [];
+                    if (err) {
+                        errors.push(err);
+                    }
                     if (totalAmount !== block.totalAmount) {
-                        errors.push("Invalid total amount: " + block.hash);
+                        errors.push("Invalid total amount: " + block.id);
                     }
                     if (totalFee !== block.totalFee) {
-                        errors.push("Invalid total fee: " + block.hash);
+                        errors.push("Invalid total fee: " + block.id);
                     }
                     if (errors.length > 0) {
-                        async.each(block.transactions, function (transaction, cb) {
-                            if (appliedTransactions[transaction.hash]) {
+                        async.eachSeries(block.transactions, function (transaction, cb) {
+                            if (appliedTransactions[transaction.id]) {
                                 library.modules.transactions.undoUnconfirmed(transaction, cb);
                             } else {
                                 setImmediate(cb);
                             }
                         }, function () {
-                            cb(errors);
+                            done(errors[0]);
                         });
-                        return cb(errors[0]);
                     } else {
-                        library.base.block.save(block, function (err) {
-                            if (err) {
-                                library.log.Error("saveBlock", "Error", err.toString());
-                                cb("saveBlock", "Error", err.toString());
-                            }
-                            else {
+                        try {
+                            block = library.base.block.objectNormalize(block);
+                        } catch (e) {
+                            return setImmediate(done, e);
+                        }
+
+                        async.eachSeries(block.transactions, function (transaction, cb) {
+                            library.modules.accounts.setAccountAndGet({master_pub: transaction.senderPublicKey}, function (err, sender) {
+                                if (err) {
+                                    library.log.Error("accounts.setAccountAndGet Failed to apply transactions: " + transaction.hash);
+                                    process.exit(0);
+                                }
+                                library.modules.transactions.apply(transaction, block, sender, function (err) {
+                                    if (err) {
+                                        library.log.Error("2Failed to apply transactions: " + transaction.hash);
+                                        process.exit(0);
+                                    }
+                                    library.modules.transactions.removeUnconfirmedTransaction(transaction.hash);
+                                    setImmediate(cb);
+                                });
+                            });
+                        }, function (err) {
+                            privated.saveBlocks(block, function (err) {
+                                if (err) {
+                                    library.log.Error("Failed to save block...");
+                                    library.log.Error(err);
+                                    process.exit(0);
+                                }
+
+
                                 privated.lastBlock = block;
                                 library.log.Debug("saveBlock success");
-
                                 library.notification_center.notify('sendLastBlock');
                                 library.modules.round.tick(block, done);
-                                // cb();
-                            }
+                                // setImmediate(done);
+                            });
                         });
                     }
                 });
