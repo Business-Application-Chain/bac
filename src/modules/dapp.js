@@ -171,6 +171,7 @@ function DoDapp() {
         data.params.forEach((item) => {
             param.push(JSON.stringify({data: item, type: typeof item}));
         });
+        txObj.recipientId = null;
         txObj.asset.doDapp = {
             dappHash: data.dappHash,
             fun: data.fun,

@@ -321,5 +321,31 @@ Block.prototype.save = function (blockObj, cb) {
     });
 };
 
+Block.prototype.dbSave = function (blockObj, t) {
+    return library.dbClient.query("INSERT INTO blocks (hash, version, timestamp, height, previousBlock, numberOfTransactions, totalAmount, totalFee, reward, generatorPublicKey, blockSignature, merkleRoot, difficulty, basic, decisionSignature, decisionAddress, minerHash) VALUES ($hash, $version, $timestamp, $height, $previousBlock, $numberOfTransactions, $totalAmount, $totalFee, $reward, $generatorPublicKey, $blockSignature, $merkleRoot, $difficulty, $basic, $decisionSignature, $decisionAddress, $minerHash)", {
+        type: Sequelize.QueryTypes.INSERT,
+        bind: {
+            hash: blockObj.hash,
+            version: blockObj.version,
+            timestamp: blockObj.timestamp,
+            height: blockObj.height,
+            previousBlock: blockObj.previousBlock,
+            numberOfTransactions: blockObj.numberOfTransactions,
+            totalAmount: blockObj.totalAmount,
+            totalFee: blockObj.totalFee,
+            reward: blockObj.reward || 0,
+            generatorPublicKey: blockObj.generatorPublicKey,
+            blockSignature: blockObj.blockSignature,
+            merkleRoot: blockObj.merkleRoot,
+            basic: blockObj.basic,
+            difficulty: blockObj.difficulty,
+            decisionSignature: blockObj.decisionSignature,
+            decisionAddress: blockObj.decisionAddress,
+            minerHash: blockObj.minerHash
+        },
+        transaction: t
+    });
+};
+
 // export
 module.exports = Block;

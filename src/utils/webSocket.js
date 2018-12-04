@@ -48,7 +48,7 @@ privated.initWebSocket = function () {
             return;
         }
 
-        console.log((new Date()) + ' Connection accepted.');
+        // library.log.Info((new Date()) + ' Connection accepted.');
         connection.on('message', function(message) {
             if (message.type === 'utf8') {
                 let msg = message.utf8Data;
