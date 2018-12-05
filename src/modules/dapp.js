@@ -548,9 +548,9 @@ privated.getAssetsAdmin = function (address, dappHash, cb) {
 };
 
 privated.searchDpaaBalance = function (address, dappHash, cb) {
-    let sql = 'SELECT * FROM `dapp2assets_balances` WHERE `accountId` = $accountId ';
+    let sql = 'SELECT a.*, b.decimals FROM `dapp2assets_balances` a left outer join dapp2assets as b on a.dappHash = b.hash WHERE a.accountId = $accountId ';
     if (dappHash) {
-        sql += 'and `dappHash`=$dappHash';
+        sql += 'and a.dappHash=$dappHash';
     }
     library.dbClient.query(sql, {
         type: Sequelize.QueryTypes.SELECT,
@@ -559,10 +559,10 @@ privated.searchDpaaBalance = function (address, dappHash, cb) {
             dappHash: dappHash
         }
     }).then((rows) => {
-        cb(null, rows[0]);
+        cb(null, rows);
     }).catch(err => {
         cb(err);
-    })
+    });
 };
 
 privated.searchHandle = function (data, cb) {
