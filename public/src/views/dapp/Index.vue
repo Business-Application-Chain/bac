@@ -42,6 +42,29 @@
                                 <router-link :to="{name: 'dappDetail', params:{hash: scope.hash}}" class="link">{{scope.symbol}} ({{scope.name}})</router-link>
                             </template>
                         </x-table-column>
+                        <x-table-column min-width="3" label="hash">
+                            <template slot-scope="scope">
+                                <router-link :to="{name: 'dappDetail', params:{hash: scope.hash}}" class="link">{{scope.dappHash}}</router-link>
+                            </template>
+                        </x-table-column>
+                        
+                        <x-table-column min-width="1" prop="decimals" label="小数位"></x-table-column>
+                        <x-table-column min-width="1" prop="totalAmount" label="余额">
+                            <template slot-scope="scope">
+                                {{scope._balance}}
+                            </template>
+                        </x-table-column>
+                        <x-table-column min-width="3" prop="accountId" label="创建者"></x-table-column>
+                    </x-table>
+                </tabs-pane>
+                <tabs-pane label="我创建的" name="owner">
+                    <x-table :list="ownerList">
+                        <x-table-column width="40"></x-table-column>
+                        <x-table-column min-width="1" label="名称">
+                            <template slot-scope="scope">
+                                <router-link :to="{name: 'dappDetail', params:{hash: scope.hash}}" class="link">{{scope.symbol}} ({{scope.name}})</router-link>
+                            </template>
+                        </x-table-column>
                         <x-table-column min-width="2" prop="hash" label="hash">
                             <template slot-scope="scope">
                                 <router-link :to="{name: 'dappDetail', params:{hash: scope.hash}}" class="link">{{scope.hash}}</router-link>
@@ -60,7 +83,7 @@
                         </x-table-column>
                     </x-table>
 
-                    <pagination :current-page="myCurPage" :page-count="myPageCount" @currentPage="fetchMy"></pagination>
+                    <pagination :current-page="ownerCurPage" :page-count="ownerPageCount" @currentPage="fetchOwner"></pagination>
                 </tabs-pane>
             </tabs>
         </div>
@@ -112,10 +135,12 @@
                 allCurPage:1,
                 allPageCount: 1,
                 allPageSize: 10,
-                myList: [],
-                myCurPage: 1,
-                myPageCount: 1,
-                myPageSize:10,
+                ownerList: [],
+                ownerCurPage: 1,
+                ownerPageCount: 1,
+                ownerPageSize:10,
+                myList:[],
+                
 
                 isActive: false,
                 searchTxt: '',
@@ -130,6 +155,7 @@
 
         created() {
             this.fetchAll()
+            this.fetchOwner()
             this.fetchMy()
         },
 
@@ -164,11 +190,20 @@
                 this.allPageCount = Math.ceil(res.totalCount / this.allPageSize)
             },
 
-            async fetchMy () {
-                const res = await api.dapp.searchMineList([this.account.address[0], this.myCurPage, this.myPageSize])
+            async fetchOwner () {
+                const res = await api.dapp.searchMineList([this.account.address[0], this.ownerCurPage, this.ownerPageSize])
                 if (res === null) return;
-                this.myList = res.data
-                this.myPageCount = Math.ceil(res.totalCount / this.myPageSize)
+                this.ownerList = res.data
+                this.ownerPageCount = Math.ceil(res.totalCount / this.ownerPageSize)
+            },
+
+            async fetchMy () {
+                const res = await api.dapp.searchDappBalance([this.account.address[0]])
+                if (res === null) return;
+                res.forEach(item => {
+                    item._balance = item.balance / Math.pow(10, item.decimals)
+                })
+                this.myList = res
             },
 
             async search (txt) {
