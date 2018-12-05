@@ -922,7 +922,7 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                 }
                 var totalAmount = 0, totalFee = 0, appliedTransactions = {};
 
-                async.each(block.transactions, function (transaction, cb) {
+                async.eachSeries(block.transactions, function (transaction, cb) {
                     transaction.blockHash = block.hash;
                     library.dbClient.query(`SELECT hash FROM transactions WHERE hash="${transaction.hash}"`,{
                         type: Sequelize.QueryTypes.SELECT

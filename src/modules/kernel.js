@@ -473,8 +473,7 @@ shared_1_0.addTransactions = function (params, cb) {
         library.modules.transactions.receiveTransactions([transaction], cb);
     }, function (err) {
         if (err) {
-            console.log("err");
-            console.log(err);
+            // console.log(err);
             return cb(err, 16005);
         } else {
             return cb(null, 200, "success");
