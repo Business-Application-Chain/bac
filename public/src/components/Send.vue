@@ -5,6 +5,7 @@
         :ok-loading="okLoading"
         @ok="submit" 
         title="发送" 
+        
         hint="请确认您正发送BAC给正确的接收人，因为该过程是无法撤消的.">
         <div class="send-comp">
             <div class="comp-title">
@@ -42,6 +43,7 @@
     import api from '../js/api/index'
     import Toast from '~/components/ui/toast/index'
     import sha256 from 'crypto-js/sha256'
+    import Message from '~/components/ui/message'
     
     export default {
         data () {
@@ -98,16 +100,16 @@
                     this.okLoading = false
                     if (res === null) return;
 
-                    api.account.getAccount([this.account.address[0]]).then(res => {
-                        if (res === null) return;
+                    api.account.getAccount([this.account.address[0]]).then(newRes => {
+                        if (newRes === null) return;
                         
                         this.$store.dispatch('setAccount', {
-                            balance: res.account.balance
+                            balance: newRes.account.balance
                         })
                     })
 
                     this.compVisible = false
-                    Toast.success('交易发送成功')
+                    Message.alert(`转账成功，has值为${res.transactionHash}`)
 
                 })
             }
