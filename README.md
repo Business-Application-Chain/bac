@@ -44,20 +44,23 @@ $ npm install
 #### 运行bac:
   node bin/www.js
 * 运行时可能会出现
-  ```
-  Error=ENOTDIR: not a directory, open 'libreadline.so' Stack=Error: not a directory, open 'libreadline.so'
-  ```
+
+  ```  Error=ENOTDIR: not a directory, open 'libreadline.so' Stack=Error: not a directory, open 'libreadline.so'  ```
 * Center OS下 查找Readline动态链接库位置
-```
-  ldconfig -p | grep readline
-  ln -fs /lib64/libreadline.so.6 /lib64/libreadline.so
-```
+
+  ```
+      ldconfig -p | grep readline
+      ln -fs /lib64/libreadline.so.6 /lib64/libreadline.so
+  ```
 * Ubuntu下
-  ``` sudo apt-get install libreadline6-dev ```
-  找到Readline对应的位置
-  ``` ldconfig -p | grep readline ```
-  编译的时候连接一下Readline库
-  ``` ldconfig -p |awk '/libreadline.so.6/{print "ln -fs " $NF " /lib64/libreadline.so" }' |bash ```
+
+  ```  sudo apt-get install libreadline6-dev  ```
+    找到Readline对应的位置
+
+  ```  ldconfig -p | grep readline  ```
+    编译的时候连接一下Readline库
+
+  ```  ldconfig -p |awk '/libreadline.so.6/{print "ln -fs " $NF " /lib64/libreadline.so" }' |bash  ```
 
   打开 http://localhost:7259
   助记词 credit video joy hero draft leisure coin arrest floor vague punch ozone 下有100000000个bac提供测试
