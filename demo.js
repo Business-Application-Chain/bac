@@ -20,7 +20,7 @@ class TestToken {
         }
         from = Get(message, "from");
         balanceFrom = Get(balance, from);
-        if (80000000000 - 10000000 > 0) {
+        if (balanceFrom - value > 0) {
             balance = SetBalance(balance, from, -value);
             balance = SetBalance(balance, to, value);
             return true;

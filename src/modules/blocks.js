@@ -314,6 +314,29 @@ privated.list = function (filter, cb) {
     });
 };
 
+privated.getTransactionsOrBlock = function (hash, cb) {
+    let result = {};
+    library.dbClient.query(`SELECT * FROM transactions WHERE hash like "%${hash}%"`, {
+        type: Sequelize.QueryTypes.SELECT
+    }).then(tRows => {
+        if(tRows[0]) {
+            result = tRows[0];
+            result.searchType = 1;
+            return cb(null, result);
+        } else {
+            library.dbClient.query(`SELECT * FROM blocks where hash like "%${hash}%" or height = "${hash}" `, {
+                type: Sequelize.QueryTypes.SELECT
+            }).then((bRows) => {
+                result = bRows[0];
+                result.searchType = 0;
+                return cb(null, result);
+            });
+        }
+    }).catch(err => {
+        return cb(err);
+    });
+};
+
 privated.getById = function (hash, cb) {
     async.waterfall([
         function (cb) {
@@ -1120,21 +1143,23 @@ shared_1_0.blocks = function(params, cb) {
         }
     });
 };
-
+// type 0 :block; type 1 : transactions;
 shared_1_0.block = function(params, cb) {
     let bId = params[0] || 0;
     if(!bId) {
         return cb('missing block id', 11000);
     }
     let tra = library.modules.transactions.getUnconfirmedTransactionHash(bId);
-    if(tra)
+    if(tra) {
+        tra.searchType = 1;
         return cb(null, 200, tra);
-    privated.getById(bId, function (err, block) {
+    }
+    privated.getTransactionsOrBlock(bId, function (err, result) {
         if(err) {
             return cb(err.message, 12001);
         }
-        if(block[0])
-            return cb(null, 200, block[0]);
+        if(result)
+            return cb(null, 200, result);
         else {
             return cb('can not find transaction', 13004);
         }

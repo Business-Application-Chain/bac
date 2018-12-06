@@ -1,5 +1,5 @@
 # BAC公链
-## 配置系统环境
+#### 配置系统环境
 Ubuntu 14.04 ~ 16.10 (LTS) - x86_64
 安装必要的依赖包（命令行操作）:
   $ sudo apt-get update
@@ -46,10 +46,10 @@ $ npm install
   ```  Error=ENOTDIR: not a directory, open 'libreadline.so' Stack=Error: not a directory, open 'libreadline.so'  ```
 * Center OS下 查找Readline动态链接库位置
 
-  ```
-      ldconfig -p | grep readline
-      ln -fs /lib64/libreadline.so.6 /lib64/libreadline.so
-  ```
+```
+ldconfig -p | grep readline
+ln -fs /lib64/libreadline.so.6 /lib64/libreadline.so
+```
 * Ubuntu下
 
   ```  sudo apt-get install libreadline6-dev  ```

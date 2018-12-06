@@ -227,7 +227,7 @@ privated.list = function (filter, cb) {
 };
 
 privated.getAllTransactions = function (filter, cb) {
-    let sql = 'SELECT t.hash AS t_hash, b.height AS b_height, t.blockHash AS t_blockHash, t.type AS t_type, t.timestamp AS t_timestamp, lower(t.senderPublicKey) AS t_senderPublicKey, t.senderId AS t_senderId, t.recipientId AS t_recipientId, t.senderUsername AS t_senderUsername, t.recipientUsername AS t_recipientUsername, t.amount AS t_amount, t.fee AS t_fee, lower(t.signature) AS t_signature, lower(t.signSignature) AS t_signSignature';
+    let sql = 'SELECT t.hash AS hash, b.height AS b_height, t.blockHash AS blockHash, t.type AS type, t.timestamp AS timestamp, lower(t.senderPublicKey) AS senderPublicKey, t.senderId AS senderId, t.recipientId AS recipientId, t.senderUsername AS senderUsername, t.recipientUsername AS recipientUsername, t.amount AS amount, t.fee AS fee, lower(t.signature) AS signature, lower(t.signSignature) AS signSignature';
     sql += ' FROM transactions t ';
     sql += ' INNER JOIN blocks b on t.blockHash = b.hash ';
     if (filter.height) {
@@ -721,15 +721,15 @@ shared_1_0.getAllTransactions = function (params, cb) {
             return cb(err, 11000);
         }
         let send = [];
-        let transactions = self.getUnconfirmedTransactionList(true);
-        if (height === 0) {
-            for (let i = 0; i < transactions.length; i++) {
-                transactions[i].isUnconfirmed = true;
-                if (transactions[i]) {
-                    send.push(transactions[i]);
-                }
-            }
-        }
+        // let transactions = self.getUnconfirmedTransactionList(true);
+        // if (height === 0) {
+        //     for (let i = 0; i < transactions.length; i++) {
+        //         transactions[i].isUnconfirmed = true;
+        //         if (transactions[i]) {
+        //             send.push(transactions[i]);
+        //         }
+        //     }
+        // }
         data.forEach(function (item) {
             send.push(item);
         });
