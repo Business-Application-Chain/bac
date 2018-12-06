@@ -28,7 +28,7 @@
 
                 <div class="main-cell_body">
                     <div class="main-cell_id">
-                        <div class="main-title">Hash</div>
+                        <div class="main-title">地址</div>
                         <div class="main-primary">{{info.hash}} </div>
                     </div>
                     <div class="main-cell_id">

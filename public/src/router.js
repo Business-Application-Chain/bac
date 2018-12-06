@@ -1,28 +1,28 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import Index from './views/Index.vue'
-import Login from './views/login/Login.vue'
-import LoginGenWords from './views/login/GenWords'
-import LoginImportWords from './views/login/ImportWords'
-import LoginSetPassword from './views/login/SetPassword'
-import LoginExport from './views/login/Export'
-import LoginWriteWords from './views/login/WriteWords'
-import Main from './views/Main'
-import DashboardIndex from './views/dashboard/Index.vue'
-import ExplorerIndex from './views/explorer/Index.vue'
-import ExplorerList from './views/explorer/List.vue'
-import ExplorerTransaction from './views/explorer/Transaction.vue'
-import ExplorerResult from './views/explorer/Result.vue'
-import AccountIndex from './views/account/Index.vue'
-import ContactIndex from './views/contact/Index.vue'
-import SettingsIndex from './views/settings/Index.vue'
-import MessageIndex from './views/message/Index.vue'
-import ContactDetail from './views/contact/Detail.vue'
-import AssetsIndex from './views/assets/Index.vue'
-import AssetsTransactions from './views/assets/Transactions.vue'
-import DappIndex from './views/dapp/Index.vue'
-import DappDetail from './views/dapp/Detail.vue'
-import CreateDapp from './views/dapp/Create.vue'
+const Index = () => import( './views/Index.vue')
+const Login = () => import( './views/login/Login.vue')
+const LoginGenWords = () => import( './views/login/GenWords')
+const LoginImportWords = () => import( './views/login/ImportWords')
+const LoginSetPassword = () => import( './views/login/SetPassword')
+const LoginExport = () => import( './views/login/Export')
+const LoginWriteWords = () => import( './views/login/WriteWords')
+const Main = () => import( './views/Main')
+const DashboardIndex = () => import( './views/dashboard/Index.vue')
+const ExplorerIndex = () => import( './views/explorer/Index.vue')
+const ExplorerList = () => import( './views/explorer/List.vue')
+const ExplorerTransaction = () => import( './views/explorer/Transaction.vue')
+const ExplorerResult = () => import( './views/explorer/Result.vue')
+const AccountIndex = () => import( './views/account/Index.vue')
+const ContactIndex = () => import( './views/contact/Index.vue')
+const SettingsIndex = () => import( './views/settings/Index.vue')
+const MessageIndex = () => import( './views/message/Index.vue')
+const ContactDetail = () => import( './views/contact/Detail.vue')
+const AssetsIndex = () => import( './views/assets/Index.vue')
+const AssetsTransactions = () => import( './views/assets/Transactions.vue')
+const DappIndex = () => import( './views/dapp/Index.vue')
+const DappDetail = () => import( './views/dapp/Detail.vue')
+const CreateDapp = () => import( './views/dapp/Create.vue')
 
 Vue.use(Router)
 

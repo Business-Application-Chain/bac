@@ -14,14 +14,14 @@
 
             <div class="tab-list" id="tabList" :style="{maxHeight: listCssHeight}">
                 <transition-group name="explorer-list" tag="div" >
-                    <div v-for="item in transactionsList" :key="item.t_hash" class="table-cell">
+                    <div v-for="item in transactionsList" :key="item.hash" class="table-cell">
                         <div class="tb-1">
-                            <router-link :to="{name: 'explorerTransaction', params:{id: item.t_hash}}" class="link">{{item.t_hash}}</router-link>
+                            <router-link :to="{name: 'explorerTransaction', params:{id: item.hash}}" class="link">{{item.hash}}</router-link>
                         </div>
                         <div class="tb-2">
                             <router-link :to="{name: 'explorerResult', params: {query: item.b_height}}" class="link">{{item.b_height}}</router-link>
                         </div>
-                        <div class="tb-3">{{item.t_timestamp | listDate(now)}}</div>
+                        <div class="tb-3">{{item.timestamp | listDate(now)}}</div>
                     </div>
                 </transition-group>
                 
@@ -39,13 +39,13 @@
             </div>
 
             <div class="tab-list" :style="{maxHeight: listCssHeight}">
-                <transition-group name="explorer-list" tag="div" >
+                <transition-group name="explorer-list" tag="div">
                     <div v-for="item in blocksList" :key="item.hash" class="table-cell">
                         <div class="tb-2-1">
-                            <router-link :to="{name: 'explorerResult', params: {query: item.height}}" class="link">{{item.height}}</router-link>
+                            <router-link :to="{name: 'explorerResult', params: {query: item.hash}}" class="link">{{item.height}}</router-link>
                         </div>
                         <div class="tb-2-2">
-                            <router-link :to="{name: 'explorerResult', params: {query: item.height}}" class="link">{{item.hash}}</router-link>
+                            <router-link :to="{name: 'explorerResult', params: {query: item.hash}}" class="link">{{item.hash}}</router-link>
                         </div>
                         <div class="tb-2-3">{{item.numberOfTransactions}}</div>
                         <div class="tb-2-4">{{item.timestamp | listDate(now)}}</div>
@@ -86,6 +86,7 @@
 
             const trans = api.transactions.allTransactions([0, 50]).then(res => {
                 if (res === null) return;
+                
                 
                 this.transactionsList = res
             })
@@ -162,7 +163,7 @@
             },
 
             loadTransactionsMore ($state) {
-                api.blocks.blocks([this.transactionsList[this.transactionsList.length - 1].height, 50]).then(res => {
+                api.transactions.allTransactions([this.transactionsList[this.transactionsList.length - 1].height, 50]).then(res => {
                     if (res === null) return;
                     if (res.length == 50) {
                         $state.loaded()

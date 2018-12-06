@@ -44,17 +44,28 @@
                 })
             },
 
-            search () {
+            async search () {
 
                 if (this.searchTxt == '' || !this.searchTxt){
                     Toast.warn('请输入要搜索的内容')
                     return;
                 }
 
-                this.$router.push({
-                    name: 'explorerResult',
-                    params: {query: this.searchTxt}
-                })
+                const res = await api.blocks.block([this.searchTxt])
+                if (res === null) return;
+                if (res.searchType == 0) {
+                    this.$router.push({
+                        name: 'explorerResult',
+                        params: {query: this.searchTxt}
+                    })
+                } else if (res.searchType == 1) {
+                    this.$router.push({
+                        name: 'explorerTransaction',
+                        params:{id: res.hash}
+                    })
+                }
+
+                
             }
         }
     }

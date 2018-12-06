@@ -2,7 +2,7 @@
     <div class="dapp-index-page">
         <div class="btn-sec">
             <div class="btn-sec_hd">
-                <search-bar @submit="search" v-model.trim="searchTxt"></search-bar>
+                <search-bar @submit="search" placeholder="address / hash" v-model.trim="searchTxt"></search-bar>
             </div>
             <div class="btn-sec_ft">
                 <x-btn icon="&#xe613;" @click.native="$router.push({name: 'createDapp'})" icon-size="16px" height="50px" type="primary">创建合约</x-btn>
@@ -18,7 +18,7 @@
                                 <router-link :to="{name: 'dappDetail', params:{hash: scope.hash}}" class="link">{{scope.symbol}} ({{scope.name}})</router-link>
                             </template>
                         </x-table-column>
-                        <x-table-column min-width="3" prop="hash" label="hash">
+                        <x-table-column min-width="3" prop="hash" label="地址">
                             <template slot-scope="scope">
                                 <router-link :to="{name: 'dappDetail', params:{hash: scope.hash}}" class="link">{{scope.hash}}</router-link>
                             </template>
@@ -39,12 +39,12 @@
                         <x-table-column width="40"></x-table-column>
                         <x-table-column min-width="1" label="名称">
                             <template slot-scope="scope">
-                                <router-link :to="{name: 'dappDetail', params:{hash: scope.hash}}" class="link">{{scope.symbol}} ({{scope.name}})</router-link>
+                                <router-link :to="{name: 'dappDetail', params:{hash: scope.dappHash}}" class="link">{{scope.symbol}} ({{scope.name}})</router-link>
                             </template>
                         </x-table-column>
-                        <x-table-column min-width="3" label="hash">
+                        <x-table-column min-width="3" label="地址">
                             <template slot-scope="scope">
-                                <router-link :to="{name: 'dappDetail', params:{hash: scope.hash}}" class="link">{{scope.dappHash}}</router-link>
+                                <router-link :to="{name: 'dappDetail', params:{hash: scope.dappHash}}" class="link">{{scope.dappHash}}</router-link>
                             </template>
                         </x-table-column>
                         
@@ -65,7 +65,7 @@
                                 <router-link :to="{name: 'dappDetail', params:{hash: scope.hash}}" class="link">{{scope.symbol}} ({{scope.name}})</router-link>
                             </template>
                         </x-table-column>
-                        <x-table-column min-width="2" prop="hash" label="hash">
+                        <x-table-column min-width="2" prop="hash" label="地址">
                             <template slot-scope="scope">
                                 <router-link :to="{name: 'dappDetail', params:{hash: scope.hash}}" class="link">{{scope.hash}}</router-link>
                             </template>
