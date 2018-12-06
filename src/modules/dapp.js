@@ -866,10 +866,15 @@ shared_1_0.searchDappHash = function (params, cb) {
     if(!hash) {
         return cb("dapp hash is empty", 11000);
     } else {
-        library.dbClient.query(`SELECT hash from dapp2assets WHERE hash like "%${hash}%"`, {
-            type: Sequelize.QueryTypes.SELECT
+        library.dbClient.query(`SELECT hash from dapp2assets WHERE hash like '%${hash}%' or transactionHash like '%${hash}%'`, {
+            type: Sequelize.QueryTypes.SELECT,
+            bind: {
+                hash: hash
+            }
         }).then((rows) => {
             return cb(null, 200, rows);
+        }).catch(err => {
+            return cb(err, 11000);
         });
     }
 };
@@ -934,7 +939,6 @@ shared_1_0.searchDappHandle = function (params, cb) {
         }
     });
 };
-
 //拉取dapp详情
 shared_1_0.getDappInfo = function (params, cb) {
     let dappHash = params[0];
@@ -953,13 +957,11 @@ shared_1_0.getDappInfo = function (params, cb) {
         cb("获取dapp详情失败", 11000);
     });
 };
-
 // 创建合约费用
 shared_1_0.getCreateDappFee = function (params, cb) {
     let fee = 1 * constants.fixedPoint;
     return cb(null, 200, fee);
 };
-
 //调用合约费用
 shared_1_0.getHandleDappFee = function(params, cb) {
     let fee = 0.01 * constants.fixedPoint;

@@ -1,2 +1,4 @@
-let ip=require('ip');
-console.log(ip.fromLong(167835859))
+let a = {
+    status: "blocksStatus"
+}
+console.log(JSON.stringify(a))
