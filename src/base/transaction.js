@@ -488,7 +488,6 @@ Transaction.prototype.verifyTrsSignature = function (txObj) {
         recipientId: txObj.recipientId || null,
         senderPublicKey: txObj.senderPublicKey,
         timestamp: txObj.timestamp,
-        // asset: txObj.asset
     };
     let signature = Buffer.from(txObj.signature, 'hex');
     return bacLib.bacSign.verify(JSON.stringify(data), txObj.senderId, signature);

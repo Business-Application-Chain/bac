@@ -7,8 +7,12 @@ var server = http.createServer(function(request, response) {
     response.writeHead(404);
     response.end();
 });
+var fs = require('fs');
+var path = require('path');
 
 var library, privated={}, socketConnect, self, conArray = [];
+
+var output = fs.createWriteStream("./wsLog.txt", {flags: 'a'});
 
 function WebSocket(scope, cb) {
     library = scope;
@@ -119,6 +123,12 @@ WebSocket.prototype.send = function (data, cb) {
     } else {
         conArray.forEach(function (itemSocket) {
             itemSocket.sendUTF(data);
+            output.write(data + '\n');
+            // fs.writeFile(path.join(__dirname, 'wsLog.txt'), data, function (err) {
+            //     if(err) {
+            //         console.log(err);
+            //     }
+            // });
         });
     }
 };
