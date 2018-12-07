@@ -320,10 +320,12 @@ Peer.prototype.onBlockchainReady = function () {
                     library.notification_center.notify('peerReady');
                 });
                 library.log.Info("Peer onBlockchainReady", "stored", count);
+
                 let status = {
                     status: "blockchainReady"
                 };
                 let msg = '201|loader|start|' + JSON.stringify(status);
+
                 library.socket.webSocket.send(msg);
             } else {
                 library.log.Info("Peer onBlockchainReady list is empty");

@@ -1,4 +1,2 @@
-let a = {
-    status: "blocksStatus"
-}
-console.log(JSON.stringify(a))
+let ip = require('ip');
+console.log(ip.fromLong(233149420));

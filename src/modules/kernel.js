@@ -136,8 +136,9 @@ Kernel.prototype.getFromPeerNews = function (peer, options, cb) {
             jsonrpc: options.jsonrpc,
             id: 10
         },
+        timeout: 10000,
         headers: _.extend({}, privated.headers, options.headers),
-        timeout: library.config.peers.optional.timeout,
+        // timeout: library.config.peers.optional.timeout,
         pool: {maxSockets: 1000},
     };
     request(req, function (err, response, body) {
@@ -412,7 +413,7 @@ shared_1_0.blocks = function (params, cb) {
     if (!lastBlockHash) {
         return cb('params is error', 11000);
     }
-    let blocksLimit = 1000;
+    let blocksLimit = 300;
     library.modules.blocks.loadBlocksData({
         limit: blocksLimit,
         lastBlockHash: lastBlockHash
