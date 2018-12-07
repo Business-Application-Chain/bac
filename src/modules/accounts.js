@@ -24,6 +24,7 @@ function Vote() {
     };
 
     this.create = function (data, txObj) {
+
         txObj.recipientId = data.sender.master_address;
         txObj.recipientUsername = data.sender.username;
         txObj.votes = data.votes;
