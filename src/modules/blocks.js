@@ -509,7 +509,7 @@ privated.checkBlocks = function (transactionsHash, cb) {
         }
     }).then(rows => {
         if(!rows[0]) {
-            console.log("not find blocks", transactionsHash)
+            return cb("not find blocks " + not find blocks);
         } else {
             return cb();
         }
