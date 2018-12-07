@@ -225,6 +225,10 @@ Interpreter = function () {
         } }, { key: "checkNumberOperands", value: function checkNumberOperands(
 
         operator, left, right) {
+            let re = /^[0-9]+.?[0-9]*$/;
+            if(re.test(right)) {
+                right = parseInt(right);
+            }
             if (typeof left == "number" && typeof right == "number") return;
             throw new _error.RuntimeError(operator, "Operands must be numbers.");
         } }, { key: "isTruthy", value: function isTruthy(
