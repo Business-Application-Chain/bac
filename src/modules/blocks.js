@@ -502,14 +502,17 @@ privated.applyTransaction = function (block, transaction, sender, cb) {
 
 privated.checkBlocks = function (transactionsHash, cb) {
     // library.dbClient.query('SELECT * FROM `blocks` WHERE hash = $blockHash', {
-    library.dbClient.query('SELECT * FROM `blocks` WHERE `hash` = (SELECT `blockHash` FROM `transactions` where `hash`=$blockHash)', {
-        blockHash: transactionsHash
+    library.dbClient.query('SELECT * FROM `blocks` WHERE `hash` = (SELECT `blockHash` FROM `transactions` where `hash`=$transactionsHash)', {
+        transactionsHash: transactionsHash
     }).then(rows => {
         if(!rows[0]) {
             return cb("not find blocks");
         } else {
             return cb();
         }
+    }).catch(err => {
+        console.log(err);
+        cb(err);
     })
 };
 
