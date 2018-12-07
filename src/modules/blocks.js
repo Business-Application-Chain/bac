@@ -213,6 +213,9 @@ privated.saveBlocks = function (blockObj, cb) {
     }).then(() => {
         async.eachSeries(blockObj.transactions, function (transaction, cb) {
             transaction.blockHash = blockObj.hash;
+            if(transaction.mark) {
+                return cb();
+            }
             library.base.transaction.save(transaction, cb);
         }, function (err) {
             return cb(err);
@@ -497,15 +500,18 @@ privated.applyTransaction = function (block, transaction, sender, cb) {
     });
 };
 
-privated.checkBlocks = function (blockHash, cb) {
-    library.dbClient.query('SELECT * FROM `blocks` WHERE hash = $blockHash', {
-        blockHash: blockHash
+privated.checkBlocks = function (transactionsHash, cb) {
+    // library.dbClient.query('SELECT * FROM `blocks` WHERE hash = $blockHash', {
+    library.dbClient.query('SELECT * FROM `blocks` WHERE `hash` = (SELECT `blockHash` FROM `transactions` where `hash`=$hash)', {
+        blockHash: transactionsHash
     }).then(rows => {
         if(!rows[0]) {
-
+            return cb("not find blocks");
+        } else {
+            return cb();
         }
     })
-}
+};
 
 // public methods
 Blocks.prototype.sandboxApi = function (call, args, cb) {
@@ -952,7 +958,22 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                     }).then((rows) => {
                         var tId = rows.length && rows[0].hash;
                         if (tId) {
-                            // privated.checkBlocks();
+                            privated.checkBlocks(transaction.hash, function (err) {
+                                if(err) {
+                                    // 找不到这个交易所在的区块，应该删除此交易
+                                    // library.base.transaction.undo(transaction);
+                                    // library.dbClient.query('delete from transactions where hash=$hash', {
+                                    //     type: Sequelize.QueryTypes.Delete,
+                                    //     bind: {
+                                    //         hash: transaction.hash
+                                    //     }
+                                    // });
+                                    totalAmount += transaction.amount;
+                                    totalFee += transaction.fee;
+                                    transaction.mark = true;
+                                    return setImmediate(cb);
+                                }
+                            });
                             library.modules.delegates.fork(block, 2);
                             setImmediate(cb, "Transaction already exists: " + transaction.hash);
                         } else {
@@ -1012,6 +1033,9 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                     library.log.Error("accounts.setAccountAndGet Failed to apply transactions: " + transaction.hash);
                                     process.exit(0);
                                 }
+                                if(transaction.mark) {
+                                    setImmediate(cb);
+                                }
                                 library.modules.transactions.apply(transaction, block, sender, function (err) {
                                     if (err) {
                                         library.log.Error("2Failed to apply transactions: " + transaction.hash);
@@ -1028,8 +1052,6 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                     library.log.Error(err);
                                     process.exit(0);
                                 }
-
-
                                 privated.lastBlock = block;
                                 library.log.Debug("saveBlock success");
                                 library.notification_center.notify('sendLastBlock');

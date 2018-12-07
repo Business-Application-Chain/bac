@@ -599,8 +599,9 @@ Transaction.prototype.undo = function (txObj, blockObj, sender, cb) {
 
     this.scope.account.merge(sender.master_address, {
         balance: amount,
-        blockHash: blockObj.hash,
-        round: calc(blockObj.height)
+        blockHash: txObj.blockHash,
+        // round: calc(blockObj.height)
+        round: 1
     }, function (err, sender) {
         if (err) {
             return cb(err);
@@ -610,8 +611,9 @@ Transaction.prototype.undo = function (txObj, blockObj, sender, cb) {
             if (err) { // once error ocurrs, rollback the balance amount
                 this.scope.account.merge(sender.master_address, {
                     balance: amount,
-                    blockHash: blockObj.hash,
-                    round: calc(blockObj.height)
+                    blockHash: txObj.blockHash,
+                    round: 1
+                    // round: calc(blockObj.height)
                 }, function (err2) {
                     cb(err2);
                 });
