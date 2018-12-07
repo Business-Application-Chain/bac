@@ -84,6 +84,8 @@
         mounted() {
             this.compVisible = this.visible
             this.recipientAddress = this.recipient
+
+            console.log(this)
         },
 
         components: {
