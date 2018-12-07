@@ -503,14 +503,13 @@ privated.applyTransaction = function (block, transaction, sender, cb) {
 privated.checkBlocks = function (transactionsHash, cb) {
     // library.dbClient.query('SELECT * FROM `blocks` WHERE hash = $blockHash', {
     library.dbClient.query('SELECT * FROM `blocks` WHERE `hash` = (SELECT `blockHash` FROM `transactions` where `hash`=$transactionsHash)', {
-        // transactionsHash: transactionsHash
         type: Sequelize.QueryTypes.SELECT,
         bind: {
             transactionsHash: transactionsHash
         }
     }).then(rows => {
         if(!rows[0]) {
-            return cb("not find blocks");
+            console.log("not find blocks", transactionsHash)
         } else {
             return cb();
         }
@@ -965,24 +964,18 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                     }).then((rows) => {
                         var tId = rows.length && rows[0].hash;
                         if (tId) {
-                            privated.checkBlocks(transaction.hash, function (err) {
+                            privated.checkBlocks(tId, function (err) {
                                 if(err) {
                                     // 找不到这个交易所在的区块，应该删除此交易
-                                    // library.base.transaction.undo(transaction);
-                                    // library.dbClient.query('delete from transactions where hash=$hash', {
-                                    //     type: Sequelize.QueryTypes.Delete,
-                                    //     bind: {
-                                    //         hash: transaction.hash
-                                    //     }
-                                    // });
                                     totalAmount += transaction.amount;
                                     totalFee += transaction.fee;
                                     transaction.mark = true;
-                                    return setImmediate(cb);
+                                    setImmediate(cb);
+                                } else {
+                                    library.modules.delegates.fork(block, 2);
+                                    return setImmediate(cb, "Transaction already exists: " + transaction.hash);
                                 }
                             });
-                            library.modules.delegates.fork(block, 2);
-                            setImmediate(cb, "Transaction already exists: " + transaction.hash);
                         } else {
                             library.modules.accounts.getAccount({master_pub: transaction.senderPublicKey}, function (err, sender) {
                                 if (err) {
@@ -1041,7 +1034,7 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                     process.exit(0);
                                 }
                                 if(transaction.mark) {
-                                    setImmediate(cb);
+                                    return setImmediate(cb);
                                 }
                                 library.modules.transactions.apply(transaction, block, sender, function (err) {
                                     if (err) {
