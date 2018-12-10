@@ -408,6 +408,20 @@ shared_1_0.height = function (req, cb) {
     cb(null, 200, blockHeight);
 };
 
+shared_1_0.getBlockHeight = function (req, cb) {
+    library.dbClient.query('SELECT * FROM blocks WHERE hash = $hash', {
+        type: Sequelize.QueryTypes.SELECT,
+        bind: {
+            hash: req[0]
+        }
+    }).then((rows) => {
+        cb(null, 200, rows[0].height);
+    }).catch(err => {
+        console.log(err);
+        cb(null, 11000);
+    })
+};
+
 shared_1_0.blocks = function (params, cb) {
     let lastBlockHash = params[0] || undefined;
     if (!lastBlockHash) {

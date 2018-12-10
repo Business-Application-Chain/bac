@@ -33,7 +33,7 @@ privated.loadBlocks = function(lastBlock, cb) {
         api:'kernel',
         method:'POST',
         func:'height',
-        data:'[]',
+        data:'['+ lastBlock.hash +']',
         jsonrpc: '1.0',
         id: Math.random()
     }, function (err, data) {
@@ -50,7 +50,8 @@ privated.loadBlocks = function(lastBlock, cb) {
             return cb();
         }
 
-        if (bignum(library.modules.blocks.getLastBlock().height).lt(height)) { // Diff in chainbases
+        // if (bignum(library.modules.blocks.getLastBlock().height).lt(height)) { // Diff in chainbases
+        if (lastBlock.height === height) { // Diff in chainbases
             privated.blocksToSync = height;
             library.socket.webSocket.send('201|kernel|status|' + JSON.stringify({
                 height: library.modules.blocks.getLastBlock().height,
@@ -302,7 +303,8 @@ privated.findUpdate = function(lastBlock, peer, cb) {
                         if(err) {
                             console.log(err);
                             //撤销操作
-                            console.log('loadBlocksFromPeer is error!!!!!!!!!!!!!');
+                            console.log(ip.fromLong(peer.ip));
+                            library.log.Error("loadBlocksFromPeer is error!!!!!!!!!!!!!")
                             return cb(err);
                         } else {
                             for (var i = 0; i < overTransactionList.length; i++) {
