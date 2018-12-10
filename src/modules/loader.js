@@ -32,8 +32,8 @@ privated.loadBlocks = function(lastBlock, cb) {
     library.modules.kernel.getFromRandomPeerNews({
         api:'kernel',
         method:'POST',
-        func:'height',
-        data:'['+ lastBlock.hash +']',
+        func:'getBlockHeight',
+        data: [lastBlock.hash],
         jsonrpc: '1.0',
         id: Math.random()
     }, function (err, data) {

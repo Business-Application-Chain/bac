@@ -419,7 +419,7 @@ shared_1_0.getBlockHeight = function (req, cb) {
     }).catch(err => {
         console.log(err);
         cb(null, 11000);
-    })
+    });
 };
 
 shared_1_0.blocks = function (params, cb) {
@@ -444,6 +444,7 @@ shared_1_0.blocks = function (params, cb) {
 shared_1_0.lastBlockHash = function (req, cb) {
     return cb(null, 200, library.modules.blocks.getLastBlock().hash);
 };
+
 
 shared_1_0.blocks_common = function (params, cb) {
     let reqParams = JSON.parse(params);
