@@ -688,6 +688,8 @@ Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
                             }).catch((err) => {
                                 cb(err);
                             });
+                        } else {
+                            cb("block is full");
                         }
                     });
                 }, function (blocks, data, cb) {

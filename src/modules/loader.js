@@ -299,7 +299,7 @@ privated.findUpdate = function(lastBlock, peer, cb) {
                 // },
                 function (cb) {
                     library.log.Debug("Loading blocks from peer " + peerStr);
-                    library.modules.blocks.loadBlocksFromPeer(peer, commonBlock.hash, function (err, lastValidBlock) {
+                    library.modules.blocks.loadBlocksFromPeer(peer, commonBlock.hash, function (err) {
                         if(err) {
                             console.log(err);
                             //撤销操作
