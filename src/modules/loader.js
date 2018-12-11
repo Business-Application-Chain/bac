@@ -32,7 +32,7 @@ privated.loadBlocks = function(lastBlock, cb) {
     library.modules.kernel.getFromRandomPeerNews({
         api:'kernel',
         method:'POST',
-        func:'getBlockHeight',
+        func:'height',
         data: [lastBlock.hash],
         jsonrpc: '1.0',
         id: Math.random()
@@ -46,12 +46,11 @@ privated.loadBlocks = function(lastBlock, cb) {
 
         let height = data.result || 0;
         if (height <= 0) {
-            // library.log.Info("Failed to parse blockchain height: " + peerStr + "\n" + library.scheme.getLastError());
             return cb();
         }
 
         // if (bignum(library.modules.blocks.getLastBlock().height).lt(height)) { // Diff in chainbases
-        if (lastBlock.height === height) { // Diff in chainbases
+        if (lastBlock.height <= height) { // Diff in chainbases
             privated.blocksToSync = height;
             library.socket.webSocket.send('201|kernel|status|' + JSON.stringify({
                 height: library.modules.blocks.getLastBlock().height,
