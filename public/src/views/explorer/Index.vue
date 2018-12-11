@@ -1,9 +1,9 @@
 <template>
     <div class="explorer-index-page">
         <div class="page-search" :class="{active: isActive}">
-            <input v-model.trim="searchTxt" @keyup.enter="search" @focus="isActive = true" @blur="isActive = false" placeholder="区块高度 / 交易HASH " type="text" class="search-input">
+            <input v-model.trim="searchTxt" @keyup.enter="search" @focus="isActive = true" @blur="isActive = false" :placeholder="`${$t('BlockHeight')} / ${$t('TransactionHash')}` " type="text" class="search-input">
             <div v-if="searchTxt" @click="clear" class="search-close"><i class="iconfont">&#xe60f;</i></div>
-            <div @click="search" class="search-btn">搜索</div>
+            <div @click="search" class="search-btn">{{$t('Search')}}</div>
         </div>
 
         <router-view />
@@ -47,7 +47,7 @@
             async search () {
 
                 if (this.searchTxt == '' || !this.searchTxt){
-                    Toast.warn('请输入要搜索的内容')
+                    Toast.warn(`${this.$t('Pleaseenterwhatyouwanttosearchfor')}`)
                     return;
                 }
 

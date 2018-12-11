@@ -13,7 +13,7 @@
 
                 <div v-if="hint" class="comp-hint">
                     <span class="hint-circle"></span>
-                    <span>注意：{{hint}}</span>
+                    <span>{{$t('Warning')}}：{{hint}}</span>
                 </div>
 
                 <div class="wrap-main">
@@ -23,9 +23,9 @@
                 <div v-if="cancelVisible || okVisible" class="comp-btns">
 
                     <div class="cancel-btn">
-                        <x-btn @click="close" v-if="cancelVisible">{{cancelText}}</x-btn>
+                        <x-btn @click="close" v-if="cancelVisible">{{cancelText || $t('Cancel')}}</x-btn>
                     </div> 
-                    <x-btn v-if="okVisible" @click="okHandle" :loading="okLoading" type="primary">{{okText}}</x-btn>
+                    <x-btn v-if="okVisible" @click="okHandle" :loading="okLoading" type="primary">{{okText || $t('Confirm')}}</x-btn>
                 </div>
             </div>
         </transition>
@@ -56,7 +56,7 @@
             },
             
             okText: {
-                default: '确认'
+                default: ''
             },
 
             okLoading: {
@@ -68,7 +68,7 @@
             },
 
             cancelText: {
-                default: '取消'
+                default: ''
             },
 
             hint: {

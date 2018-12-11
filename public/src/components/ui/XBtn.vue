@@ -8,7 +8,7 @@
         </template>
         <template v-if="!loading">
             <i v-if="icon" class="iconfont" :style="{fontSize: iconSize}" v-html="icon"></i>
-            <span class="comp-txt" :style="{fontSize: fontSize}"><slot>确认</slot></span>
+            <span class="comp-txt" :style="{fontSize: fontSize}"><slot>{{$t('Confirm')}}</slot></span>
         </template>
     </div>
 </template>

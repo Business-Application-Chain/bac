@@ -2,21 +2,21 @@
     <div class="dashboard-index-page">
         <div class="card-list">
             <router-link :to="{name: 'account'}" class="card-item">
-                <div class="card-item_title">账户余额</div>
+                <div class="card-item_title">{{$t('Balance')}}</div>
                 <div class="card-item_primary">{{account.balance | bac}}</div>
             </router-link>
             <router-link :to="{name: 'contact'}" class="card-item">
-                <div class="card-item_title">联系人</div>
+                <div class="card-item_title">{{$t('Contact')}}</div>
                 <div class="card-item_primary">{{contactsCount}}</div>
             </router-link>
             <div class="card-item">
-                <div class="card-item_title">目前版本</div>
+                <div class="card-item_title">{{$t('CurrentVersion')}}</div>
                 <div class="card-item_primary">V{{version}}</div>
             </div>
         </div>
 
         <div class="sec order-sec">
-            <div class="sec-header">最新交易</div>
+            <div class="sec-header">{{$t('LatestTransaction')}}</div>
             <account-orders :address="account.address[0]"></account-orders>
         </div>
     </div>
@@ -39,13 +39,11 @@
             ...mapState(['account'])
         },
         created () {
-            //获取联系人数量
             api.contacts.count([this.account.publicKey]).then(res => {
                 if (res === null) return;
                 this.contactsCount = res
             })
 
-            //获取版本号
             api.kernel.version().then(res => {
                 if (res === null) return;
                 this.version = res

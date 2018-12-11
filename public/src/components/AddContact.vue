@@ -5,25 +5,25 @@
             :visible.sync="compVisible"
             @ok="submit"
             :okLoading="okLoading"
-            title="添加联系人" 
-            hint="添加联系人需要手续费">
-            <div class="add-title">联系人</div>    
+            :title="$t('AddContact')" 
+            :hint="$t('Addingacontactrequiresafee')">
+            <div class="add-title">{{$t('Contact')}}</div>    
             <x-input 
                 v-model.trim="compAddress"
                 :status="addressStatus"
                 :errorMsg="addressError"
-                placeholder="请输入别名或者地址">
+                :placeholder="$t('Pleaseenteranicknameoraddress')">
             </x-input>
-            <div v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1" class="add-title">支付密码</div> 
+            <div v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1" class="add-title">{{$t('PaymentPassword')}}</div> 
             <x-input 
                 v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1" 
                 v-model.trim="password" 
                 type="password"
                 :status="passwordStatus"
                 :errorMsg="passwordError"
-                placeholder="请输入支付密码">
+                :placeholder="Pleaseenterthepaymentpassword">
             </x-input>
-            <div class="add-fee">费用： {{fee | bac}} BAC</div>
+            <div class="add-fee">{{$t('Fee')}}： {{fee | bac}} BAC</div>
         </modal>
     </div>
     
@@ -94,13 +94,13 @@
             submit () {
                 if (this.compAddress == '') {
                     this.addressStatus = 'error'
-                    this.addressError = '请输入别名或者地址'
+                    this.addressError = this.$t('Pleaseenteranicknameoraddress')
                     return
                 }
 
                 if ( (this.account.secondsign == 1 || this.account.secondsign_unconfirmed == 1) &&  this.password == '') {
                     this.passwordStatus = 'error'
-                    this.passwordError = '请输入支付密码'
+                    this.passwordError = this.$t('Pleaseenterthepaymentpassword')
                     return
                 }
 

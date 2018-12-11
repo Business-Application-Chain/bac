@@ -2,12 +2,12 @@
     <div class="account-orders-comp">
         <template v-if="count > 0">
             <orders :list="list"></orders>
-            <div v-if="pageCount < 2" class="single-page">暂无更多的交易</div>
+            <div v-if="pageCount < 2" class="single-page">{{$t('Nomore')}}</div>
             <pagination v-else :currentPage.sync="curPage" :page-count="pageCount" @currentChange="orderChage"></pagination>
         </template>
         <div v-else class="empty-sec">
             <img class="empty-sec_img" src="../assets/images/none_order.png" />
-            <div class="empty-sec_hint">您还没有交易记录</div>
+            <div class="empty-sec_hint">{{$t('Notransaction')}}</div>
         </div>
     </div>
 </template>

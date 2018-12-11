@@ -1,27 +1,27 @@
 <template>
     <div class="contact-detail-page">
         <div class="sec">
-            <div class="sec-header">联系人</div>
+            <div class="sec-header">{{$t('Contact')}}</div>
             <div class="contact-info">
                 <div class="info-hd">
                     <div class="info-item">
-                        <span class="info-item_desc">别名: </span> 
+                        <span class="info-item_desc">{{$t('Nickname')}}: </span> 
                         <span class="info-item_primary">{{userAccount.username || '-'}}</span>
                     </div>
                     <div class="info-item">
-                        <span class="info-item_desc">地址: </span> 
+                        <span class="info-item_desc">{{$t('Address')}}: </span> 
                         <span class="info-item_primary">{{userAccount.address[0]}}</span>
                     </div>
                 </div>
-                <x-btn v-if="!userAccount.isFriend" @click="addVisible = true" icon="&#xe601;" width="90px">添加</x-btn>
+                <x-btn v-if="!userAccount.isFriend" @click="addVisible = true" icon="&#xe601;" width="90px">{{$t('Add')}}</x-btn>
                 <div class="info-ft">
-                    <x-btn @click="sendVisible = true" type="primary" icon="&#xe60b;" width="90px">Send</x-btn>
+                    <x-btn @click="sendVisible = true" type="primary" icon="&#xe60b;" width="90px">{{$t('Send')}}</x-btn>
                 </div>
             </div>
         </div>
 
         <div class="sec order-sec">
-            <div class="sec-header">交易</div>
+            <div class="sec-header">{{$t('Transactions')}}</div>
             <account-orders :address="id"></account-orders>
         </div>
 
@@ -86,7 +86,7 @@
             },
 
             successHandle () {
-                Toast.success('添加联系人成功')
+                Toast.success(this.$t('Success'))
                 this.userAccount.isFriend = true
             }
         }

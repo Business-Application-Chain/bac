@@ -2,11 +2,11 @@
     <div class="explorer-transaction-page">
         <div class="table">
             <div class="table-header">
-                <div class="table-5">交易HASH</div>
-                <div class="table-1">发送地址</div>
+                <div class="table-5">{{$t('Transactions')}} Hash</div>
+                <div class="table-1">{{$t('Sender')}}</div>
                 <div class="table-2"></div>
-                <div class="table-3">接收地址</div>
-                <div class="table-4">数量/手续费（BAC）</div>
+                <div class="table-3">{{$t('Recipient')}}</div>
+                <div class="table-4">{{$t('Quantity')}}/{{$t('Fee')}}（BAC）</div>
             </div>
         
             <div class="table-cell">
