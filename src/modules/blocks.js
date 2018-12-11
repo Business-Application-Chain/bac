@@ -213,6 +213,9 @@ privated.saveBlocks = function (blockObj, cb) {
     }).then(() => {
         async.eachSeries(blockObj.transactions, function (transaction, cb) {
             transaction.blockHash = blockObj.hash;
+            if(transaction.mark) {
+                return cb();
+            }
             library.base.transaction.save(transaction, cb);
         }, function (err) {
             return cb(err);
@@ -497,15 +500,24 @@ privated.applyTransaction = function (block, transaction, sender, cb) {
     });
 };
 
-privated.checkBlocks = function (blockHash, cb) {
-    library.dbClient.query('SELECT * FROM `blocks` WHERE hash = $blockHash', {
-        blockHash: blockHash
+privated.checkBlocks = function (transactionsHash, cb) {
+    // library.dbClient.query('SELECT * FROM `blocks` WHERE hash = $blockHash', {
+    library.dbClient.query('SELECT * FROM `blocks` WHERE `hash` = (SELECT `blockHash` FROM `transactions` where `hash`=$transactionsHash)', {
+        type: Sequelize.QueryTypes.SELECT,
+        bind: {
+            transactionsHash: transactionsHash
+        }
     }).then(rows => {
         if(!rows[0]) {
-
+            return cb("not find blocks ");
+        } else {
+            return cb();
         }
-    })
-}
+    }).catch(err => {
+        console.log(err);
+        return cb(err);
+    });
+};
 
 // public methods
 Blocks.prototype.sandboxApi = function (call, args, cb) {
@@ -676,6 +688,8 @@ Blocks.prototype.loadBlocksFromPeer = function(peer, lastCommonBlockId, cb) {
                             }).catch((err) => {
                                 cb(err);
                             });
+                        } else {
+                            cb("block is full");
                         }
                     });
                 }, function (blocks, data, cb) {
@@ -952,9 +966,18 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                     }).then((rows) => {
                         var tId = rows.length && rows[0].hash;
                         if (tId) {
-                            // privated.checkBlocks();
-                            library.modules.delegates.fork(block, 2);
-                            setImmediate(cb, "Transaction already exists: " + transaction.hash);
+                            privated.checkBlocks(tId, function (err) {
+                                if(err) {
+                                    // 找不到这个交易所在的区块，应该删除此交易
+                                    totalAmount += transaction.amount;
+                                    totalFee += transaction.fee;
+                                    transaction.mark = true;
+                                    setImmediate(cb);
+                                } else {
+                                    library.modules.delegates.fork(block, 2);
+                                    return setImmediate(cb, "Transaction already exists: " + transaction.hash);
+                                }
+                            });
                         } else {
                             library.modules.accounts.getAccount({master_pub: transaction.senderPublicKey}, function (err, sender) {
                                 if (err) {
@@ -1012,6 +1035,9 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                     library.log.Error("accounts.setAccountAndGet Failed to apply transactions: " + transaction.hash);
                                     process.exit(0);
                                 }
+                                if(transaction.mark) {
+                                    return setImmediate(cb);
+                                }
                                 library.modules.transactions.apply(transaction, block, sender, function (err) {
                                     if (err) {
                                         library.log.Error("2Failed to apply transactions: " + transaction.hash);
@@ -1028,8 +1054,6 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                     library.log.Error(err);
                                     process.exit(0);
                                 }
-
-
                                 privated.lastBlock = block;
                                 library.log.Debug("saveBlock success");
                                 library.notification_center.notify('sendLastBlock');
@@ -1103,7 +1127,7 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
                     block.b_blockSignature = block.b_blockSignature.toString('utf8');
                     block.b_generatorPublicKey = block.b_generatorPublicKey.toString('utf8');
                 });
-                if(!blocks)
+                if(!blocks || blocks.length === 0)
                     return cb(null, null);
                 let json2csv = new Json2csv({header: false});
                 let csv = json2csv.parse(blocks);
