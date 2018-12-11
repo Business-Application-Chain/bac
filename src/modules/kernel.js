@@ -415,7 +415,13 @@ shared_1_0.getBlockHeight = function (req, cb) {
             hash: req[0]
         }
     }).then((rows) => {
-        cb(null, 200, rows[0].height);
+        if(rows && rows[0]) {
+            return cb(null, 200, rows[0].height);
+        }
+        else {
+            console.log("kernel getBlockHeight -> " + req[0]);
+            return cb("not find blocks", 11000);
+        }
     }).catch(err => {
         console.log(err);
         cb(null, 11000);
