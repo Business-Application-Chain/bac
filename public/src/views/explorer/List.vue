@@ -1,15 +1,15 @@
 <template>
     <div class="explorer-list-page">
         <div class="tabs-nav">
-            <div class="tabs-nav_item" @click="active = 1 " :class="{active: active == 1}">最新交易</div>
-            <div class="tabs-nav_item" @click="active = 2 " :class="{active: active == 2}">最新区块</div>
+            <div class="tabs-nav_item" @click="active = 1 " :class="{active: active == 1}">{{$t('LatestTransaction')}}</div>
+            <div class="tabs-nav_item" @click="active = 2 " :class="{active: active == 2}">{{$t('LastestBlock')}}</div>
         </div>
 
         <div v-if="active == 1" class="tabs-content">
             <div class="table-header">
-                <div class="tb-1">交易HASH</div>
-                <div class="tb-2">区块</div>
-                <div class="tb-3">时间</div>
+                <div class="tb-1">{{$t('TransactionHash')}}</div>
+                <div class="tb-2">{{$t('Block')}}</div>
+                <div class="tb-3">{{$t('Date')}}</div>
             </div>
 
             <div class="tab-list" id="tabList" :style="{maxHeight: listCssHeight}">
@@ -21,7 +21,7 @@
                         <div class="tb-2">
                             <router-link :to="{name: 'explorerResult', params: {query: item.b_height}}" class="link">{{item.b_height}}</router-link>
                         </div>
-                        <div class="tb-3">{{item.timestamp | listDate(now)}}</div>
+                        <div class="tb-3">{{item.timestamp | listDate(now, $t)}}</div>
                     </div>
                 </transition-group>
                 
@@ -32,10 +32,10 @@
         </div>
         <div v-if="active == 2" class="tabs-content">
             <div class="table-header">
-                <div class="tb-2-1">区块高度</div>
-                <div class="tb-2-2">区块HASH</div>
-                <div class="tb-2-3">交易数量</div>
-                <div class="tb-2-4">时间</div>
+                <div class="tb-2-1">{{$t('BlockHeight')}}</div>
+                <div class="tb-2-2">Hash</div>
+                <div class="tb-2-3">{{$t('Transactions')}}</div>
+                <div class="tb-2-4">{{$t('Date')}}</div>
             </div>
 
             <div class="tab-list" :style="{maxHeight: listCssHeight}">
@@ -48,7 +48,7 @@
                             <router-link :to="{name: 'explorerResult', params: {query: item.hash}}" class="link">{{item.hash}}</router-link>
                         </div>
                         <div class="tb-2-3">{{item.numberOfTransactions}}</div>
-                        <div class="tb-2-4">{{item.timestamp | listDate(now)}}</div>
+                        <div class="tb-2-4">{{item.timestamp | listDate(now, $t)}}</div>
                     </div>
                 </transition-group>
 
@@ -120,18 +120,18 @@
         },
 
         filters:{
-            listDate (timestamp, now) {
+            listDate (timestamp, now, tFn) {
                 const t = now - timestamp
                 if (t < 0) {
-                    return `0秒前`
+                    return `0${tFn('Seconds')}${tFn('ago')}`
                 }else if (t < 10 * 60 * 1000) {  //如果小于10分钟
                     let m = Math.floor(t / 60 / 1000)
                     let s = padStart(Math.floor((t - m * 60 * 1000) / 1000), 2, '0')
                     if (m > 0) {
                         m = padStart(m, 2, '0')
-                        return `${m}分${s}秒前`
+                        return `${m}${tFn('Minutes')}${s}${tFn('Seconds')}${tFn('ago')}`
                     }else {
-                        return `${s}秒前`
+                        return `${s}${tFn('Seconds')}${tFn('ago')}`
                     }
                     
                 } else {
@@ -189,7 +189,8 @@
         }
 
         .tabs-nav_item{
-            width: 130px;
+            min-width: 130px;
+            padding: 0 20px;
             height: 40px;
             line-height: 40px;
             text-align: center;

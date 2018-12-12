@@ -3,10 +3,10 @@
         <div class="sec">
             <div class="sec-header">
                 <div class="sec-header_hd">
-                    联系人({{list.length}})
+                    {{$t('Contact')}}({{list.length}})
                 </div>
                 <div class="sec-header_ft">
-                    <x-btn @click="addVisible = true" icon="&#xe601;" height="36px" type="primary" width="90px">添加</x-btn>
+                    <x-btn @click="addVisible = true" icon="&#xe601;" height="36px" type="primary" width="90px">{{$t('Add')}}</x-btn>
                 </div>
             </div>
             
@@ -20,14 +20,14 @@
                 </div>
                 <div @click.prevent="send(item.master_address)" class="item-ft">
                     <i class="iconfont">&#xe60b;</i>
-                    <span>发送</span>
+                    <span>{{$t('Send')}}</span>
                 </div>
             </router-link>
         </div>
 
         <div v-else class="empty-sec">
             <img class="empty-sec_img" src="../../assets/images/none_contact.png" />
-            <div class="empty-sec_hint">您还没有联系人</div>
+            <div class="empty-sec_hint">{{$t('Nocontact')}}</div>
         </div>
 
         <send v-if="sendVisible" :visible.sync="sendVisible" :recipient="sendAddress"></send>

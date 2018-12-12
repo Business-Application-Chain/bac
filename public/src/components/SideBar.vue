@@ -2,7 +2,7 @@
     <div class="side-bar-comp">
         <router-link :to="{name: 'dashboard'}" class="comp-item" :class="{active: name == 'dashboard'}">
             <img class="comp-item_hd" src="../assets/images/dashboard@3x.png" />
-            <div class="comp-item_ft">主控面板</div>
+            <div class="comp-item_ft">{{$t('Dashboard')}}</div>
         </router-link>
 
         <div class="comp-line">
@@ -11,15 +11,15 @@
 
         <router-link :to="{name: 'account'}" class="comp-item" >
             <img class="comp-item_hd" src="../assets/images/account@3x.png" />
-            <div class="comp-item_ft">账户</div>
+            <div class="comp-item_ft">{{$t('Account')}}</div>
         </router-link>
         <router-link :to="{name: 'contact'}" class="comp-item">
             <img class="comp-item_hd" src="../assets/images/contact@3x.png" />
-            <div class="comp-item_ft">联系人</div>
+            <div class="comp-item_ft">{{$t('Contact')}}</div>
         </router-link>
         <router-link :to="{name: 'explorer'}" class="comp-item">
             <img class="comp-item_hd" src="../assets/images/browser@3x.png" />
-            <div class="comp-item_ft">浏览器</div>
+            <div class="comp-item_ft">{{$t('Explorer')}}</div>
         </router-link>
         <router-link style="display:none" :to="{name: 'assets'}" class="comp-item">
             <img class="comp-item_hd" src="../assets/images/dapp@3x.png" />
@@ -29,17 +29,22 @@
             <img class="comp-item_hd" src="../assets/images/dapp@3x.png" />
             <div class="comp-item_ft">Dapp</div>
         </router-link>
+        
 
         <div class="network-sec">
-            <div class="sec-title">MAINNET 同步状态</div>
-            <div class="sec-desc">同步中: {{height}}/{{peerHeight}}</div>
-            <div class="sec-desc">连接数: {{peerCount}}</div>
+            <div class="get-btn">
+                <x-btn type="primary">获取测试币</x-btn>
+            </div>
+            <div class="sec-title">MAINNET {{$t('Synchronizationstatus')}}</div>
+            <div class="sec-desc">{{$t('Synchronizing')}}: {{height}}/{{peerHeight}}</div>
+            <div class="sec-desc">{{$t('Connections')}}: {{peerCount}}</div>
         </div>
     </div>
 </template>
 
 <script>
     import ws from '~/js/plugins/ws'
+    import XBtn from '~/components/ui/XBtn.vue'
 
     export default {
         data () {
@@ -51,6 +56,9 @@
         },
         props: {
             name: String
+        },
+        components: {
+            XBtn
         },
         created () {
             ws.add(({mod, name, data}) => {
@@ -134,6 +142,10 @@
             font-size: 14px;
             color: rgba(255, 255, 255, .5);
             margin-top: 10px;
+        }
+
+        .get-btn{
+            margin-bottom: 30px;
         }
     }
 </style>

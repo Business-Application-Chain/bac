@@ -5,7 +5,7 @@
                 <search-bar @submit="search" placeholder="address / hash" v-model.trim="searchTxt"></search-bar>
             </div>
             <div class="btn-sec_ft">
-                <x-btn icon="&#xe613;" @click.native="$router.push({name: 'createDapp'})" icon-size="16px" height="50px" type="primary">创建合约</x-btn>
+                <x-btn icon="&#xe613;" @click.native="$router.push({name: 'createDapp'})" icon-size="16px" height="50px" type="primary">{{$t('CreateDapp')}}</x-btn>
             </div>
         </div>
         <div class="tabs-nav">
@@ -13,24 +13,24 @@
                 <tabs-pane label="全部" name="all">
                     <x-table :list="allList">
                         <x-table-column width="40"></x-table-column>
-                        <x-table-column min-width="1" label="名称">
+                        <x-table-column min-width="1" :label="$t('Name')">
                             <template slot-scope="scope">
                                 <router-link :to="{name: 'dappDetail', params:{hash: scope.hash}}" class="link">{{scope.symbol}} ({{scope.name}})</router-link>
                             </template>
                         </x-table-column>
-                        <x-table-column min-width="3" prop="hash" label="地址">
+                        <x-table-column min-width="3" prop="hash" :label="$t('Address')">
                             <template slot-scope="scope">
                                 <router-link :to="{name: 'dappDetail', params:{hash: scope.hash}}" class="link">{{scope.hash}}</router-link>
                             </template>
                         </x-table-column>
                         
-                        <x-table-column min-width="1" prop="decimals" label="小数位"></x-table-column>
-                        <x-table-column min-width="1" prop="totalAmount" label="总量">
+                        <x-table-column min-width="1" prop="decimals" :label="$t('Decimals')"></x-table-column>
+                        <x-table-column min-width="1" prop="totalAmount" :label="$t('Total')">
                             <template slot-scope="scope">
                                 {{parseInt(scope.totalAmount)}}
                             </template>
                         </x-table-column>
-                        <x-table-column min-width="3" prop="accountId" label="创建者"></x-table-column>
+                        <x-table-column min-width="3" prop="accountId" :label="$t('Creator')"></x-table-column>
                     </x-table>
                     <pagination :current-page="allCurPage" :page-count="allPageCount" @currentPage="fetchAll"></pagination>
                 </tabs-pane>

@@ -18,6 +18,10 @@ ws.addEventListener('message', ev => {
     }
 })
 
+setInterval(() => {
+    ws.send('102|kernel|peerInfo')
+}, 1000 * 60)
+
 ws.onclose = ev => {
     
 }

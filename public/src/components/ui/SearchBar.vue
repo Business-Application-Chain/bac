@@ -3,7 +3,7 @@
     <div class="searchbar-comp" :class="{active: isActive}">
         <input :value="value" @input="$emit('input', $event.target.value)"  @keyup.enter="search" @focus="isActive = true" @blur="isActive = false" :placeholder="placeholder " type="text" class="search-input">
         <div v-if="value" @click="clear" class="search-close"><i class="iconfont">&#xe60f;</i></div>
-        <div @click="search" class="search-btn">搜索</div>
+        <div @click="search" class="search-btn">{{$t('Search')}}</div>
     </div>
     
 </template>

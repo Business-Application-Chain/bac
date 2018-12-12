@@ -4,32 +4,31 @@
         :visible.sync="compVisible" 
         :ok-loading="okLoading"
         @ok="submit" 
-        title="发送" 
-        
-        hint="请确认您正发送BAC给正确的接收人，因为该过程是无法撤消的.">
+        :title="$t('Send')" 
+        :hint="$t('Pleaseconfirmthatyouaresendingtothecorrectrecipient')">
         <div class="send-comp">
             <div class="comp-title">
-                <div class="comp-title_hd"><b>我的地址</b></div>
+                <div class="comp-title_hd"><b>{{$t('MyAddress')}}</b></div>
                 <div class="comp-title_ft">{{account.balance | bac}} <span>BAC</span></div>
             </div>
             
             <x-input :disabeld="true" v-model="account.address[0]"></x-input>
             
             <div class="comp-title">
-                <div class="comp-title_hd"><b>对方账户</b></div>
+                <div class="comp-title_hd"><b>{{$t('Recipient')}}</b></div>
                 <div class="comp-title_ft"></div>
             </div>
-            <x-input v-model="recipientAddress" :disabeld="recipient ? true : false" placeholder="请填写对方地址"></x-input>
+            <x-input v-model="recipientAddress" :disabeld="recipient ? true : false" :placeholder="Pleaseentertherecipientaddress"></x-input>
             <div class="comp-title">
-                <div class="comp-title_hd"><b>数量</b></div>
+                <div class="comp-title_hd"><b>{{$t('Quantity')}}</b></div>
                 <div class="comp-title_ft"></div>
             </div>
-            <x-input v-model="amount" placeholder="请填写数量"></x-input>
+            <x-input v-model="amount" :placeholder="$t('Pleaseenterthequantity')"></x-input>
             <div v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1" class="comp-title">
-                <div class="comp-title_hd"><b>密码</b></div>
+                <div class="comp-title_hd"><b>{{$t('password')}}</b></div>
                 <div class="comp-title_ft"></div>
             </div>
-            <x-input v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1" v-model="password" type="password" placeholder="请输入支付密码"></x-input>
+            <x-input v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1" v-model="password" type="password" :placeholder="$t('Pleaseenterthepaymentpassword')"></x-input>
         </div>
     </modal>
 </template>
@@ -84,8 +83,6 @@
         mounted() {
             this.compVisible = this.visible
             this.recipientAddress = this.recipient
-
-            console.log(this)
         },
 
         components: {
@@ -111,7 +108,7 @@
                     })
 
                     this.compVisible = false
-                    Message.alert(`转账成功，has值为${res.transactionHash}`)
+                    Message.alert(`${this.$t('TransferSuccess')}${res.transactionHash}`)
 
                 })
             }

@@ -1,20 +1,20 @@
 <template>
     <div class="explorer-result-page">
         <div class="sec">
-            <div class="sec-header">交易详情</div>
+            <div class="sec-header">{{$('Transactions')}}{{$t('Detail')}}</div>
 
             <div class="page-desc">
                 <div class="desc-item">
-                    <div class="desc-item_hd">区块哈希</div>
+                    <div class="desc-item_hd">{{$t('Block')}} Hash</div>
                     <div class="desc-item_ft">{{result.hash}}</div>
                 </div>
                 <div class="desc-item">
-                    <div class="desc-item_hd">区块高度</div>
+                    <div class="desc-item_hd">{{$t('BlockHeight')}}</div>
                     <div class="desc-item_ft">{{result.height}}</div>
                 </div>
                 
                 <div class="desc-item">
-                    <div class="desc-item_hd">确认数</div>
+                    <div class="desc-item_hd">{{$t('Confirmations')}}</div>
                     <div class="desc-item_ft">{{result.confirmations || 0}}</div>
                 </div>
             </div>
@@ -23,11 +23,11 @@
 
         <div class="table">
             <div class="table-header">
-                <div class="table-5">交易HASH</div>
-                <div class="table-1">发送地址</div>
+                <div class="table-5">{{$('Transactions')}} Hash</div>
+                <div class="table-1">{{$t('Sender')}}</div>
                 <div class="table-2"></div>
-                <div class="table-3">接收地址</div>
-                <div class="table-4">数量/手续费（BAC）</div>
+                <div class="table-3">{{$t('Recipient')}}</div>
+                <div class="table-4">{{$t('Quantity')}}/{{$t('Fee')}}（BAC）</div>
             </div>
         
             <div v-for="item in result.transactions" :key="item.hash" class="table-cell">

@@ -1,12 +1,12 @@
 <template>
     <div class="orders-comp">
         <div class="comp-header">
-            <div class="comp-t1">交易HASH</div>
-            <div class="comp-t2">发送者</div>
-            <div class="comp-t3">接受者</div>
-            <div class="comp-t4">日期</div>
+            <div class="comp-t1">HASH</div>
+            <div class="comp-t2">{{$t('Sender')}}</div>
+            <div class="comp-t3">{{$t('Recipient')}}</div>
+            <div class="comp-t4">{{$t('Date')}}</div>
             <div class="comp-t5"></div>
-            <div class="comp-t6">金额/手续费</div>
+            <div class="comp-t6">{{$t('Amount')}}/{{$t('Fee')}}</div>
         </div>
         <div v-for="item in list" :key="item.hash" class="comp-item active">
             <div class="comp-t1">
@@ -23,10 +23,10 @@
             </div>
             <div class="comp-t4">{{item.timestamp | date}}</div>
             <div class="comp-t5">
-                
+                <div class="status-tag" :class="[item.senderType]">{{item.senderType | upper}}</div>
             </div>
             <div class="comp-t6">
-                <div class="status-tag" :class="[item.senderType]">{{item.senderType | upper}}</div>
+                
                 {{item.amount | bac}} / {{item.fee | bac}}
             </div>
         </div>
