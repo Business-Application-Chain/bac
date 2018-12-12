@@ -1,2 +1,4 @@
-let ip = require('ip');
-console.log(ip.fromLong(233149420));
+const newsList = {
+    data: [1,2,3,4,5,6,7,8]
+};
+console.log(JSON.stringify(newsList) + "");
