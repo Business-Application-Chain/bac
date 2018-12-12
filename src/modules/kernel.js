@@ -335,6 +335,16 @@ Kernel.prototype.onNewBlock = function (block, broadcast) {
     }
 };
 
+Kernel.prototype.onGetPeerInfo = function () {
+    let block = library.modules.blocks.getLastBlock();
+    let peerCount = library.modules.peer.getCount();
+    library.socket.webSocket.send('201|kernel|status|' + JSON.stringify({
+        height: block.height,
+        peerHeight: block.height,
+        peerCount: peerCount
+    }), null);
+};
+
 Kernel.prototype.onBlockchainReady = function () {
     privated.loaded = true;
 };
