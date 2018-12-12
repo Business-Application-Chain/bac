@@ -3,7 +3,7 @@
         <div class="sec">
             <div class="sec-header">
                 <div class="sec-header_hd">
-                    合约详情
+                    {{$t('DappDetails')}}
                 </div>
                 <div class="sec-header_ft">
                     
@@ -13,30 +13,30 @@
             <div class="main-cell">
                 <div class="main-cell_body">
                     <div class="main-cell_id">
-                        <div class="main-title">名称</div>
+                        <div class="main-title">{{$t('Name')}}</div>
                         <div class="main-primary">{{info.name}} / {{info.symbol}} </div>
                     </div>
                     <div class="main-cell_id">
-                        <div class="main-title">发行总量</div>
+                        <div class="main-title">{{$t('Total')}}</div>
                         <div class="main-primary">{{info.totalAmount}} </div>
                     </div>
                     <div class="main-cell_id">
-                        <div class="main-title">持有人</div>
+                        <div class="main-title">{{$t('Creator')}}</div>
                         <div class="main-primary">{{info.accountId}} </div>
                     </div>
                 </div>
 
                 <div class="main-cell_body">
                     <div class="main-cell_id">
-                        <div class="main-title">地址</div>
+                        <div class="main-title">{{$t('Address')}}</div>
                         <div class="main-primary">{{info.hash}} </div>
                     </div>
                     <div class="main-cell_id">
-                        <div class="main-title">小数位</div>
+                        <div class="main-title">{{$t('Decimals')}}</div>
                         <div class="main-primary">{{info.decimals}} </div>
                     </div>
                     <div class="main-cell_id">
-                        <div class="main-title">创建时间</div>
+                        <div class="main-title">{{$t('CreateTime')}}</div>
                         <div class="main-primary">{{info._createDate}} </div>
                     </div>
                 </div>
@@ -44,7 +44,7 @@
 
             <div class="action-cell">
                 <div class="main-cell_id">
-                    <div class="main-title">执行合约</div>
+                    <div class="main-title">{{$t('ExecuteDapp')}}</div>
                     <div class="main-primary">
                         <x-select width="300px" v-model="dappFunc">
                             <x-option v-for="(item, index) in info._abi" :key="index" @change="selectedFunc = item" :label="item.method" :value="item.method"></x-option>
@@ -52,7 +52,7 @@
                     </div>
                 </div>
                 <div class="main-cell_id" v-if="selectedFunc.params && selectedFunc.params.length">
-                    <div class="main-title">参数</div>
+                    <div class="main-title">{{$t('Parameters')}}</div>
                     <div class="main-primary">
                         <div class="main-primary_item" v-for="(item, index) in selectedFunc.params" :key="index">
                             <x-input :placeholder="item" v-model="dappParams[index]"  type="text" :no-error="true"></x-input>
@@ -61,14 +61,14 @@
                 </div>
 
                 <div class="main-cell_id">
-                    <div class="main-title" v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1" >支付密码</div>
+                    <div class="main-title" v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1" >{{PaymentPassword}}</div>
                     <div class="main-primary">
                         <div class="password-wrapper">
                             <x-input 
                                 v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1" 
                                 v-model.trim="password" 
                                 type="password"
-                                placeholder="请输入支付密码"
+                                :placeholder="$t('Pleaseenterthepaymentpassword')"
                             
                                 :no-error="true">
                             </x-input>
@@ -76,7 +76,7 @@
                     </div>
                 </div>
                 <div class="main-cell_id">
-                    <div class="main-title">所需费用</div>
+                    <div class="main-title">{{$t('Fee')}}</div>
                     <div class="main-primary">
                         {{fee | bac}} BAC
                     </div>
@@ -84,7 +84,7 @@
                 <div class="main-cell_id">
                     <div class="main-title"></div>
                     <div class="main-primary">
-                        <x-btn @click="dappHandle" type="primary">提交</x-btn>
+                        <x-btn @click="dappHandle" type="primary">{{$t('Submit')}}</x-btn>
                     </div>
                 </div>
 
@@ -93,24 +93,23 @@
         </div>
 
         <tabs v-model="active">
-            <tabs-pane label="操作记录" name="1">
+            <tabs-pane :label="$t('ExecuteRecord')" name="1">
                 <x-table v-if="transactionList.length > 0" :list="transactionList">
                     <x-table-column width="40"></x-table-column>
-                    <x-table-column prop="_createDate" label="日期" min-width="180"></x-table-column>
+                    <x-table-column prop="_createDate" :label="$t('Date')" min-width="180"></x-table-column>
                     <x-table-column prop="transactionHash" label="Hash" min-width="510"></x-table-column>
-                    <x-table-column prop="accountId" label="调用者" min-width="300"></x-table-column>
-                    <x-table-column prop="fun" label="执行函数" min-width="180"></x-table-column>
-                    <x-table-column label="结果" min-width="100">
+                    <x-table-column prop="accountId" :label="$t('Executive')" min-width="300"></x-table-column>
+                    <x-table-column prop="fun" :label="$t('CalledFunction')" min-width="180"></x-table-column>
+                    <x-table-column :label="$t('Result')" min-width="100">
                         <template slot-scope="scope">
-                            {{scope.dealResult == 0 ? '成功' : '失败'}}
+                            {{scope.dealResult == 0 ? $t('Success') : $t('Fail')}}
                         </template>
                     </x-table-column>
                 </x-table>
                 <Pagination  v-if="transactionList.length > 0" :current-page="transactionCurPage" :page-count="transactionPageCount" @currentChange="fetchTrans" />
 
                 <div v-if="transactionList.length == 0" class="empty-sec">
-                    
-                    <div class="empty-sec_hint">暂无操作记录</div>
+                    <div class="empty-sec_hint">{{$t('Norecord')}}</div>
                 </div>
             </tabs-pane>
             <tabs-pane label="abi" name="2">
@@ -233,7 +232,7 @@
                 this.handleFuncLoading = true
                 const res = await api.dapp.handleDapp([this.key.mnemonic, this.hash, this.dappFunc, this.dappParams, sha256(this.password).toString()])
                 if (res === null) return;
-                Toast.success('执行成功')
+                Toast.success(this.$t('Success'))
             },
 
             async getHandleDappFee () {

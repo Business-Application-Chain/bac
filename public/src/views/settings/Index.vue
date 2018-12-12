@@ -1,28 +1,28 @@
 <template>
     <div class="settings-index-page sec">
         <div class="sec-header">
-            支付密码<span class="warn" v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1">[已设置]</span>
+            {{$t('PaymentPassword')}}<span class="warn" v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1">[{{$t('Hasbeenset')}}]</span>
         </div>
 
         <div class="settings-pw">
             <div class="pw-hd">
-                <div class="pw-hd_title">Password</div>
+                <div class="pw-hd_title">{{$t('Password')}}</div>
                 <x-input type="password" v-model.trim="password" :status="status" :disabeld="(account.secondsign == 1 || account.secondsign_unconfirmed == 1) ? true : false"></x-input>
-                <div class="pw-hd_title second-title">Confirm Password</div>
+                <div class="pw-hd_title second-title">{{$t('ConfirmPassword')}}</div>
                 <x-input type="password" v-model.trim="secondPassword" :status="status"  :disabeld="(account.secondsign == 1 || account.secondsign_unconfirmed == 1) ? true : false"></x-input>
                 <div class="hd-btn">
-                    <x-btn type="primary" @click="submit" :disabled="disabled" :loading="loading" width="126px">Continue</x-btn>
+                    <x-btn type="primary" @click="submit" :disabled="disabled" :loading="loading" width="126px">{{$t('Submit')}}</x-btn>
                 </div>
             </div>
 
             <div class="pw-ft">
                 <div class="pw-ft_warn">
-                    <span class="warn-circle"></span>注意：该支付密码设置后不可修改！且无法找回！
+                    <span class="warn-circle"></span>{{$t('Warning')}}：{{$t('Thepaymentpasswordcannotbemodifiedafteritisset')}}
                 </div>
                 
-                <div class="pw-ft_desc">使用支付密码(可选)来保障帐户安全! 请稍待片刻以使信息成功保存到区块链. </div>
+                <div class="pw-ft_desc">{{$t('PaymentPasswordsethint')}}</div>
 
-                <div class="pw-ft_primary">本次费用：<b>{{fee | bac}} BAC</b> </div>
+                <div class="pw-ft_primary">{{$t('Fee')}}：<b>{{fee | bac}} BAC</b> </div>
             </div>
         </div>
         
@@ -82,7 +82,7 @@
                     this.loading = false
                     if (res === null) return;
 
-                    Toast.success('设置密码成功')
+                    Toast.success(this.$t('Success'))
                     location.reload()
                 })
             }

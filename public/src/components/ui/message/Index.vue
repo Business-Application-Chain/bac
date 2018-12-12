@@ -82,6 +82,7 @@
 
             close () {
                 this.compVisible = false
+                this.cancel()
             },
 
             cancelHandle () {
