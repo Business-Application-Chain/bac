@@ -9,7 +9,9 @@ var ed = require('ed25519');
 
 function Dapp() {
     this.calculateFee = function (txObj, sender) {
-        return 1 * constants.fixedPoint;
+        let gasUsed = txObj.asset.dapp.gasUsed;
+        let gasPrice = txObj.asset.dapp.gasPrice;
+        return gasUsed * gasPrice;
     };
 
     this.create = function (data, txObj) {
@@ -23,7 +25,10 @@ function Dapp() {
             className: data.className,
             issuersAddress: data.issuersAddress,
             abi: data.abi,
-            tokens: data.tokens
+            tokens: data.tokens,
+            gasPrice: 1,
+            gasUsed: data.gasUsed,
+            gasLimit: data.gasLimit
         };
         return txObj;
     };
@@ -105,6 +110,9 @@ function Dapp() {
             hash: raw.da_hash,
             className: raw.da_className,
             issuersAddress: raw.da_issuersAddress,
+            gasLimit: raw.da_gasLimit,
+            gasPrice: raw.da_gasPrice,
+            gasUsed: raw.da_gasUsed,
             abi: JSON.parse(raw.da_abi),
             tokens: JSON.parse(raw.da_tokenList)
         };
@@ -142,7 +150,10 @@ function Dapp() {
                     tokenList: JSON.stringify(cTokens),
                     tokenCode: " ",
                     issuersAddress: dapp.issuersAddress,
-                    status: dappState
+                    status: dappState,
+                    gasPrice: dappData.gasPrice,
+                    gasLimit: dappData.gasLimit,
+                    gasUsed: dappData.gasUsed
                 },
             }).then(() => {
                 return library.base.accountAssets.addDappBalance(txObj.senderId, {
@@ -619,8 +630,9 @@ privated.searchHandle = function (data, cb) {
 shared_1_0.upLoadDapp = function (params, cb) {
     let mnemonic = params[0] || '';
     let className = params[1] || '';
-    let msg = params[2] || '';
-    let secondSecret = params[3] || '';
+    let gasLimit = params[2] || 10000;
+    let msg = params[3] || '';
+    let secondSecret = params[4] || '';
     if (!(mnemonic && msg && className)) {
         return cb("miss must params", 11000);
     }
@@ -658,10 +670,13 @@ shared_1_0.upLoadDapp = function (params, cb) {
                         accountId: account.master_address,
                         message: msg,
                         className: className
-                    }, function (err, dappData) {
+                    }, gasLimit, function (err, dappData) {
                         if (err || dappData.hadError) {
                             return cb(err || "合约缺少关键属性", 11000);
                         } else {
+                            if(dappData.gasUsed === -1) {
+                                return cb("gas is not enough", 11000);
+                            }
                             if (dappData.name && dappData.symbol && dappData.decimals && dappData.totalAmount) {
                                 dappData.token.pop();
                                 try {
@@ -673,6 +688,8 @@ shared_1_0.upLoadDapp = function (params, cb) {
                                         secondKeypair: secondKeypair,
                                         tokens: dappData.token,
                                         abi: dappData.abi,
+                                        gasLimit: gasLimit,
+                                        gasUsed: dappData.gasUsed,
                                         issuersAddress: issuersAddress || " "
                                     });
                                 } catch (e) {
@@ -694,12 +711,13 @@ shared_1_0.upLoadDapp = function (params, cb) {
         cb(null, 200, {transactionHash: transaction[0].hash, dappHash: transaction[0].asset.dapp.hash});
     })
 };
-// 使用合约方法
+// 调用合约方法
 shared_1_0.handleDapp = function (params, cb) {
     let mnemonic = params[0] || '';
     let dappHash = params[1] || '';
     let fun = params[2] || '';
     let param = params[3] || [];
+    let gasLimit = params[4] || 10000;
     let secondSecret = params[4] || '';
 
     if (!(mnemonic || fun || dappHash)) {
