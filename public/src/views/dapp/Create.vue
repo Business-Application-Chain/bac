@@ -3,7 +3,7 @@
         <div class="sec">
             <div class="sec-header">
                 <div class="sec-header_hd">
-                    创建合约
+                    {{$t('CreateDapp')}}
                 </div>
                 <div class="sec-header_ft">
                     
@@ -11,25 +11,25 @@
             </div>
             
             <div class="page-main">
-                <div class="modal-label">合约代码</div>
+                <div class="modal-label">{{$t('DappCode')}}</div>
                 <codemirror v-model="code" :options="{
                     lineNumbers: true
                 }"></codemirror>
 
                 <div class="create-modal-main">
-                    <div class="modal-label">合约类名</div>
+                    <div class="modal-label">{{$t('DappClass')}}</div>
                     <x-input 
                         v-model.trim="dappClass" 
-                        type="test"
-                        placeholder="请输入合约类名">
+                        type="text"
+                        :placeholder="$t('Pleaseenterthedappclass')">
                     </x-input>
 
-                    <div v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1"  class="modal-label">支付密码</div> 
+                    <div v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1"  class="modal-label">{{$t('PaymentPassword')}}</div> 
                     <x-input 
                         v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1" 
                         v-model.trim="password" 
                         type="password"
-                        placeholder="请输入支付密码">
+                        :placeholder="$t('Pleaseenterthepaymentpassword')">
                     </x-input>
                     
                 </div>
@@ -38,7 +38,7 @@
             <div class="actions-cell">
                 <div class="actions-cell_hd"></div>
                 <div class="actions-cell_ft">
-                    <x-btn @click="submit" :loading="btnLoading" type="primary">提交</x-btn>
+                    <x-btn @click="submit" :loading="btnLoading" type="primary">{{$t('Submit')}}</x-btn>
                 </div>
             </div>
         </div>
@@ -53,6 +53,7 @@
     import {mapState} from 'vuex'
     import sha256 from 'crypto-js/sha256'
     import Toast from '~/components/ui/toast'
+    import Message from '~/components/ui/message'
 
     export default {
         data () {
@@ -133,17 +134,17 @@
         methods: {
             async submit () {
                 if (this.code == '') {
-                    Toast.warn('请输入合约代码')
+                    Toast.warn(this.$t('Pleaseenterthedappcode'))
                     return
                 }
 
                 if (this.dappClass == '') {
-                    Toast.warn('请输入合约类名')
+                    Toast.warn(this.$t('Pleaseenterthedappclass'))
                     return
                 }
 
                 if ( (this.account.secondsign == 1 || this.account.secondsign_unconfirmed == 1) && this.password == '') {
-                    Toast.warn('请输入密码')
+                    Toast.warn(this.$t('Pleaseenterthepaymentpassword'))
                     return
                 }
                 
@@ -154,17 +155,23 @@
                     this.btnLoading = false
                     return;
                 }
-
-                if(!confirm(`创建dapp所需费用${fee / Math.pow(10, 8)} BAC, 确定要继续吗？`)){
+                
+                const msg = this.$t('CreateDappModal', {fee: fee / Math.pow(10, 8)})
+                const confirm = this.$t('Confirm')
+                const cancel = this.$t('Cancel')
+                
+                Message.confirm(msg, confirm, {
+                    okText: confirm,
+                    cancelText: cancel
+                }).then(async () => {
+                    const res = await api.dapp.uploadDapp([this.key.mnemonic, this.dappClass, this.code, sha256(this.password).toString()])
+                    this.btnLoading = false
+                    if (res === null) return;
+                    Toast.success(this.$t('Success'))
+                }).catch(() => {
                     this.btnLoading = false
                     return;
-                }
-
-                const res = await api.dapp.uploadDapp([this.key.mnemonic, this.dappClass, this.code, sha256(this.password).toString()])
-                this.btnLoading = false
-                if (res === null) return;
-                Toast.success('创建合约成功,等待区块打包后查看')
-                
+                })
                 
             },
 

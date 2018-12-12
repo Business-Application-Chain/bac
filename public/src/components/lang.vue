@@ -32,15 +32,16 @@
             }
         },
         mounted () {
-            
+            console.log(this.$i18n.locale)
         },
         directives:{
             ClickOutside
         },
         methods:{
-            setLang (lang) {
+            setLang (lang) { 
                 this.$i18n.locale = lang
                 this.visible = false
+                localStorage.setItem('lang', lang)
             },
             hide () {
                 this.visible = false

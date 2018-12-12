@@ -1,8 +1,8 @@
 <template>
     <div class="pagination-comp">
-        <div class="comp-btn arrow" :class="{disabled: currentPage == 1}" @click="prev">上一页</div>
+        <div class="comp-btn arrow" :class="{disabled: currentPage == 1}" @click="prev">{{$t('Previous')}}</div>
         <div v-for="item in indexArr" :key="item.value" class="comp-btn" @click="changeCur(item)" :class="{active: item.value == currentPage}">{{item.value}}</div>
-        <div class="comp-btn arrow" :class="{disabled: currentPage == pageCount}" @click="next">下一页</div>
+        <div class="comp-btn arrow" :class="{disabled: currentPage == pageCount}" @click="next">{{$t('Next')}}</div>
     </div>
 </template>
 <script>

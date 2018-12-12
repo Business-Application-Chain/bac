@@ -6,7 +6,7 @@
         </router-link>
 
         <div class="comp-line">
-            核心数据
+            {{$t('CoreData')}}
         </div>
 
         <router-link :to="{name: 'account'}" class="comp-item" >

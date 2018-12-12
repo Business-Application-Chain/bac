@@ -10,7 +10,7 @@
         </div>
         <div class="tabs-nav">
             <tabs v-model="tabActive">
-                <tabs-pane label="全部" name="all">
+                <tabs-pane :label="$t('All')" name="all">
                     <x-table :list="allList">
                         <x-table-column width="40"></x-table-column>
                         <x-table-column min-width="1" :label="$t('Name')">
@@ -34,51 +34,51 @@
                     </x-table>
                     <pagination :current-page="allCurPage" :page-count="allPageCount" @currentPage="fetchAll"></pagination>
                 </tabs-pane>
-                <tabs-pane label="我的" name="my">
+                <tabs-pane :label="$t('Mine')" name="my">
                     <x-table :list="myList">
                         <x-table-column width="40"></x-table-column>
-                        <x-table-column min-width="1" label="名称">
+                        <x-table-column min-width="1" :label="$t('Name')">
                             <template slot-scope="scope">
                                 <router-link :to="{name: 'dappDetail', params:{hash: scope.dappHash}}" class="link">{{scope.symbol}} ({{scope.name}})</router-link>
                             </template>
                         </x-table-column>
-                        <x-table-column min-width="3" label="地址">
+                        <x-table-column min-width="3" :label="$t('Address')">
                             <template slot-scope="scope">
                                 <router-link :to="{name: 'dappDetail', params:{hash: scope.dappHash}}" class="link">{{scope.dappHash}}</router-link>
                             </template>
                         </x-table-column>
                         
-                        <x-table-column min-width="1" prop="decimals" label="小数位"></x-table-column>
-                        <x-table-column min-width="1" prop="totalAmount" label="余额">
+                        <x-table-column min-width="1" prop="decimals" :label="$t('Decimals')"></x-table-column>
+                        <x-table-column min-width="1" prop="totalAmount" :label="$t('Balance')">
                             <template slot-scope="scope">
                                 {{scope._balance}}
                             </template>
                         </x-table-column>
-                        <x-table-column min-width="3" prop="accountId" label="创建者"></x-table-column>
+                        <x-table-column min-width="3" prop="accountId" :label="$t('Creator')"></x-table-column>
                     </x-table>
                 </tabs-pane>
-                <tabs-pane label="我创建的" name="owner">
+                <tabs-pane :label="$t('Created')" name="owner">
                     <x-table :list="ownerList">
                         <x-table-column width="40"></x-table-column>
-                        <x-table-column min-width="1" label="名称">
+                        <x-table-column min-width="1" :label="$t('Name')">
                             <template slot-scope="scope">
                                 <router-link :to="{name: 'dappDetail', params:{hash: scope.hash}}" class="link">{{scope.symbol}} ({{scope.name}})</router-link>
                             </template>
                         </x-table-column>
-                        <x-table-column min-width="2" prop="hash" label="地址">
+                        <x-table-column min-width="2" prop="hash" :label="$t('Address')">
                             <template slot-scope="scope">
                                 <router-link :to="{name: 'dappDetail', params:{hash: scope.hash}}" class="link">{{scope.hash}}</router-link>
                             </template>
                         </x-table-column>
-                        <x-table-column min-width="1" prop="decimals" label="小数位"></x-table-column>
-                        <x-table-column min-width="1" prop="totalAmount" label="总量">
+                        <x-table-column min-width="1" prop="decimals" :label="$t('Decimals')"></x-table-column>
+                        <x-table-column min-width="1" prop="totalAmount" :label="$t('Total')">
                             <template slot-scope="scope">
                                 {{parseInt(scope.totalAmount)}}
                             </template>
                         </x-table-column>
-                        <x-table-column label="操作" min-width="1">
+                        <x-table-column :label="$t('Action')" min-width="1">
                             <template slot-scope="scope">
-                                <x-btn height="35px" font-size="14px" @click="transferDapp(scope)">合约转让</x-btn>
+                                <x-btn height="35px" font-size="14px" @click="transferDapp(scope)">{{$t('TransferDapp')}}</x-btn>
                             </template>
                         </x-table-column>
                     </x-table>
@@ -91,21 +91,21 @@
         <modal 
             v-if="transferVisible"
             :visible.sync="transferVisible"
-            title="转让合约"
-            hint="转让合约需要手续费且不可修改"
+            :title="$t('TransferDapp')"
+            :hint="$t('Thetransferdapprequiresafeeandcannotbemodified')"
             @ok="transferSubmit"
             :okLoading="okLoading"
         >
-            <div class="modal-label">接收方地址</div>
-            <x-input v-model="transferAdress" placeholder="请输入接收方地址"></x-input>
-            <div v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1" class="add-title">支付密码</div> 
+            <div class="modal-label">{{$t('Recipient')}}</div>
+            <x-input v-model="transferAdress" :placeholder="$t('Pleaseentertherecipientaddress')"></x-input>
+            <div v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1" class="add-title">{{$t('PaymentPassword')}}</div> 
             <x-input 
                 v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1" 
                 v-model.trim="transferPassword" 
                 type="password"
-                placeholder="请输入支付密码">
+                :placeholder="$t('Pleaseenterthepaymentpassword')">
             </x-input>
-            <div class="modal-fee">费用： {{transferFee | bac}} BAC</div>
+            <div class="modal-fee">{{$t('Fee')}}： {{transferFee | bac}} BAC</div>
 
         </modal>
     </div>
@@ -210,7 +210,7 @@
                 const res = await api.dapp.searchDappHash([txt])
                 if (res === null) return;
                 if (res.length === 0) {
-                    Toast.warn('没有搜到对应的结果')
+                    Toast.warn(this.$t('Noresultswerefound'))
                     return 
                 }
                 this.$router.push({name: 'dappDetail', params:{hash: res[0].hash}})
@@ -239,7 +239,7 @@
                 if (res === null) return;
                 
                 this.transferVisible = false;
-                Toast.success('合约转让成功')
+                Toast.success(this.$t('Success'))
             }
         }
     }
