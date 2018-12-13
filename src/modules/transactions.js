@@ -596,7 +596,8 @@ Transactions.prototype.onSendUnconfirmedTrs = function () {
         if(item)
             unconfirmedTrs.push(item);
     });
-    console.log("unconfirmedTrs.length -> ", unconfirmedTrs.length);
+    // console.log("unconfirmedTrs.length -> ", unconfirmedTrs.length);
+    library.log.Info("unconfirmed transactions number", unconfirmedTrs.length);
     let send = [];
     let maxCount = unconfirmedTrs.length > 1000 ? 1000 : unconfirmedTrs.length;
     for (let i = 0; i < maxCount; i++) {

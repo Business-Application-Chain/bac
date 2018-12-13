@@ -300,9 +300,9 @@ privated.findUpdate = function(lastBlock, peer, cb) {
                     library.log.Debug("Loading blocks from peer " + peerStr);
                     library.modules.blocks.loadBlocksFromPeer(peer, commonBlock.hash, function (err) {
                         if(err) {
-                            console.log(err);
+                            // console.log(err);
                             //撤销操作
-                            console.log(ip.fromLong(peer.ip));
+                            // console.log(ip.fromLong(peer.ip));
                             library.log.Error("loadBlocksFromPeer is error!!!!!!!!!!!!!")
                             return cb(err);
                         } else {
@@ -424,7 +424,7 @@ Loader.prototype.onPeerReady = function() {
             let lastBlock = library.modules.blocks.getLastBlock();
             privated.loadBlocks(lastBlock, cb);
         }, function (err) {
-            err && library.log.Error('loadBlocks timer', err);
+            err && library.log.Info('loadBlocks timer', err);
             privated.isActive = false;
             setTimeout(nextLoadBlock, 30 * 1000);
         });

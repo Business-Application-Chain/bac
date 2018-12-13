@@ -330,9 +330,17 @@ privated.getTransactionsOrBlock = function (hash, cb) {
             library.dbClient.query(`SELECT * FROM blocks where hash like "%${hash}%" or height = "${hash}" `, {
                 type: Sequelize.QueryTypes.SELECT
             }).then((bRows) => {
-                result = bRows[0];
-                result.searchType = 0;
-                return cb(null, result);
+                return bRows[0];
+            }).then(block => {
+                library.dbClient.query('SELECT * FROM `transactions` WHERE `blockHash` = $blockHash ', {
+                    type: Sequelize.QueryTypes.SELECT,
+                    bind: {
+                        blockHash: block.hash
+                    }
+                }).then((rows) => {
+                    block.transactions = rows;
+                    return cb(null, block);
+                });
             });
         }
     }).catch(err => {
@@ -1055,7 +1063,7 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                     process.exit(0);
                                 }
                                 privated.lastBlock = block;
-                                library.log.Debug("saveBlock success");
+                                library.log.Debug("saveBlock success, block height is " + block.height);
                                 library.notification_center.notify('sendLastBlock');
                                 library.modules.round.tick(block, done);
                                 // setImmediate(done);
