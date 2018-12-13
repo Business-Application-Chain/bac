@@ -17,7 +17,7 @@
                 }"></codemirror>
 
                 <div class="create-modal-main">
-                    <div class="modal-label">{{$t('DappClass')}}</div>
+                    <div class="modal-label">{{$t('DappClass')}} ({{$t('Pleasekeepthesameasthecodeclassname')}})</div>
                     <x-input 
                         v-model.trim="dappClass" 
                         type="text"
@@ -60,60 +60,60 @@
             return {
                 password: '',
                 createFee: '',
-                code: `
-                    var from;
-                    var balanceFrom;
-                    var balance = Balance();
-                    var message = Message();
-                    var status = Status();
+                code: 
+`var from;
+var balanceFrom;
+var balanceObj = Balance();
+var messageObj = Message();
+var statusObj = Status();
 
-                    class TestToken {
-                        init() {
-                            this.name = "Test Token";
-                            this.symbol = "TT";
-                            this.decimals = 8;
-                            this.totalAmount = 1000000000 * 10 * 8;
-                            this.status = '{"lock": false,"lockTime": 0}';
-                            SetObject(this.name, this.symbol, this.decimals, this.totalAmount, this.status);
-                        }
+class TestToken {
+    init() {
+        this.name = "Test Token";
+        this.symbol = "TT";
+        this.decimals = 8;
+        this.totalAmount = 1000000000 * 10 * 8;
+        this.statusObj = '{"lock": false,"lockTime": 0}';
+        SetObject(this.name, this.symbol, this.decimals, this.totalAmount, this.statusObj);
+    }
 
-                        send(to, value) {
-                            if (Get(this.status, "lock") or Get(this.status, "lockTime") > clock() ) {
-                                return false;
-                            }
-                            from = Get(message, "from");
-                            balanceFrom = Get(balance, from);
-                            if (balanceFrom - value > 0) {
-                                balance = SetBalance(balance, from, -value);
-                                balance = SetBalance(balance, to, value);
-                                return true;
-                            }
-                            return false;
-                        }
+    send(to, value) {
+        if (Get(this.statusObj, "lock") or Get(this.statusObj, "lockTime") > clock() ) {
+            return false;
+        }
+        from = Get(messageObj, "from");
+        balanceFrom = Get(balanceObj, from);
+        if (balanceFrom - value > 0) {
+            balanceObj = SetBalance(balanceObj, from, -value);
+            balanceObj = SetBalance(balanceObj, to, value);
+            return true;
+        }
+        return false;
+    }
 
-                        lockAccount(to) {
-                            if (Get(message, "admin") == Get(message, "from")) {
-                                status = SetStatus(status, to, "lock", true);
-                                return true;
-                            }
-                            return false;
-                        }
+    lockAccount(to) {
+        if (Get(messageObj, "admin") == Get(messageObj, "from")) {
+            statusObj = SetStatus(statusObj, to, "lock", true);
+            return true;
+        }
+        return false;
+    }
 
-                        unLockAccount(to) {
-                            if (Get(message, "admin") == Get(message, "from")) {
-                                status = SetStatus(status, to, "lock", false);
-                                return true;
-                            }
-                            return false;
-                        }
+    unLockAccount(to) {
+        if (Get(messageObj, "admin") == Get(messageObj, "from")) {
+            statusObj = SetStatus(statusObj, to, "lock", false);
+            return true;
+        }
+        return false;
+    }
 
-                        lockAccountTime(time, to) {
-                            if (Get(message, "admin") == Get(message, "from")) {
-                                status = SetStatus(status, to, lockTime, time);
-                            }
-                            return false;
-                        }
-                    }`,
+    lockAccountTime(time, to) {
+        if (Get(messageObj, "admin") == Get(messageObj, "from")) {
+            statusObj = SetStatus(statusObj, to, lockTime, time);
+        }
+        return false;
+    }
+}`,
                 dappClass: '',
                 btnLoading: false
             }

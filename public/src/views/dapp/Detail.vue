@@ -44,7 +44,7 @@
 
             <div class="action-cell">
                 <div class="main-cell_id">
-                    <div class="main-title">{{$t('ExecuteDapp')}}</div>
+                    <div class="main-title">{{$t('ExecuteFunction')}}</div>
                     <div class="main-primary">
                         <x-select width="300px" v-model="dappFunc">
                             <x-option v-for="(item, index) in info._abi" :key="index" @change="selectedFunc = item" :label="item.method" :value="item.method"></x-option>

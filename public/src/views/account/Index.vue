@@ -13,6 +13,9 @@
                             <div class="main-title">{{$t('Nickname')}}</div>
                             <div class="main-primary">
                                 <span v-if="account.username">{{account.username}}</span>
+                                <span v-else-if="account.username_unconfirmed">
+                                    {{account.username_unconfirmed}} <span class="main-primary_desc">({{$t('Unconfirmed')}})</span>
+                                </span>
                                 <span v-else @click="setVisible = true" class="link">{{$t('Set')}}</span>
                             </div>
                         </div>
@@ -274,6 +277,10 @@
             font-size: 16px;
             color: #4A4A4A;
             margin-left: 30px;
+        }
+
+        .main-primary_desc{
+            color: #9b9b9b
         }
 
         .main-cell_id{

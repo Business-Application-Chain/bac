@@ -118,7 +118,7 @@ export default {
     "DappDetails": "Dapp Details",
     "Holder": "Holder",
     "CreateTime": "Create Time",
-    "ExecuteDapp": "Execute Dapp",
+    "ExecuteFunction": "Execute Function",
     "Parameters": "Parameters",
     "ExecuteRecord": "Execute Record",
     "Executive": "Executive",
@@ -130,5 +130,7 @@ export default {
     "ConfirmPassword": "Confirm Password",
     "Thepaymentpasswordcannotbemodifiedafteritisset":"The payment password cannot be modified after it is set! And can't retrieve it!",
     "PaymentPasswordsethint": 'Use a payment password (optional) to keep your account secure! Please wait a moment for the information to be successfully saved to the blockchain.',
-    "CoreData": "Core Data"
+    "CoreData": "Core Data",
+    "Unconfirmed": "Unconfirmed",
+    "Pleasekeepthesameasthecodeclassname": "Please keep the same as the code class name"
 }

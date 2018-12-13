@@ -37,8 +37,13 @@ Vue.filter('date', value => {
     return `${YYYY}/${MM}/${DD}`
 })
 
+let lang = localStorage.getItem('lang')
+if (lang != 'zh' && lang != 'en') {
+    lang = 'en'
+}
+
 const i18n = new VueI18n({
-    locale: localStorage.getItem('lang') || 'en',
+    locale: lang,
     messages:{
         zh,
         en,
