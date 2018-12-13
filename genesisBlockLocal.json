@@ -190,10 +190,10 @@
       "recipientId": null,
       "senderId": "BPVXnDofpznUqDoAL5vBSrtWiYcnZZjDd6",
       "senderPublicKey": "03fcdeb713ccdcc27b54cc9c6325cef6667381cf97f6f6f87d91c472a8eca14782",
-      "timestamp": 167835863,
+      "timestamp": 1532420482220,
       "asset": {
         "minerIp": {
-          "ip": 2887713617,
+          "ip": 167835863,
           "port": 7259
         }
       },
