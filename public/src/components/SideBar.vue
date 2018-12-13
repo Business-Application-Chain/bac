@@ -33,9 +33,9 @@
 
         <div class="network-sec">
             <div class="get-btn">
-                <x-btn type="primary">获取测试币</x-btn>
+                
             </div>
-            <div class="sec-title">MAINNET {{$t('Synchronizationstatus')}}</div>
+            <div class="sec-title">TEST NET {{$t('Synchronizationstatus')}}</div>
             <div class="sec-desc">{{$t('Synchronizing')}}: {{height}}/{{peerHeight}}</div>
             <div class="sec-desc">{{$t('Connections')}}: {{peerCount}}</div>
         </div>

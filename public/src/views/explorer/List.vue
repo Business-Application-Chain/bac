@@ -21,7 +21,7 @@
                         <div class="tb-2">
                             <router-link :to="{name: 'explorerResult', params: {query: item.b_height}}" class="link">{{item.b_height}}</router-link>
                         </div>
-                        <div class="tb-3">{{item.timestamp | listDate(now, $t)}}</div>
+                        <div class="tb-3">{{item._timeString}}</div>
                     </div>
                 </transition-group>
                 
@@ -48,7 +48,7 @@
                             <router-link :to="{name: 'explorerResult', params: {query: item.hash}}" class="link">{{item.hash}}</router-link>
                         </div>
                         <div class="tb-2-3">{{item.numberOfTransactions}}</div>
-                        <div class="tb-2-4">{{item.timestamp | listDate(now, $t)}}</div>
+                        <div class="tb-2-4">{{item._timeString}}</div>
                     </div>
                 </transition-group>
 
@@ -86,7 +86,12 @@
 
             const trans = api.transactions.allTransactions([0, 50]).then(res => {
                 if (res === null) return;
-                
+
+                if (res.length == 50) {
+                    this.transactionsHasNext = true
+                } else {
+                    this.transactionsHasNext = false
+                }
                 
                 this.transactionsList = res
             })
@@ -95,6 +100,8 @@
                 if (res === null) return;
                 if (res.length == 50) {
                     this.blocksHasNext = true
+                } else {
+                    this.blocksHasNext = false
                 }
                 this.blocksList = res
             })
@@ -119,19 +126,32 @@
             InfiniteLoading
         },
 
-        filters:{
-            listDate (timestamp, now, tFn) {
+        watch: {
+            now (newVal) {
+                this.transactionsList.forEach(item => {
+                    this.$set(item, '_timeString', this.timeFormat(item.timestamp, newVal))
+                })
+                
+                this.blocksList.forEach(item => {
+                    this.$set(item, '_timeString', this.timeFormat(item.timestamp, newVal))
+                })
+            }
+        },
+
+        methods: {
+            timeFormat (timestamp, now) {
                 const t = now - timestamp
+
                 if (t < 0) {
-                    return `0${tFn('Seconds')}${tFn('ago')}`
+                    return `0${this.$t('Seconds')}${this.$t('ago')}`
                 }else if (t < 10 * 60 * 1000) {  //如果小于10分钟
                     let m = Math.floor(t / 60 / 1000)
                     let s = padStart(Math.floor((t - m * 60 * 1000) / 1000), 2, '0')
                     if (m > 0) {
                         m = padStart(m, 2, '0')
-                        return `${m}${tFn('Minutes')}${s}${tFn('Seconds')}${tFn('ago')}`
+                        return `${m}${this.$t('Minutes')}${s}${this.$t('Seconds')}${this.$t('ago')}`
                     }else {
-                        return `${s}${tFn('Seconds')}${tFn('ago')}`
+                        return `${s}${this.$t('Seconds')}${this.$t('ago')}`
                     }
                     
                 } else {
@@ -145,10 +165,8 @@
 
                     return `${YYYY}/${MM}/${DD} ${hh}:${mm}:${ss}`
                 }
-            }
-        },
 
-        methods: {
+            },
             loadBlocksMore ($state) {
                 api.blocks.blocks([this.blocksList[this.blocksList.length - 1].height, 50]).then(res => {
                     if (res === null) return;
@@ -156,6 +174,7 @@
                         $state.loaded()
                     } else {
                         $state.complete()
+                        this.blocksHasNext = false
                     }
                     this.blocksList = [...this.blocksList, ...res]
                     
@@ -169,6 +188,7 @@
                         $state.loaded()
                     } else {
                         $state.complete()
+                        this.transactionsHasNext = false
                     }
                     this.transactionsList = [...this.transactionsList, ...res]
                     

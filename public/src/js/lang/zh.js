@@ -118,7 +118,7 @@ export default {
     "DappDetails": "合约详情",
     "Holder": "持有人",
     "CreateTime": "创建时间",
-    "ExecuteDapp": "执行合约",
+    "ExecuteFunction": "执行函数",
     "Parameters": "参数",
     "ExecuteRecord": "执行记录",
     "Executive": "执行人",
@@ -130,5 +130,7 @@ export default {
     "ConfirmPassword": "确认密码",
     "Thepaymentpasswordcannotbemodifiedafteritisset":"支付密码设置后不可修改！且丢失后无法找回！",
     "PaymentPasswordsethint": "使用支付密码(可选)来保障帐户安全! 请稍待片刻等信息成功保存到区块链.",
-    "CoreData": "核心数据"
+    "CoreData": "核心数据",
+    "Unconfirmed": "未确认",
+    "Pleasekeepthesameasthecodeclassname": "请保持与代码中类名相同"
 }

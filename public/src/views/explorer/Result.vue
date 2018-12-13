@@ -1,7 +1,7 @@
 <template>
     <div class="explorer-result-page">
         <div class="sec">
-            <div class="sec-header">{{$('Transactions')}}{{$t('Detail')}}</div>
+            <div class="sec-header">{{$t('Block')}}{{$t('Detail')}}</div>
 
             <div class="page-desc">
                 <div class="desc-item">
@@ -23,11 +23,11 @@
 
         <div class="table">
             <div class="table-header">
-                <div class="table-5">{{$('Transactions')}} Hash</div>
+                <div class="table-5">{{$t('Transactions')}} Hash</div>
                 <div class="table-1">{{$t('Sender')}}</div>
                 <div class="table-2"></div>
                 <div class="table-3">{{$t('Recipient')}}</div>
-                <div class="table-4">{{$t('Quantity')}}/{{$t('Fee')}}（BAC）</div>
+                <div class="table-4">{{$t('Amount')}}/{{$t('Fee')}}（BAC）</div>
             </div>
         
             <div v-for="item in result.transactions" :key="item.hash" class="table-cell">
