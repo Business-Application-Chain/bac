@@ -303,7 +303,7 @@ privated.findUpdate = function(lastBlock, peer, cb) {
                             // console.log(err);
                             //撤销操作
                             // console.log(ip.fromLong(peer.ip));
-                            library.log.Error("loadBlocksFromPeer is error!!!!!!!!!!!!!")
+                            library.log.Info("loadBlocksFromPeer no data");
                             return cb(err);
                         } else {
                             for (var i = 0; i < overTransactionList.length; i++) {

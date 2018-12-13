@@ -332,6 +332,8 @@ privated.getTransactionsOrBlock = function (hash, cb) {
             }).then((bRows) => {
                 return bRows[0];
             }).then(block => {
+                if(!block)
+                    return cb({message: "not find hash"});
                 library.dbClient.query('SELECT * FROM `transactions` WHERE `blockHash` = $blockHash ', {
                     type: Sequelize.QueryTypes.SELECT,
                     bind: {
