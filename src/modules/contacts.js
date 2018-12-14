@@ -193,7 +193,7 @@ function Contacts(cb, scope) {
 }
 
 
-Contacts.prototype.callApi = function (call, rpcjson, args, cb) {
+Contacts.prototype.callApi = function (call, rpcjson, args, peerIp, cb) {
     var callArgs = [args, cb];
     // execute
     if (rpcjson === '1.0') {

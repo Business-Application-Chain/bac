@@ -51,13 +51,10 @@ function selectModule(apiType, scope) {
 }
 
 function checkHeaders(req, scope, cb) {
-    if(req.body.api) {
-        return cb();
-    }
     var peerIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    if (peerIp === "127.0.0.1" || peerIp === "172.100.1.88") {
-        return cb();
-    }
+    // if (peerIp === "127.0.0.1") {
+    //     return cb();
+    // }
     if (!peerIp) {
         return cb({success: false, error: "Wrong header data"});
     }
@@ -89,18 +86,19 @@ function checkHeaders(req, scope, cb) {
            return cb(err);
         if (!report.isValid)
             return cb({status: false, error: report.issues});
-        let peer = {
-            ip: ip.toLong(peerIp),
-            port: headers.port,
-            state: 2,
-            os: headers.os,
-            sharePort: Number(headers['share-port']),
-            version: headers.version
-        };
-        if (peer.port > 0 && peer.port <= 65535 && peer.version === scope.config.version) {
-            scope.modules.peer.update(peer);
-        }
-        cb();
+        // let peer = {
+        //     ip: ip.toLong(peerIp),
+        //     port: headers.port,
+        //     state: 2,
+        //     os: headers.os,
+        //     sharePort: Number(headers['share-port']),
+        //     version: headers.version
+        // };
+        // if (peer.port > 0 && peer.port <= 65535 && peer.version === scope.config.version) {
+        //     scope.modules.peer.update(peer);
+        // }
+        // cb();
+        setImmediate(cb);
     });
 }
 
@@ -123,6 +121,7 @@ module.exports = function (scope) {
         };
         var body = req.body;
         var jsonrpc = body.jsonrpc || '';
+        let peerIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
         let id = body.id || 0;
         if(id === 0 || jsonrpc === '') {
             return res.json({
@@ -152,7 +151,8 @@ module.exports = function (scope) {
                         'jsonrpc': jsonrpc
                     });
                 }
-                apiModules.callApi(body['method'], jsonrpc, body['params'], function (error, code, data) {
+
+                apiModules.callApi(body['method'], jsonrpc, body['params'], peerIp, function (error, code, data) {
                     if(error) {
                         return res.json({
                             'error': error,

@@ -136,7 +136,7 @@ Peer.prototype.sandboxApi = function (call, args, cb) {
     sandboxHelper.callMethod(shared, call, args, cb);
 };
 
-Peer.prototype.callApi = function (call, rpcjson, args, cb) {
+Peer.prototype.callApi = function (call, rpcjson, args, peerIp, cb) {
     var callArgs = [args, cb];
     // execute
     if (rpcjson === '1.0') {

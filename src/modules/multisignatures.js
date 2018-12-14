@@ -105,7 +105,7 @@ Multisignatures.prototype.sandboxApi = function (call, args, cb) {
     sandboxHelper.callMethod(shared, call, args, cb);
 };
 
-Multisignatures.prototype.callApi = function (call, args, cb) {
+Multisignatures.prototype.callApi = function (call, args, peerIp, cb) {
     var callArgs = [args, cb];
     // execute
     shared[call].apply(null, callArgs);

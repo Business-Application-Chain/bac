@@ -156,7 +156,7 @@ function Asset() {
     }
 }
 
-Assets.prototype.callApi = function (call, rpcjson, args, cb) {
+Assets.prototype.callApi = function (call, rpcjson, args, peerIp, cb) {
     var callArgs = [args, cb];
     // execute
     if (rpcjson === '1.0') {

@@ -119,18 +119,13 @@ function originIsAllowed(origin) {
     return true;
 }
 
-WebSocket.prototype.send = function (data, cb) {
+WebSocket.prototype.send = function (data) {
     if(!conArray) {
-        cb('socketConnect do not ready');
+        console.log('socketConnect do not ready');
     } else {
         conArray.forEach(function (itemSocket) {
             itemSocket.sendUTF(data);
-            // output.write(data + '\n');
-            // fs.writeFile(path.join(__dirname, 'wsLog.txt'), data, function (err) {
-            //     if(err) {
-            //         console.log(err);
-            //     }
-            // });
+            // cb();
         });
     }
 };

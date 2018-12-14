@@ -382,14 +382,10 @@ Loader.prototype.sandboxApi = function (call, args, cb) {
     sandboxHelper.callMethod(shared, call, args, cb);
 };
 
-Loader.prototype.callApi = function (call, args, cb) {
+Loader.prototype.callApi = function (call, args, peerIp, cb) {
     var callArgs = [args, cb];
     // execute
     shared[call].apply(null, callArgs);
-};
-
-Loader.prototype.callApi = function (args) {
-
 };
 
 Loader.prototype.blockIsReady = function() {

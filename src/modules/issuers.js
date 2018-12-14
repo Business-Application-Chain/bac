@@ -176,7 +176,7 @@ privated.getUserIssuers = function(accountId, cb) {
     });
 };
 
-Issuers.prototype.callApi = function (call, rpcjson, args, cb) {
+Issuers.prototype.callApi = function (call, rpcjson, args, peerIp, cb) {
     var callArgs = [args, cb];
     // execute
     if (rpcjson === '1.0') {
