@@ -1163,12 +1163,18 @@ Blocks.prototype.onSendLastBlock = function(cb) {
 Blocks.prototype.sendNewBlock = function() {
     let lastBlockJson = JSON.stringify(privated.lastBlock);
     library.socket.webSocket.send('201|blocks|block|' + lastBlockJson);
-    if(library.modules.minersIp.checkMiner()) {
-        library.log.Debug("account is miner, send new block to peers");
-        library.modules.kernel.broadcast({limit: 100}, {api: '/kernel',func: 'addBlocks', data: lastBlockJson, method: "POST"});
-    } else {
-        library.log.Debug("account isn't miner");
-    }
+    library.modules.minersIp.checkMiner(function (err, miner) {
+        if(err) {
+            library.log.Debug(err);
+            return;
+        }
+        if(miner) {
+            library.log.Debug("account is miner, send new block to peers");
+            library.modules.kernel.broadcast({limit: 100}, {api: '/kernel',func: 'addBlocks', data: lastBlockJson, method: "POST"});
+        } else {
+            library.log.Debug("account isn't miner");
+        }
+    });
 };
 
 shared_1_0.height = function(req, cb) {

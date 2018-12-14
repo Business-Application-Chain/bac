@@ -182,7 +182,7 @@ MinersIp.prototype.onModifyMinerIp = function() {
     });
 };
 
-MinersIp.prototype.checkMiner = function() {
+MinersIp.prototype.checkMiner = function(cb) {
     let accountKey = library.modules.accounts.getAccountKey();
     let accountAddress = accountKey.address;
     library.dbClient.query('SELECT * FROM `miner_ip` WHERE `address`=$address', {
@@ -192,10 +192,12 @@ MinersIp.prototype.checkMiner = function() {
         }
     }).then(rows => {
         if(!rows[0] || rows.length === 0) {
-            return null;
+            return cb();
         } else {
-            return rows[0]
+            return cb(null, rows[0]);
         }
+    }).catch(err => {
+        cb(err);
     })
 };
 
