@@ -411,7 +411,7 @@ privated.getPackageTransactions = function () {
     return blockTransactions;
 };
 
-Transactions.prototype.callApi = function (call, rpcjson, args, cb) {
+Transactions.prototype.callApi = function (call, rpcjson, args, peerIp, cb) {
     var callArgs = [args, cb];
     // execute
     if (rpcjson === '1.0') {

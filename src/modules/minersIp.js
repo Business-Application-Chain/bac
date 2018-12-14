@@ -159,7 +159,7 @@ function MinersIp(cb, scope) {
     setImmediate(cb, null, self);
 }
 
-MinersIp.prototype.callApi = function (call, rpcjson, args, cb) {
+MinersIp.prototype.callApi = function (call, rpcjson, args, peerIp, cb) {
     var callArgs = [args, cb];
     // execute
     if (rpcjson === '1.0') {
@@ -180,6 +180,23 @@ MinersIp.prototype.onModifyMinerIp = function() {
     }).catch((err) => {
         console.log(err);
     });
+};
+
+MinersIp.prototype.checkMiner = function() {
+    let accountKey = library.modules.accounts.getAccountKey();
+    let accountAddress = accountKey.address;
+    library.dbClient.query('SELECT * FROM `miner_ip` WHERE `address`=$address', {
+        type: Sequelize.QueryTypes.SELECT,
+        bind: {
+            address: accountAddress
+        }
+    }).then(rows => {
+        if(!rows[0] || rows.length === 0) {
+            return null;
+        } else {
+            return rows[0]
+        }
+    })
 };
 
 shared_1_0.setMinerIp = function(params, cb) {

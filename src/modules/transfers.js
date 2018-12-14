@@ -322,7 +322,7 @@ Transfers.prototype.onInit = function (scope) {
     modules_loaded = scope && scope != undefined ? true : false;
 };
 
-Transfers.prototype.callApi = function (call, rpcjson, args, cb) {
+Transfers.prototype.callApi = function (call, rpcjson, args, peerIp, cb) {
     var callArgs = [args, cb];
     // execute
     if (rpcjson === '1.0') {
