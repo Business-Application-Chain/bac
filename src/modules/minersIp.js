@@ -198,12 +198,13 @@ MinersIp.prototype.checkMiner = function(cb) {
         }
     }).then(rows => {
         if(!rows[0] || rows.length === 0) {
-            return cb();
+            return cb("not a miner");
         } else {
             return cb(null, rows[0]);
         }
     }).catch(err => {
-        cb(err);
+        console.log(err);
+        return cb('db has error');
     })
 };
 
