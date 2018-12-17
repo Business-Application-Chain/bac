@@ -185,6 +185,9 @@ MinersIp.prototype.onModifyMinerIp = function() {
 MinersIp.prototype.checkMiner = function() {
     let accountKey = library.modules.accounts.getAccountKey();
     let accountAddress = accountKey.address;
+    if(!accountAddress) {
+        return null;
+    }
     library.dbClient.query('SELECT * FROM `miner_ip` WHERE `address`=$address', {
         type: Sequelize.QueryTypes.SELECT,
         bind: {
@@ -261,7 +264,6 @@ shared_1_0.setMinerIp = function(params, cb) {
         if (err) {
             return cb(err.toString(), 15001);
         }
-
         cb(null, 200, {transaction: transaction[0]});
     });
 };

@@ -1170,8 +1170,6 @@ Blocks.prototype.sendNewBlock = function() {
     if(library.modules.minersIp.checkMiner()) {
         library.log.Debug("account is miner, send new block to peers");
         library.modules.kernel.broadcast({limit: 100}, {api: '/kernel',func: 'addBlocks', data: lastBlockJson, method: "POST"});
-    } else {
-        library.log.Debug("account isn't miner");
     }
 };
 
