@@ -78,18 +78,6 @@ Bunas.prototype.dealCreateContract = function(txObj, tokens, cb) {
     }, 200);
 };
 
-// let handleDapp = new Buna.default(balances, msg, status);
-// for (let i=0; i<params.length; i++) {
-//     if(typeof params[i] !== "number")
-//         params[i] = `"${params[i]}"`;
-// }
-// let end = className + "()." + fun + '(' + params.toString() + ');';
-// contract += "\n" + end;
-// handleDapp.run(contract);
-// setTimeout(function () {
-//     cb(null, handleDapp);
-// }, 100);
-
 Bunas.prototype.dealTokenContract = function(msg, balances, status, tokens) {
     return new Promise((resolve) => {
         let handleDapp = new Buna.default(balances, msg, status);
@@ -133,12 +121,12 @@ Bunas.prototype.createContract = function(txObj, cb) {
     }
 };
 
-Bunas.prototype.testContract = function(data, cb) {
+Bunas.prototype.testContract = function(data, gas, cb) {
     let msg = {
         from: data.accountId
     };
     try {
-        let tToken = new Buna.default(msg, 0, {});
+        let tToken = new Buna.default(msg, 0, {}, gas);
         data.message += "\n " + data.className + "();";
         tToken.run(data.message);
         setTimeout(function () {

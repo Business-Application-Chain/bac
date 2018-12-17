@@ -12,7 +12,13 @@ export default {
         return axios({
             method: 'post',
             url: ioUrl,
-            data: { jsonrpc, api, method, params, id }
+            headers: {
+                version: config.version,
+                os: config.os,
+                port: config.port,
+                'share-port': config["share-port"]
+            },
+            data: { jsonrpc, api, method, params, id  }
         }).then(res => {
             if(res.data.code == 200) {
                 return res.data.result
