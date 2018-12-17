@@ -136,7 +136,7 @@ Peer.prototype.sandboxApi = function (call, args, cb) {
     sandboxHelper.callMethod(shared, call, args, cb);
 };
 
-Peer.prototype.callApi = function (call, rpcjson, args, cb) {
+Peer.prototype.callApi = function (call, rpcjson, args, peerIp, cb) {
     var callArgs = [args, cb];
     // execute
     if (rpcjson === '1.0') {
@@ -168,9 +168,11 @@ Peer.prototype.state = function (pip, port, state, timeout) {
             port: port
         }
     }).then(function () {
-        console.log("update success");
+        // console.log("update success");
+        library.log.Debug("update peers success");
     }).catch(err => {
-        console.log("update ip status error");
+        // console.log("update ip status error");
+        library.log.Error("update ip status error");
     })
 };
 

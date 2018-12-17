@@ -548,7 +548,7 @@ Accounts.prototype.sandboxApi = function (call, args, cb) {
     sandboxHelper.callMethod(shared, call, args, cb);
 };
 
-Accounts.prototype.callApi = function (call, rpcjson, args, cb) {
+Accounts.prototype.callApi = function (call, rpcjson, args, peerIp, cb) {
     var callArgs = [args, cb];
     // execute
     if (rpcjson === '1.0') {
@@ -624,6 +624,10 @@ Accounts.prototype.onLoginMiner = function() {
         library.socket.webSocket.send('201|account|miner|' + JSON.stringify({account: ''}));
     }
 };
+
+Accounts.prototype.getAccountKey = function() {
+    return accountKey;
+}
 
 Accounts.prototype.getAccounts = function (filter, fields, cb) {
     library.base.account.getAll(filter, fields, cb);

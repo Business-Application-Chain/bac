@@ -300,10 +300,10 @@ privated.findUpdate = function(lastBlock, peer, cb) {
                     library.log.Debug("Loading blocks from peer " + peerStr);
                     library.modules.blocks.loadBlocksFromPeer(peer, commonBlock.hash, function (err) {
                         if(err) {
-                            console.log(err);
+                            // console.log(err);
                             //撤销操作
-                            console.log(ip.fromLong(peer.ip));
-                            library.log.Error("loadBlocksFromPeer is error!!!!!!!!!!!!!")
+                            // console.log(ip.fromLong(peer.ip));
+                            library.log.Info("loadBlocksFromPeer no data");
                             return cb(err);
                         } else {
                             for (var i = 0; i < overTransactionList.length; i++) {
@@ -382,14 +382,10 @@ Loader.prototype.sandboxApi = function (call, args, cb) {
     sandboxHelper.callMethod(shared, call, args, cb);
 };
 
-Loader.prototype.callApi = function (call, args, cb) {
+Loader.prototype.callApi = function (call, args, peerIp, cb) {
     var callArgs = [args, cb];
     // execute
     shared[call].apply(null, callArgs);
-};
-
-Loader.prototype.callApi = function (args) {
-
 };
 
 Loader.prototype.blockIsReady = function() {
@@ -424,7 +420,7 @@ Loader.prototype.onPeerReady = function() {
             let lastBlock = library.modules.blocks.getLastBlock();
             privated.loadBlocks(lastBlock, cb);
         }, function (err) {
-            err && library.log.Error('loadBlocks timer', err);
+            err && library.log.Info('loadBlocks timer', err);
             privated.isActive = false;
             setTimeout(nextLoadBlock, 30 * 1000);
         });

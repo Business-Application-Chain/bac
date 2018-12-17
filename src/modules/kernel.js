@@ -16,7 +16,7 @@ var router = express.Router();
 var Sequelize = require('sequelize');
 var bacLib = require('bac-lib');
 // private objects
-var modules_loaded, library, self, privated = {}, shared_1_0 = {};
+var modules_loaded, library, self, privated = {}, shared_1_0 = {}, peerIp = "";
 
 privated.headers = {};
 privated.loaded = false;
@@ -72,9 +72,10 @@ Kernel.prototype.broadcastNew = function (config, options, cb) {
     });
 };
 
-Kernel.prototype.callApi = function (call, rpcjson, args, cb) {
+Kernel.prototype.callApi = function (call, rpcjson, args, peerIp, cb) {
     var callArgs = [args, cb];
     // execute
+    privated.peerIp = peerIp;
     if (rpcjson === '1.0') {
         shared_1_0[call].apply(null, callArgs);
     } else {
@@ -138,7 +139,6 @@ Kernel.prototype.getFromPeerNews = function (peer, options, cb) {
         },
         timeout: 10000,
         headers: _.extend({}, privated.headers, options.headers),
-        // timeout: library.config.peers.optional.timeout,
         pool: {maxSockets: 1000},
     };
     request(req, function (err, response, body) {
@@ -429,12 +429,34 @@ shared_1_0.getBlockHeight = function (req, cb) {
             return cb(null, 200, rows[0].height);
         }
         else {
-            console.log("kernel getBlockHeight -> " + req[0]);
+            // console.log("kernel getBlockHeight -> " + req[0]);
             return cb("not find blocks", 11000);
         }
     }).catch(err => {
         console.log(err);
         cb(null, 11000);
+    });
+};
+
+shared_1_0.addBlocks = function(params, cb) {
+    library.dbClient.query('SELECT * FROM miner_ip WHERE ip=$ip', {
+        type: Sequelize.QueryTypes.SELECT,
+        bind: {
+            ip: ip.toLong(peerIp)
+        }
+    }).then(rows => {
+        return rows[0];
+    }).then(row => {
+        if(!row) {
+            return cb(null, 200);
+        } else {
+            let newBlock = JSON.parse(params);
+            let lastBlock = library.modules.blocks.getLastBlock();
+            if(lastBlock.height < newBlock) {
+                library.notification_center.notify('hasNewBlock', newBlock);
+            }
+            setImmediate(cb, null, 200);
+        }
     });
 };
 

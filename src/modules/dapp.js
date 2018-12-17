@@ -485,7 +485,7 @@ function Dapps(cb, scope) {
     setImmediate(cb, null, self);
 }
 
-Dapps.prototype.callApi = function (call, rpcjson, args, cb) {
+Dapps.prototype.callApi = function (call, rpcjson, args, peerIp, cb) {
     var callArgs = [args, cb];
     // execute
     if (rpcjson === '1.0') {

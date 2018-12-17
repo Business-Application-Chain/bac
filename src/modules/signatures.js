@@ -174,7 +174,7 @@ Signatures.prototype.sandboxApi = function (call, args, cb) {
     sandboxHelper.callMethod(shared, call, args, cb);
 };
 
-Signatures.prototype.callApi = function (call, rpcjson, args, cb) {
+Signatures.prototype.callApi = function (call, rpcjson, args, peerIp, cb) {
     var callArgs = [args, cb];
     // execute
     if (rpcjson === '1.0') {

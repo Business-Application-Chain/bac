@@ -330,9 +330,19 @@ privated.getTransactionsOrBlock = function (hash, cb) {
             library.dbClient.query(`SELECT * FROM blocks where hash like "%${hash}%" or height = "${hash}" `, {
                 type: Sequelize.QueryTypes.SELECT
             }).then((bRows) => {
-                result = bRows[0];
-                result.searchType = 0;
-                return cb(null, result);
+                return bRows[0];
+            }).then(block => {
+                if(!block)
+                    return cb({message: "not find hash"});
+                library.dbClient.query('SELECT * FROM `transactions` WHERE `blockHash` = $blockHash ', {
+                    type: Sequelize.QueryTypes.SELECT,
+                    bind: {
+                        blockHash: block.hash
+                    }
+                }).then((rows) => {
+                    block.transactions = rows;
+                    return cb(null, block);
+                });
             });
         }
     }).catch(err => {
@@ -524,7 +534,7 @@ Blocks.prototype.sandboxApi = function (call, args, cb) {
     sandboxHelper.callMethod(shared, call, args, cb);
 };
 
-Blocks.prototype.callApi = function (call, rpcjson, args, cb) {
+Blocks.prototype.callApi = function (call, rpcjson, args, peerIp, cb) {
     var callArgs = [args, cb];
     // execute
     if (rpcjson === '1.0') {
@@ -1055,8 +1065,9 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                     process.exit(0);
                                 }
                                 privated.lastBlock = block;
-                                library.log.Debug("saveBlock success");
-                                library.notification_center.notify('sendLastBlock');
+                                library.log.Debug("saveBlock success, block height is " + block.height);
+                                // library.notification_center.notify('sendNewBlock');
+                                self.sendNewBlock();
                                 library.modules.round.tick(block, done);
                                 // setImmediate(done);
                             });
@@ -1145,7 +1156,19 @@ Blocks.prototype.onHasNewBlock = function(block) {
 };
 
 Blocks.prototype.onSendLastBlock = function(cb) {
-    library.socket.webSocket.send('201|blocks|block|' + JSON.stringify(privated.lastBlock), cb);
+    let lastBlockJson = JSON.stringify(privated.lastBlock);
+    library.socket.webSocket.send('201|blocks|block|' + lastBlockJson, cb);
+};
+
+Blocks.prototype.sendNewBlock = function() {
+    let lastBlockJson = JSON.stringify(privated.lastBlock);
+    library.socket.webSocket.send('201|blocks|block|' + lastBlockJson);
+    if(library.modules.minersIp.checkMiner()) {
+        library.log.Debug("account is miner, send new block to peers");
+        library.modules.kernel.broadcast({limit: 100}, {api: '/kernel',func: 'addBlocks', data: lastBlockJson, method: "POST"});
+    } else {
+        library.log.Debug("account isn't miner");
+    }
 };
 
 shared_1_0.height = function(req, cb) {
