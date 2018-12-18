@@ -66,7 +66,7 @@
                                 </template>
                             </div>
                             <div class="lock-input" v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1"><x-input v-model="lockPassword" type="password" :placeholder="$t('Pleaseenterthepaymentpassword')"></x-input></div>
-                            <div class="lock-btn"><x-btn @click="lock" :disabled="lockBtnDisabled"  width="150px" type="primary"></x-btn></div>
+                            <div class="lock-btn"><x-btn @click="lock" :disabled="lockBtnDisabled"  width="150px" type="primary">{{$t('Submit')}}</x-btn></div>
                         </template>
                             
                        <template v-else>
