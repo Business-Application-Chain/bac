@@ -33,7 +33,7 @@
 
         <div class="network-sec">
             <div class="get-btn">
-                
+                <x-btn type="primary" @click="facut">获取测试币</x-btn>
             </div>
             <div class="sec-title">TEST NET {{$t('Synchronizationstatus')}}</div>
             <div class="sec-desc">{{$t('Synchronizing')}}: {{height}}/{{peerHeight}}</div>
@@ -45,6 +45,10 @@
 <script>
     import ws from '~/js/plugins/ws'
     import XBtn from '~/components/ui/XBtn.vue'
+    import axios  from 'axios'
+    import {mapState} from 'vuex'
+    import Toast from '~/components/ui/toast/index'
+    import config from '~/js/config'
 
     export default {
         data () {
@@ -60,6 +64,14 @@
         components: {
             XBtn
         },
+
+        computed: {
+            ...mapState({
+                account: state => state.account,
+                key: state =>  state.key
+            }),
+        },
+
         created () {
             ws.add(({mod, name, data}) => {
                 if (mod == 'kernel' && name == 'status') {
@@ -68,6 +80,17 @@
                     this.peerCount = data.peerCount
                 }
             })
+        },
+        methods: {
+            async facut () {
+                const res = await axios.get( config.facutIp + this.account.address[0])
+
+                if(res.data.code == 200) {
+                    Toast.success(this.$t('TransferSuccess') + res.data.result.transactionHash)
+                } else {
+                    Toast.error(res.data.error)
+                }
+            }
         }
     }
 </script>
