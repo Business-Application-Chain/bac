@@ -48,6 +48,7 @@
     import axios  from 'axios'
     import {mapState} from 'vuex'
     import Toast from '~/components/ui/toast/index'
+    import config from '~/js/config'
 
     export default {
         data () {
@@ -82,7 +83,7 @@
         },
         methods: {
             async facut () {
-                const res = await axios.get( 'http://13.229.137.253:1885/facut/' + this.account.address[0])
+                const res = await axios.get( config.facutIp + this.account.address[0])
 
                 if(res.data.code == 200) {
                     Toast.success(this.$t('TransferSuccess') + res.data.result.transactionHash)
