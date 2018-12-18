@@ -357,7 +357,7 @@ privated.getTransactionsOrBlock = function (hash, cb) {
 };
 
 privated.serachBlocksUseNumber = function (height, cb) {
-    library.dbClient.query(`SELECT * FROM blocks where hash like "%${hash}%" `, {
+    library.dbClient.query(`SELECT * FROM blocks where height = "${height}" `, {
         type: Sequelize.QueryTypes.SELECT
     }).then((bRows) => {
         let block = bRows[0];
@@ -1226,14 +1226,13 @@ shared_1_0.block = function(params, cb) {
     if(!bId) {
         return cb('missing block id', 11000);
     }
-    let tra = library.modules.transactions.getUnconfirmedTransactionHash(bId);
-    if(tra) {
-        tra.searchType = 1;
-        return cb(null, 200, tra);
-    }
     let re = /^[0-9]+.?[0-9]* /;
     if (!re.test(bId)) {
-
+        let tra = library.modules.transactions.getUnconfirmedTransactionHash(bId);
+        if(tra) {
+            tra.searchType = 1;
+            return cb(null, 200, tra);
+        }
         privated.getTransactionsOrBlock(bId, function (err, result) {
             if (err) {
                 return cb(err.message, 12001);
