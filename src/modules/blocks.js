@@ -320,7 +320,7 @@ privated.list = function (filter, cb) {
         return cb(err);
     });
 };
-
+// 0区块，1交易
 privated.getTransactionsOrBlock = function (hash, cb) {
     let result = {};
     library.dbClient.query(`SELECT * FROM transactions WHERE hash like "%${hash}%"`, {
@@ -334,7 +334,9 @@ privated.getTransactionsOrBlock = function (hash, cb) {
             library.dbClient.query(`SELECT * FROM blocks where hash like "%${hash}%" or height = "${hash}" `, {
                 type: Sequelize.QueryTypes.SELECT
             }).then((bRows) => {
-                return bRows[0];
+                let block = bRows[0];
+                block.searchType = 0;
+                return block;
             }).then(block => {
                 if(!block)
                     return cb({message: "not find hash"});
