@@ -149,9 +149,9 @@
                     let s = padStart(Math.floor((t - m * 60 * 1000) / 1000), 2, '0')
                     if (m > 0) {
                         m = padStart(m, 2, '0')
-                        return `${m}${this.$t('Minutes')}${s}${this.$t('Seconds')}${this.$t('ago')}`
+                        return `${m} ${this.$t('Minutes')} ${s} ${this.$t('Seconds')} ${this.$t('ago')}`
                     }else {
-                        return `${s}${this.$t('Seconds')}${this.$t('ago')}`
+                        return `${s} ${this.$t('Seconds')} ${this.$t('ago')}`
                     }
                     
                 } else {
