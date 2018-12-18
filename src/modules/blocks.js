@@ -331,7 +331,7 @@ privated.getTransactionsOrBlock = function (hash, cb) {
             result.searchType = 1;
             return cb(null, result);
         } else {
-            library.dbClient.query(`SELECT * FROM blocks where hash like "%${hash}%" or height = "${hash}" `, {
+            library.dbClient.query(`SELECT * FROM blocks where hash like "%${hash}%" `, {
                 type: Sequelize.QueryTypes.SELECT
             }).then((bRows) => {
                 let block = bRows[0];
@@ -353,6 +353,28 @@ privated.getTransactionsOrBlock = function (hash, cb) {
         }
     }).catch(err => {
         return cb(err);
+    });
+};
+
+privated.serachBlocksUseNumber = function (height, cb) {
+    library.dbClient.query(`SELECT * FROM blocks where hash like "%${hash}%" `, {
+        type: Sequelize.QueryTypes.SELECT
+    }).then((bRows) => {
+        let block = bRows[0];
+        block.searchType = 0;
+        return block;
+    }).then(block => {
+        if(!block)
+            return cb({message: "not find hash"});
+        library.dbClient.query('SELECT * FROM `transactions` WHERE `blockHash` = $blockHash ', {
+            type: Sequelize.QueryTypes.SELECT,
+            bind: {
+                blockHash: block.hash
+            }
+        }).then((rows) => {
+            block.transactions = rows;
+            return cb(null, block);
+        });
     });
 };
 
@@ -1209,16 +1231,31 @@ shared_1_0.block = function(params, cb) {
         tra.searchType = 1;
         return cb(null, 200, tra);
     }
-    privated.getTransactionsOrBlock(bId, function (err, result) {
-        if(err) {
-            return cb(err.message, 12001);
-        }
-        if(result)
-            return cb(null, 200, result);
-        else {
-            return cb('can not find transaction', 13004);
-        }
-    });
+    let re = /^[0-9]+.?[0-9]* /;
+    if (!re.test(bId)) {
+
+        privated.getTransactionsOrBlock(bId, function (err, result) {
+            if (err) {
+                return cb(err.message, 12001);
+            }
+            if (result)
+                return cb(null, 200, result);
+            else {
+                return cb('not find transaction', 13004);
+            }
+        });
+    } else {
+        privated.serachBlocksUseNumber(bId, function (err, result) {
+            if (err) {
+                return cb(err.message, 12001);
+            }
+            if (result)
+                return cb(null, 200, result);
+            else {
+                return cb('not find block height', 13004);
+            }
+        });
+    }
 };
 
 shared_1_0.getLastBlock = function(params, cb) {
