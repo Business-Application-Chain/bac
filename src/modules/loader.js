@@ -262,7 +262,7 @@ privated.findUpdate = function(lastBlock, peer, cb) {
             return cb();
         }
         var overTransactionList = [];
-        library.modules.transactions.undoUnconfirmedList(function (err, unconfirmedList) {
+        library.modules.transactions.undoBlockUnconfirmedList(lastBlock, function (err, unconfirmedList) {
             if (err) {
                 return process.exit(0);
             }

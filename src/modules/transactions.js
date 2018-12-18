@@ -427,7 +427,22 @@ Transactions.prototype.getUnconfirmedTransactionById = function (id) {
     return privated.unconfirmedTransactions[index];
 };
 
+Transactions.prototype.undoBlockUnconfirmedList = function (block, cb) {
+    var ids = [];
+    async.eachSeries(block.transactions, function (transaction, cb) {
+        if (transaction !== false && privated.unconfirmedTransactionsIdIndex[transaction.hash]) {
+            ids.push(transaction.hash);
+            self.undoUnconfirmed(transaction, cb);
+        } else {
+            setImmediate(cb);
+        }
+    }, function (err) {
+        cb(err, ids);
+    });
+};
+
 Transactions.prototype.undoUnconfirmedList = function (cb) {
+
     var ids = [];
     async.each(privated.unconfirmedTransactions, function (transaction, cb) {
         if (transaction !== false) {
@@ -572,6 +587,7 @@ Transactions.prototype.getUnconfirmedTransaction = function (id) {
 };
 
 Transactions.prototype.removeUnconfirmedTransaction = function (id) {
+    console.log("remove Unconfirmed Transaction; id -> ", id);
     var index = privated.unconfirmedTransactionsIdIndex[id];
     privated.unconfirmedTransactions[index] = false;
     delete privated.unconfirmedTransactionsIdIndex[id];
@@ -583,6 +599,7 @@ Transactions.prototype.addDoubleSpending = function (transaction) {
 
 Transactions.prototype.revertUnconfirmedTransactions = function (transactions) {
     privated.unconfirmedTransactions.push(transactions);
+    console.log();
     transactions.forEachAsync(function (item) {
         let index = privated.unconfirmedTransactions.length - 1;
         privated.unconfirmedTransactionsIdIndex[item.hash] = index;
@@ -590,13 +607,12 @@ Transactions.prototype.revertUnconfirmedTransactions = function (transactions) {
 };
 
 Transactions.prototype.onSendUnconfirmedTrs = function () {
-    // let unconfirmedTrs = privated.unconfirmedTransactions;
     let unconfirmedTrs = [];
+    console.log(privated.unconfirmedTransactions);
     privated.unconfirmedTransactions.forEach(item => {
         if(item)
             unconfirmedTrs.push(item);
     });
-    // console.log("unconfirmedTrs.length -> ", unconfirmedTrs.length);
     library.log.Info("unconfirmed transactions number", unconfirmedTrs.length);
     let send = [];
     let maxCount = unconfirmedTrs.length > 1000 ? 1000 : unconfirmedTrs.length;

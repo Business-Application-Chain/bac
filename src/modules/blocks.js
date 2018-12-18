@@ -905,7 +905,7 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
             return setImmediate(cb, e.toString());
         }
         block.height = privated.lastBlock.height + 1;
-        library.modules.transactions.undoUnconfirmedList(function (err, unconfirmedTransactions) {
+        library.modules.transactions.undoBlockUnconfirmedList(block, function (err, unconfirmedTransactions) {
             if (err) {
                 privated.isActive = false;
                 return process.exit(0);
