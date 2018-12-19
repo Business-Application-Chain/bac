@@ -1,4 +1,3 @@
-const newsList = {
-    data: [1,2,3,4,5,6,7,8]
-};
-console.log(JSON.stringify(newsList) + "");
+let re = /^[0-9]+.?[0-9]*/;
+let bId = "121";
+console.log(re.test(bId))

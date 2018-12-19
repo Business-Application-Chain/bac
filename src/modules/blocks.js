@@ -1226,7 +1226,7 @@ shared_1_0.block = function(params, cb) {
     if(!bId) {
         return cb('missing block id', 11000);
     }
-    let re = /^[0-9]+.?[0-9]* /;
+    let re = /^[0-9]+.?[0-9]*/;
     if (!re.test(bId)) {
         let tra = library.modules.transactions.getUnconfirmedTransactionHash(bId);
         if(tra) {
