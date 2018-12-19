@@ -11,7 +11,7 @@
  Target Server Version : 50721
  File Encoding         : 65001
 
- Date: 17/12/2018 13:48:34
+ Date: 19/12/2018 17:08:40
 */
 
 SET NAMES utf8mb4;
@@ -391,7 +391,7 @@ CREATE TABLE `peers` (
   `clock` bigint(13) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `ip_UNIQUE` (`ip`)
-) ENGINE=InnoDB AUTO_INCREMENT=6405833 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=6406862 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for peers_dapp
