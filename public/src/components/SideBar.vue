@@ -33,7 +33,7 @@
 
         <div class="network-sec">
             <div class="get-btn">
-                <x-btn type="primary" @click="facut">获取测试币</x-btn>
+                <x-btn type="primary" @click="facut">{{$t('GetTestCoins')}}</x-btn>
             </div>
             <div class="sec-title">TEST NET {{$t('Synchronizationstatus')}}</div>
             <div class="sec-desc">{{$t('Synchronizing')}}: {{height}}/{{peerHeight}}</div>
