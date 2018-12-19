@@ -132,5 +132,6 @@ export default {
     "PaymentPasswordsethint": 'Use a payment password (optional) to keep your account secure! Please wait a moment for the information to be successfully saved to the blockchain.',
     "CoreData": "Core Data",
     "Unconfirmed": "Unconfirmed",
-    "Pleasekeepthesameasthecodeclassname": "Please keep the same as the code class name"
+    "Pleasekeepthesameasthecodeclassname": "Please keep the same as the code class name",
+    "GetTestCoins": "Get Test Coins"
 }

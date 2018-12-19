@@ -132,5 +132,6 @@ export default {
     "PaymentPasswordsethint": "使用支付密码(可选)来保障帐户安全! 请稍待片刻等信息成功保存到区块链.",
     "CoreData": "核心数据",
     "Unconfirmed": "未确认",
-    "Pleasekeepthesameasthecodeclassname": "请保持与代码中类名相同"
+    "Pleasekeepthesameasthecodeclassname": "请保持与代码中类名相同",
+    "GetTestCoins": "获取测试币"
 }
