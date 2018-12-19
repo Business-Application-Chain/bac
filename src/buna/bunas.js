@@ -63,7 +63,7 @@ Bunas.prototype.dealCreateContract = function(txObj, tokens, cb) {
     let msg = {
         from: txObj.senderId
     };
-    let tToken = new Buna.default(msg, 0, {});
+    let tToken = new Buna.default(msg, 0, {}, dapp.gasLimit);
     let tt = tToken.runGetToken(dapp.className + "();");
     let tTokens = [];
     tokens.forEach(item => {
@@ -78,9 +78,9 @@ Bunas.prototype.dealCreateContract = function(txObj, tokens, cb) {
     }, 200);
 };
 
-Bunas.prototype.dealTokenContract = function(msg, balances, status, tokens) {
+Bunas.prototype.dealTokenContract = function(msg, balances, status, tokens, gasLimit) {
     return new Promise((resolve) => {
-        let handleDapp = new Buna.default(balances, msg, status);
+        let handleDapp = new Buna.default(balances, msg, status, gasLimit);
         handleDapp.runToken(tokens);
         setTimeout(function () {
             resolve(handleDapp);

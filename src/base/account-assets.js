@@ -126,7 +126,7 @@ AccountAssets.prototype.getDappBalance = function(address, transfers) {
     });
 };
 
-AccountAssets.prototype.getDappBalances = function(dappHash, senderId, params) {
+AccountAssets.prototype.getDappBalances = function(dappHash, senderId, params, gasLimit) {
     let _params = JSON.parse(params);
     let address = [];
     _params.forEach((item) => {

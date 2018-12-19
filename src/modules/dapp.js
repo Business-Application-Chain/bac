@@ -9,9 +9,9 @@ var ed = require('ed25519');
 
 function Dapp() {
     this.calculateFee = function (txObj, sender) {
-        let gasUsed = txObj.asset.dapp.gasUsed;
+        let gasLimit = txObj.asset.dapp.gasLimit;
         let gasPrice = txObj.asset.dapp.gasPrice;
-        return gasUsed * gasPrice;
+        return gasLimit * gasPrice;
     };
 
     this.create = function (data, txObj) {
@@ -45,9 +45,18 @@ function Dapp() {
                 },
                 issuersAddress: {
                     type: 'string'
+                },
+                gasUsed: {
+                    type: 'number'
+                },
+                gasLimit: {
+                    type: 'number'
+                },
+                gasPrice: {
+                    type: 'number'
                 }
             },
-            required: ['hash', 'className', 'issuersAddress']
+            required: ['hash', 'className', 'issuersAddress', 'gasUsed', 'gasLimit', 'gasPrice']
         });
 
         if (!report) {
@@ -110,9 +119,9 @@ function Dapp() {
             hash: raw.da_hash,
             className: raw.da_className,
             issuersAddress: raw.da_issuersAddress,
-            gasLimit: raw.da_gasLimit,
-            gasPrice: raw.da_gasPrice,
-            gasUsed: raw.da_gasUsed,
+            gasLimit: parseInt(raw.da_gasLimit),
+            gasPrice: parseInt(raw.da_gasPrice),
+            gasUsed: parseInt(raw.da_gasUsed),
             abi: JSON.parse(raw.da_abi),
             tokens: JSON.parse(raw.da_tokenList)
         };
@@ -131,7 +140,7 @@ function Dapp() {
                 dappState = 1;
             }
             console.log(JSON.stringify(cAbi));
-            return library.dbClient.query("INSERT INTO dapp2assets(`hash`, `name`, `symbol`, `decimals`, `totalAmount`, `transactionHash`, `createTime`, `accountId`, `others`, `contract`, `className`, `abi`, `tokenList`, `tokenCode`, `issuersAddress`, `status`) VALUES ($hash, $name, $symbol, $decimals, $totalAmount, $transactionHash, $createTime, $accountId, $others, $contract, $className, $abi, $tokenList, $tokenCode, $issuersAddress, $status)", {
+            return library.dbClient.query("INSERT INTO dapp2assets(`hash`, `name`, `symbol`, `decimals`, `totalAmount`, `transactionHash`, `createTime`, `accountId`, `others`, `contract`, `className`, `abi`, `tokenList`, `tokenCode`, `issuersAddress`, `status`, `gasLimit`, `gasPrice`, `gasUsed`) VALUES ($hash, $name, $symbol, $decimals, $totalAmount, $transactionHash, $createTime, $accountId, $others, $contract, $className, $abi, $tokenList, $tokenCode, $issuersAddress, $status, $gasLimit, $gasPrice, $gasUsed)", {
                 type: Sequelize.QueryTypes.INSERT,
                 bind: {
                     hash: dapp.hash,
@@ -151,9 +160,9 @@ function Dapp() {
                     tokenCode: " ",
                     issuersAddress: dapp.issuersAddress,
                     status: dappState,
-                    gasPrice: dappData.gasPrice,
-                    gasLimit: dappData.gasLimit,
-                    gasUsed: dappData.gasUsed
+                    gasPrice: dapp.gasPrice,
+                    gasLimit: dapp.gasLimit,
+                    gasUsed: dapp.gasUsed
                 },
             }).then(() => {
                 return library.base.accountAssets.addDappBalance(txObj.senderId, {
@@ -173,7 +182,9 @@ function Dapp() {
 
 function DoDapp() {
     this.calculateFee = function (txObj, sender) {
-        return 0.01 * constants.fixedPoint;
+        let gasLimit = txObj.asset.doDapp.gasLimit;
+        let gasPrice = txObj.asset.doDapp.gasPrice;
+        return gasLimit * gasPrice;
     };
 
     this.create = function (data, txObj) {
@@ -186,6 +197,8 @@ function DoDapp() {
         txObj.asset.doDapp = {
             dappHash: data.dappHash,
             fun: data.fun,
+            gasLimit: data.gasLimit,
+            gasPrice: 1,
             params: JSON.stringify(param),
         };
         return txObj;
@@ -206,9 +219,15 @@ function DoDapp() {
                 },
                 dappHash: {
                     type: 'string'
+                },
+                gasPrice: {
+                    type: 'number'
+                },
+                gasLimit: {
+                    type: 'number'
                 }
             },
-            required: ['params', 'fun', 'dappHash']
+            required: ['params', 'fun', 'dappHash', 'gasPrice', 'gasLimit']
         });
         if (!report) {
             throw new Error(library.schema.getLastError());
@@ -256,11 +275,6 @@ function DoDapp() {
 
     this.applyUnconfirmed = function (txObj, sender, cb) {
         setImmediate(cb);
-        // for(let i=0; i<param.length; i++) {
-        //     if(param[i] === account.master_address) {
-        //         return cb("合约参数错误", 11000);
-        //     }
-        // }
     };
 
     this.undoUnconfirmed = function (txObj, sender, cb) {
@@ -275,6 +289,8 @@ function DoDapp() {
             dappHash: raw.do_dappHash,
             fun: raw.do_fun,
             params: JSON.parse(raw.do_params),
+            gasLimit: parseInt(raw.do_gasLimit),
+            gasPrice: parseInt(raw.do_gasPrice),
         };
         return {doDapp: doDapp};
     };
@@ -294,7 +310,7 @@ function DoDapp() {
         }).then((row) => {
             if (row[0]) {
                 if (row[0].name && row[0].symbol && row[0].decimals && row[0].totalAmount) {
-                    return library.dbClient.query("INSERT INTO dapp2assets_handle(`dappHash`, `transactionHash`, `fun`, `params`, `timestamp`, `accountId`, `dealResult`) VALUES ($dappHash, $transactionHash, $fun, $params, $timestamp, $accountId, $dealResult)", {
+                    return library.dbClient.query("INSERT INTO dapp2assets_handle(`dappHash`, `transactionHash`, `fun`, `params`, `timestamp`, `accountId`, `dealResult`, `gasLimit`, `gasPrice`) VALUES ($dappHash, $transactionHash, $fun, $params, $timestamp, $accountId, $dealResult, $gasLimit, $gasPrice)", {
                         type: Sequelize.QueryTypes.INSERT,
                         bind: {
                             dappHash: doDapp.dappHash,
@@ -303,7 +319,9 @@ function DoDapp() {
                             accountId: txObj.senderId,
                             fun: doDapp.fun,
                             params: doDapp.params,
-                            dealResult: 0
+                            dealResult: 0,
+                            gasLimit: doDapp.gasLimit,
+                            gasPrice: doDapp.gasPrice
                         },
                     }).then(() => {
                         return library.base.accountAssets.getDappBalances(doDapp.dappHash, txObj.senderId, doDapp.params);
@@ -341,9 +359,10 @@ function DoDapp() {
                         return library.buna.buna.dealTokenContract({
                             from: txObj.senderId,
                             admin: _rows[0].dappAdmin
-                        }, balances, statuses, dealTokens);
+                        }, balances, statuses, dealTokens, doDapp.gasLimit);
                     }).then(dealValue => {
-                        if (dealValue.hadRuntimeError || dealValue.hadError) {
+                        library.log.Debug('gas used:' + dealValue.gasUsed);
+                        if (dealValue.hadRuntimeError || dealValue.hadError || dealValue.gasUsed === -1) {
                             return library.dbClient.query('UPDATE `dapp2assets_handle` SET `dealResult`=1 WHERE transactionHash=$transactionHash', {
                                 type: Sequelize.QueryTypes.UPDATE,
                                 bind: {
@@ -531,9 +550,9 @@ privated.findIssuersAddress = function (issuersAddress, cb) {
         }
     }).then((rows) => {
         if (!rows[0]) {
-            cb("issuers applyUnconfirmed is error")
+            return cb("not find dapp address");
         } else {
-            cb();
+            return cb();
         }
     }).catch((err) => {
         cb(err);
@@ -708,7 +727,7 @@ shared_1_0.upLoadDapp = function (params, cb) {
         if (err) {
             return cb(err.toString(), 13009);
         }
-        cb(null, 200, {transactionHash: transaction[0].hash, dappHash: transaction[0].asset.dapp.hash});
+        cb(null, 200, {transactionHash: transaction[0].hash, dappHash: transaction[0].asset.dapp.hash, fee: transaction[0].fee});
     })
 };
 // 调用合约方法
@@ -716,9 +735,9 @@ shared_1_0.handleDapp = function (params, cb) {
     let mnemonic = params[0] || '';
     let dappHash = params[1] || '';
     let fun = params[2] || '';
-    let param = params[3] || [];
-    let gasLimit = params[4] || 10000;
-    let secondSecret = params[4] || '';
+    let gasLimit = params[3] || 10000;
+    let param = params[4] || [];
+    let secondSecret = params[5] || '';
 
     if (!(mnemonic || fun || dappHash)) {
         return cb("miss must params", 11000);
@@ -757,6 +776,7 @@ shared_1_0.handleDapp = function (params, cb) {
                             params: param,
                             fun: fun,
                             dappHash: dappHash,
+                            gasLimit: gasLimit,
                             keypair: keyPair,
                             secondKeypair: secondKeypair,
                         });
@@ -771,7 +791,7 @@ shared_1_0.handleDapp = function (params, cb) {
         if (err) {
             return cb(err.toString(), 13009);
         }
-        cb(null, 200, {transactionHash: transaction[0].hash});
+        cb(null, 200, {transactionHash: transaction[0].hash, transactionFee: transaction[0].fee});
     });
 };
 // 转移合约所有人
@@ -875,8 +895,7 @@ shared_1_0.searchDappList = function (params, cb) {
         }
     }).catch((err) => {
         return cb(err, 11000);
-    })
-
+    });
 };
 
 shared_1_0.searchDappHash = function (params, cb) {
@@ -896,7 +915,6 @@ shared_1_0.searchDappHash = function (params, cb) {
         });
     }
 };
-
 // 查询自己的合约
 shared_1_0.searchMineList = function (params, cb) {
     let address = params[0];
@@ -991,6 +1009,3 @@ shared_1_0.transferDappFee = function(params, cb) {
     return cb(null, 200, fee);
 };
 module.exports = Dapps;
-
-
-

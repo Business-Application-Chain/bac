@@ -18,7 +18,8 @@ var Json2csv = require('json2csv').Parser;
 var header = ['b_hash', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward','b_generatorPublicKey','b_blockSignature', 'b_merkleRoot', 'b_difficulty', 'b_basic', 'b_decisionSignature', 'b_decisionAddress', 'b_minerHash',
     't_hash', 't_type','t_timestamp','t_senderPublicKey', 't_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature', 's_publicKey', 'd_address',
     'da_hash', 'da_issuersAddress','da_className', 'da_abi', 'da_tokenList', 'da_gasPrice', 'da_gasLimit', 'da_gasUsed',
-    'do_dappHash', 'do_fun', 'do_params', 'i_name', 'i_desc','i_issuersAddress', 'dt_dappHash',
+    'do_dappHash', 'do_fun', 'do_params', 'do_gasLimit', 'do_gasPrice',
+    'i_name', 'i_desc','i_issuersAddress', 'dt_dappHash',
     'c_address','u_alias', 'm_min','m_lifetime','m_keysgroup','t_requesterPublicKey','t_signatures', 'a_name', 'a_description', 'a_hash', 'a_decimal', 'a_total', 'tr_amount', 'tr_assetsHash', 'tr_assetsName', 'l_lockHeight', 'min_ip', 'min_port'];
 
 require('array.prototype.findindex'); // Old node fix
@@ -76,6 +77,8 @@ privated.blocksDataFields = {
     'do_dappHash': String,
     'do_fun': String,
     'do_params': String,
+    'do_gasLimit': Number,
+    'do_gasPrice': Number,
     'i_name': String,
     'i_desc': String,
     'i_issuersAddress': String,
@@ -108,7 +111,7 @@ privated.serchSql = 'SELECT '+
     's.publicKey as s_publicKey, ' +
     'd.address as d_address, ' +
     'da.hash as da_hash, da.issuersAddress as da_issuersAddress, da.className as da_className, da.abi as da_abi, da.tokenList as da_tokenList, da.gasPrice as da_gasPrice, da.gasLimit as da_gasLimit, da.gasUsed as da_gasUsed, ' +
-    'do.dappHash as do_dappHash, do.fun as do_fun, do.params as do_params, '+
+    'do.dappHash as do_dappHash, do.fun as do_fun, do.params as do_params, do.gasLimit as do_gasLimit, do.gasPrice as do_gasPrice, '+
     'i.name as i_name, i.desc as i_desc, i.issuersAddress as i_issuersAddress, '+
     'dt.dappHash as dt_dappHash, ' +
     'c.address as c_address, ' +
