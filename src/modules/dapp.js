@@ -362,7 +362,14 @@ function DoDapp() {
                         }, balances, statuses, dealTokens, doDapp.gasLimit);
                     }).then(dealValue => {
                         library.log.Debug('gas used:' + dealValue.gasUsed);
-                        if (dealValue.hadRuntimeError || dealValue.hadError || dealValue.gasUsed === -1) {
+                        if (dealValue.gasUsed === -1) {
+                            return library.dbClient.query('UPDATE `dapp2assets_handle` SET `dealResult`=2 WHERE transactionHash=$transactionHash', {
+                                type: Sequelize.QueryTypes.UPDATE,
+                                bind: {
+                                    transactionHash: txObj.hash
+                                }
+                            });
+                        } else if(dealValue.hadRuntimeError || dealValue.hadError) {
                             return library.dbClient.query('UPDATE `dapp2assets_handle` SET `dealResult`=1 WHERE transactionHash=$transactionHash', {
                                 type: Sequelize.QueryTypes.UPDATE,
                                 bind: {
@@ -370,11 +377,18 @@ function DoDapp() {
                                 }
                             });
                         } else {
-                            if (dealValue.tag === 1)
-                                return library.base.accountAssets.upDateDappBalances(dealValue.balance, dappHash);
-                            else {
-                                return library.base.accountAssets.upDateDappStatuses(dealValue.status, dappHash);
-                            }
+                            library.dbClient.query('UPDATE `dapp2assets_handle` SET `gasUsed`=$gasUsed WHERE transactionHash=$transactionHash', {
+                                type: Sequelize.QueryTypes.UPDATE,
+                                bind: {
+                                    gasUsed: dealValue.gasUsed,
+                                    transactionHash: txObj.hash
+                                }
+                            }).then(() => {
+                                if (dealValue.tag === 1)
+                                    return library.base.accountAssets.upDateDappBalances(dealValue.balance, dappHash);
+                                else
+                                    return library.base.accountAssets.upDateDappStatuses(dealValue.status, dappHash);
+                            });
                         }
                     }).then(() => {
                         cb();

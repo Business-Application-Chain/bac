@@ -219,8 +219,6 @@ Interpreter = function () {
         } }, { key: "checkNumberOperand", value: function checkNumberOperand(
 
         operator, operand) {
-            console.log("operator -> ", operator);
-            console.log("operand -> ", operand);
             if (/^\d+$/.test(operand))
             return;
             // if (typeof operand == "number") return;
@@ -228,6 +226,8 @@ Interpreter = function () {
         } }, { key: "checkNumberOperands", value: function checkNumberOperands(
 
         operator, left, right) {
+            if (/^\d+$/.test(right))
+                right = parseInt(right);
             if (typeof left == "number" && typeof right == "number") return;
             throw new _error.RuntimeError(operator, "Operands must be numbers.");
         } }, { key: "isTruthy", value: function isTruthy(
