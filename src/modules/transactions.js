@@ -658,6 +658,11 @@ Transactions.prototype.receiveTransactions = function (transactions, cb) {
     });
 };
 
+Transactions.prototype.removeUnconfirmedTransactionByHash = function(hash) {
+    let index = privated.unconfirmedTransactionsIdIndex[hash];
+    self.removeUnconfirmTransactionById(index);
+};
+
 // Events
 Transactions.prototype.onInit = function (scope) {
     modules_loaded = scope && scope != undefined ? true : false;

@@ -1030,6 +1030,7 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                     }
                                     library.modules.transactions.applyUnconfirmed(transaction, sender, function (err) {
                                         if (err) {
+                                            library.modules.transactions.removeUnconfirmedTransactionByHash(transaction.hash);
                                             return setImmediate(cb, "Failed to apply transaction: " + transaction.hash);
                                         }
                                         totalAmount += transaction.amount;
