@@ -135,5 +135,7 @@ export default {
     "Pleasekeepthesameasthecodeclassname": "请保持与代码中类名相同",
     "GetTestCoins": "获取测试币",
     "Gas": "消耗汽油",
-    "GasPlaceholder": '请输入消耗的汽油数量'
+    "GasPlaceholder": '请输入消耗的汽油数量',
+    "Insufficientgasoline": "汽油不足",
+    "Callfailed": "调用失败"
 }

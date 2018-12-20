@@ -119,7 +119,10 @@
                     <x-table-column prop="fun" :label="$t('CalledFunction')" min-width="180"></x-table-column>
                     <x-table-column :label="$t('Result')" min-width="100">
                         <template slot-scope="scope">
-                            {{scope.dealResult == 0 ? $t('Success') : $t('Fail')}}
+                            <div v-if="scope.dealResult == 0 " style="color:#77C86B">{{$t('Success')}}</div>
+                            <div v-if="scope.dealResult == 1 " style="color:#FF7E7E">{{$t('Callfailed')}}</div>
+                            <div v-if="scope.dealResult == 2 " style="color:#FF7E7E">{{$t('Insufficientgasoline')}}</div>
+                            
                         </template>
                     </x-table-column>
                 </x-table>

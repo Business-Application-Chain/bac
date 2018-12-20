@@ -135,5 +135,7 @@ export default {
     "Pleasekeepthesameasthecodeclassname": "Please keep the same as the code class name",
     "GetTestCoins": "Get Test Coins",
     "Gas": "Gas",
-    "GasPlaceholder": 'Please enter the gas'
+    "GasPlaceholder": 'Please enter the gas',
+    "Insufficientgasoline": "Insufficient gasoline",
+    "Callfailed": "Call failed"
 }
