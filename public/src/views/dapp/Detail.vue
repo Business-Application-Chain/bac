@@ -61,6 +61,28 @@
                 </div>
 
                 <div class="main-cell_id">
+                    <div class="main-title">{{$t('Gas')}}</div>
+                    <div class="main-primary">
+                        <div class="gas-wrapper">
+                            <x-input     
+                                v-model="gasLimit"
+                                type="text"
+                                :placeholder="$t('GasPlaceholder')"
+                                :no-error="true"
+                            >
+                            </x-input>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="main-cell_id">
+                    <div class="main-title">{{$t('Fee')}}</div>
+                    <div class="main-primary">
+                        {{fee }} BAC
+                    </div>
+                </div>
+
+                <div class="main-cell_id">
                     <div class="main-title" v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1" >{{PaymentPassword}}</div>
                     <div class="main-primary">
                         <div class="password-wrapper">
@@ -75,12 +97,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="main-cell_id">
-                    <div class="main-title">{{$t('Fee')}}</div>
-                    <div class="main-primary">
-                        {{fee | bac}} BAC
-                    </div>
-                </div>
+                
                 <div class="main-cell_id">
                     <div class="main-title"></div>
                     <div class="main-primary">
@@ -146,6 +163,7 @@
                 hash:this.$route.params.hash,
                 info:{},
                 active: '1',
+                gasLimit: '5000',
                 transactionList: [],
                 transactionCurPage: 1,
                 transactionPageCount: 1,
@@ -154,7 +172,7 @@
                 selectedFunc: {},
                 handleFuncLoading: false,
                 password: '',
-                fee: 0
+                
             }
         },
 
@@ -165,6 +183,9 @@
             }),
             dappParams () {
                 return this.selectedFunc.params.map(item => '')
+            },
+            fee () {
+                return this.gasLimit / Math.pow(10, 8)
             }
         },
         components: {
@@ -182,7 +203,7 @@
         created () {
             this.fetchInfo()    
             this.fetchTrans()
-            this.getHandleDappFee()
+            
         },
 
     
@@ -230,15 +251,9 @@
             
             async dappHandle () {
                 this.handleFuncLoading = true
-                const res = await api.dapp.handleDapp([this.key.mnemonic, this.hash, this.dappFunc, this.dappParams, sha256(this.password).toString()])
+                const res = await api.dapp.handleDapp([this.key.mnemonic, this.hash, this.dappFunc, parseFloat(this.gasLimit), this.dappParams, sha256(this.password).toString()])
                 if (res === null) return;
                 Toast.success(this.$t('Success'))
-            },
-
-            async getHandleDappFee () {
-                const res = await api.dapp.getHandleDappFee()
-                if (res === null) return;
-                this.fee = res
             }
         }
     }
@@ -307,7 +322,9 @@
         .password-wrapper{
             width: 300px
         }
-
+        .gas-wrapper{
+            width: 300px;
+        }
     }
 </style>
 

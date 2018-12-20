@@ -24,6 +24,15 @@
                         :placeholder="$t('Pleaseenterthedappclass')">
                     </x-input>
 
+                    <div class="modal-label">{{$t('Gas')}}</div>
+                    <x-input 
+                        v-model="gasLimit" 
+                        type="text"
+                        :placeholder="$t('GasPlaceholder')">
+                    </x-input>
+
+                    <div class="fee">{{$t('Fee')}} ≈ {{fee}} BAC</div>
+
                     <div v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1"  class="modal-label">{{$t('PaymentPassword')}}</div> 
                     <x-input 
                         v-if="account.secondsign == 1 || account.secondsign_unconfirmed == 1" 
@@ -115,6 +124,7 @@ class TestToken {
     }
 }`,
                 dappClass: '',
+                gasLimit: '3000',
                 btnLoading: false
             }
         },
@@ -122,7 +132,11 @@ class TestToken {
             ...mapState({
                 account: state => state.account,
                 key: state => state.key
-            })
+            }),
+
+            fee () {
+                return this.gasLimit / Math.pow(10, 8)
+            }
         },
 
         components: {
@@ -149,14 +163,8 @@ class TestToken {
                 }
                 
                 this.btnLoading = true
-
-                const fee = await api.dapp.getCreateDappFee()
-                if (fee === null) {
-                    this.btnLoading = false
-                    return;
-                }
                 
-                const msg = this.$t('CreateDappModal', {fee: fee / Math.pow(10, 8)})
+                const msg = this.$t('CreateDappModal', {fee: this.fee})
                 const confirm = this.$t('Confirm')
                 const cancel = this.$t('Cancel')
                 
@@ -164,7 +172,7 @@ class TestToken {
                     okText: confirm,
                     cancelText: cancel
                 }).then(async () => {
-                    const res = await api.dapp.uploadDapp([this.key.mnemonic, this.dappClass, this.code, sha256(this.password).toString()])
+                    const res = await api.dapp.uploadDapp([this.key.mnemonic, this.dappClass, parseFloat(this.gasLimit), this.code, sha256(this.password).toString()])
                     this.btnLoading = false
                     if (res === null) return;
                     Toast.success(this.$t('Success'))
@@ -199,7 +207,7 @@ class TestToken {
             margin-top: 20px;
         }
         
-        .modal-fee{
+        .modal-fee, .fee{
             color: #FF7E7E;
             font-size: 14px;
         }
@@ -213,6 +221,7 @@ class TestToken {
         .actions-cell_hd{
             flex: 1
         }
+    
 
         
     }

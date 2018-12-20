@@ -133,5 +133,7 @@ export default {
     "CoreData": "Core Data",
     "Unconfirmed": "Unconfirmed",
     "Pleasekeepthesameasthecodeclassname": "Please keep the same as the code class name",
-    "GetTestCoins": "Get Test Coins"
+    "GetTestCoins": "Get Test Coins",
+    "Gas": "Gas",
+    "GasPlaceholder": 'Please enter the gas'
 }

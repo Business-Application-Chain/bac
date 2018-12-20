@@ -133,5 +133,7 @@ export default {
     "CoreData": "核心数据",
     "Unconfirmed": "未确认",
     "Pleasekeepthesameasthecodeclassname": "请保持与代码中类名相同",
-    "GetTestCoins": "获取测试币"
+    "GetTestCoins": "获取测试币",
+    "Gas": "消耗汽油",
+    "GasPlaceholder": '请输入消耗的汽油数量'
 }

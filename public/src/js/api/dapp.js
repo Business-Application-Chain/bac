@@ -1,7 +1,7 @@
 import io from './io'
 
 export default {
-    //上传合约  params: [助记词，合约类名，合约代码，密码]
+    //上传合约  params: [mnemonic, className, gasLimit, contract, secondSecret]
     uploadDapp (params) {
         return io.post({
             api: 'dapp',
@@ -19,7 +19,7 @@ export default {
         }) 
     },
 
-    //执行合约 params: [mnemonic, dappHash, func, param, secondSecret]
+    //执行合约 params: [mnemonic, dappHash, fun, gasLimit,param, secondSecret]
     handleDapp (params) {
         return io.post({
             api: 'dapp',
