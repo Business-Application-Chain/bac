@@ -612,6 +612,8 @@ Transactions.prototype.onSendUnconfirmedTrs = function () {
     privated.unconfirmedTransactions.forEach(item => {
         if(item)
             unconfirmedTrs.push(item);
+        else
+            unconfirmedTrs.pop();
     });
     library.log.Info("unconfirmed transactions number", unconfirmedTrs.length);
     let send = [];
