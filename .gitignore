@@ -24,5 +24,6 @@ public/.sass-cache
 public/.tmp
 public/.gulp
 public/*.css
+public/node_modules
 *.save
 accountKey.json

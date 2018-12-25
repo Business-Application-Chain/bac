@@ -10,6 +10,7 @@ var ByteBuffer = require('bytebuffer');
 var extend = require('util-extend');
 var bacLib = require('bac-lib');
 var library, privated = {};
+var errorCode = require("../utils/error-code");
 
 // constructor
 function Transaction(scope, cb) {
@@ -532,13 +533,13 @@ Transaction.prototype.apply = function (txObj, blockObj, sender, cb) {
     }
 
     if (!this.ready(txObj, sender)) {
-        return setImmediate(cb, "Transaction is not ready: " + txObj.hash);
+        return setImmediate(cb, {message: "Transaction is not ready " + txObj.hash, code: errorCode.server.TRANSACTION_NOT_READY});
     }
 
     var amount = txObj.amount + txObj.fee;
 
-    if (sender.balance < amount && txObj.blockHash != genesisblock.block.hash) {
-        return setImmediate(cb, "Account [apply-sender] does not have enough token: " + txObj.hash);
+    if (sender.balance < amount && txObj.blockHash !== genesisblock.block.hash) {
+        return setImmediate(cb, {message: "Account [apply-sender] does not have enough token" + txObj.hash, code: errorCode.server.NOT_ENOUGH_TOKEN})
     }
 
     this.scope.account.merge(sender.master_address, {
@@ -557,7 +558,7 @@ Transaction.prototype.apply = function (txObj, blockObj, sender, cb) {
                     blockHash: blockObj.hash,
                     round: calc(blockObj.height)
                 }, function (err2) {
-                    cb(err2);
+                    cb({message: err2, code: errorCode.server.SERVER_ERROR});
                 });
             } else {
                 setImmediate(cb, err);
@@ -568,7 +569,7 @@ Transaction.prototype.apply = function (txObj, blockObj, sender, cb) {
 
 Transaction.prototype.undoUnconfirmed = function (trs, sender, cb) {
     if (!privated.types[trs.type]) {
-        return setImmediate(cb, "Unknown transaction type " + trs.type);
+        return setImmediate(cb, {message: "Unknown transaction type " + trs.type, code: errorCode.server.TRANSACTION_NOT_TYPE});
     }
 
     var amount = trs.amount + trs.fee;

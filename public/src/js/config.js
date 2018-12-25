@@ -1,8 +1,8 @@
-const baseUrl = '//10.0.100.91'
+const baseUrl = '//13.251.35.155'
 // const baseUrl = '//10.0.100.91'
 
 export default {
-    url: `http:${baseUrl}:7259/`,
+    url: `http:${baseUrl}:8080/`,
     websocketUrl: `ws:${baseUrl}:18008`,
     version: '0.1.3',
     os: 'vue',
