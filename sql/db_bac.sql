@@ -11,11 +11,22 @@
  Target Server Version : 50721
  File Encoding         : 65001
 
- Date: 19/12/2018 17:08:40
+ Date: 26/12/2018 14:51:50
 */
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
+
+-- ----------------------------
+-- Table structure for SequelizeMeta
+-- ----------------------------
+DROP TABLE IF EXISTS `SequelizeMeta`;
+CREATE TABLE `SequelizeMeta` (
+  `name` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  PRIMARY KEY (`name`),
+  UNIQUE KEY `name` (`name`),
+  UNIQUE KEY `SequelizeMeta_name_unique` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- ----------------------------
 -- Table structure for account2assets
@@ -86,7 +97,7 @@ CREATE TABLE `accounts` (
 -- ----------------------------
 DROP TABLE IF EXISTS `accounts2asset_balance`;
 CREATE TABLE `accounts2asset_balance` (
-  `assetsHash` varchar(64) CHARACTER SET latin1 DEFAULT NULL,
+  `assetsHash` varchar(64) DEFAULT NULL,
   `assets_name` varchar(32) CHARACTER SET latin1 DEFAULT NULL,
   `master_address` varchar(64) CHARACTER SET latin1 DEFAULT NULL,
   `balance` bigint(20) DEFAULT NULL
@@ -391,7 +402,7 @@ CREATE TABLE `peers` (
   `clock` bigint(13) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `ip_UNIQUE` (`ip`)
-) ENGINE=InnoDB AUTO_INCREMENT=6406862 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=6406838 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for peers_dapp
