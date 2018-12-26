@@ -39,7 +39,7 @@
     "express-query-int": "^3.0.0",
     "extend": "^3.0.1",
     "fast-glob": "^2.2.2",
-    "ffi": "^2.2.0",
+    "ffi": "^2.3.0",
     "fs-readfile-promise": "^3.0.1",
     "hashmap": "^2.3.0",
     "ip": "^1.1.5",

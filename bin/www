@@ -17,7 +17,12 @@ var Sequence = require('../src/utils/sequence.js');
 
 process.stdin.resume();
 
-var versionBuild = fs.readFileSync(path.join(__dirname, '../build'), 'utf8');
+// var versionBuild = fs.readFileSync(path.join(__dirname, '../build'), 'utf8');
+var versionBuild
+fs.readFile(path.join(__dirname, '../build'), function (err, data) {
+    console.log(data);
+    versionBuild = data;
+});
 
 var log = new Log15({echo: appConfig.echoLogLevel, recLevel: appConfig.outputLogLevel});
 
