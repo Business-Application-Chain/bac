@@ -1184,7 +1184,11 @@ Blocks.prototype.loadBlocksData = function(filter, options, cb) {
 
 
 Blocks.prototype.onHasNewBlock = function(block) {
-    self.processBlock(block, true);
+    // self.processBlock(block, true);
+    library.sequence.add(function (cb) {
+        self.processBlock(block, true);
+        setImmediate(cb);
+    })
 };
 
 Blocks.prototype.onSendLastBlock = function(cb) {
