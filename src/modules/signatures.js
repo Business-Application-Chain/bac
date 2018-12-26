@@ -10,6 +10,7 @@ var crypto = require('crypto');
 var ed = require('ed25519');
 var TransactionTypes = require('../utils/transaction-types.js');
 var ByteBuffer = require('bytebuffer');
+const errorCode = require('../utils/error-code');
 
 // private objects
 var modules_loaded, library, self, privated = {}, shared = {}, shared_1_0 = {};
@@ -197,12 +198,12 @@ shared_1_0.addSignature = function(params, cb) {
         multisigAccountPublicKey: params[3] || ''
     };
     if(!(query.secret && query.secondSecret && query.publicKey)) {
-        return cb(11000, 'miss must params');
+        return cb('miss must params', errorCode.server.MISSING_PARAMS);
     }
     let keyPair = library.base.account.getKeypair(query.secret);
     if (query.publicKey) {
         if (keyPair.getPublicKeyBuffer().toString('hex') !== query.publicKey) {
-            return cb("Invalid passphrase", 13005);
+            return cb("Invalid passphrase", errorCode.transactions.INVALID_PASSPHRASE);
         }
     }
     library.balancesSequence.add(function (cb) {
@@ -211,14 +212,14 @@ shared_1_0.addSignature = function(params, cb) {
                 return cb(err.toString());
             }
             if (!account || !account.master_pub) {
-                return cb("Invalid account", 13007);
+                return cb("Invalid account", errorCode.transactions.INVALID_ACCOUNT);
             }
             if (account.secondsign || account.secondsign_unconfirmed) {
-                return cb("Invalid second passphrase", 13008);
+                return cb("Invalid second passphrase", errorCode.transactions.INVALID_SECOND_PASSPHRASE);
             }
             let lastHeight = library.modules.blocks.getLastBlock().height;
             if(account.lockHeight > lastHeight) {
-                return cb("Account is locked", 11000);
+                return cb("Account is locked", errorCode.account.IS_LOCKING);
             }
             var secondHash = crypto.createHash('sha256').update(query.secondSecret, 'utf8').digest();
             var secondKeypair = ed.MakeKeypair(secondHash);
@@ -230,13 +231,13 @@ shared_1_0.addSignature = function(params, cb) {
                     secondKeypair: secondKeypair
                 });
             } catch (e) {
-                return cb(e.toString(), 15004);
+                return cb(e.toString(), errorCode.account.ADD_SIGNATURES_FAILURE);
             }
             library.modules.transactions.receiveTransactions([transaction], cb);
         });
     }, function (err, transaction) {
         if (err) {
-            return cb(err.toString(), 15004);
+            return cb(err.toString(), errorCode.account.ADD_SIGNATURES_FAILURE);
         }
         cb(null, 200, {transaction: transaction[0]});
     });

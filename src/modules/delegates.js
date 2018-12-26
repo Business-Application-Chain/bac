@@ -10,6 +10,7 @@ var shuffle = require('knuth-shuffle').knuthShuffle;
 var ed = require('ed25519');
 var slots = require('../utils/slots.js');
 var crypto = require('crypto');
+const errorCode = require('../utils/error-code');
 
 require('array.prototype.find'); // Old node fix
 
@@ -439,47 +440,6 @@ Delegates.prototype.checkDelegates = function (publicKey, votes, cb) {
 
 Delegates.prototype.checkUnconfirmedDelegates = function (publicKey, votes, cb) {
     setImmediate(cb);
-    // if (util.isArray(votes)) {
-    //     library.modules.accounts.getAccount({master_pub: publicKey}, function (err, account) {
-    //         if (err) {
-    //             return cb(err);
-    //         }
-    //         if (!account) {
-    //             return cb("Account not found");
-    //         }
-    //
-    //         async.eachSeries(votes, function (action ,cb) {
-    //             var math = action[0];
-    //
-    //             if (math !== '+' && math !== '-') {
-    //                 return cb("Invalid math operator");
-    //             }
-    //
-    //             var publicKey = action.slice(1);
-    //
-    //             if (math == "+" && (account.delegates_unconfirmed !== null && account.delegates_unconfirmed.indexOf(publicKey) != -1)) {
-    //                 return cb("Failed to add vote, account has already voted for this delgate");
-    //             }
-    //             if (math == "-" && (account.delegates_unconfirmed === null || account.delegates_unconfirmed.indexOf(publicKey) === -1)) {
-    //                 return cb("Failed to remove vote, account has not voted for this delegate");
-    //             }
-    //
-    //             library.modules.accounts.getAccount({master_pub: publicKey, isDelegate: 1}, function (err, account) {
-    //                 if (err) {
-    //                     return cb(err);
-    //                 }
-    //
-    //                 if (!account) {
-    //                     return cb("Delegate not found account");
-    //                 }
-    //
-    //                 cb();
-    //             });
-    //         }, cb);
-    //     });
-    // } else {
-    //     return setImmediate(cb, "Please provide an array of votes 222222222222");
-    // }
 };
 
 Delegates.prototype.fork = function (block, cause) {
@@ -537,23 +497,23 @@ shared_1_0.addNewMiners = function(params, cb) {
     let mnemonic = params[0] || '';
     let secondSecret = params[1] || '';
     if(!mnemonic)
-        return cb(11000, 'miss must params');
+        return cb('miss must params', errorCode.server.MISSING_PARAMS);
     let keyPair = library.base.account.getKeypair(mnemonic);
     let publicKey = keyPair.getPublicKeyBuffer().toString('hex');
     library.balancesSequence.add(function (cb) {
         library.modules.accounts.getAccount({master_pub: publicKey}, function (err, account) {
             if (err) {
-                return cb(err.toString(), 11003);
+                return cb(err.toString(), errorCode.server.ACCOUNT_ERROR);
             }
             if (!account || !account.master_pub) {
-                return cb("Invalid account", 13007);
+                return cb("Invalid account", errorCode.transactions.INVALID_ACCOUNT);
             }
 
             if (account.secondsign && !secondSecret) {
-                return cb("Invalid second passphrase", 13008);
+                return cb("Invalid second passphrase", errorCode.transactions.INVALID_SECOND_PASSPHRASE);
             }
             if (account.isDelegate || account.isDelegate_unconfirmed) {
-                return cb('the account is already be delegate', 13009);
+                return cb('the account is already be delegate', errorCode.transactions.ADD_TRANSACTION_FAILURE);
             }
             let secondKeypair = null;
             if (account.secondsign) {
@@ -562,7 +522,7 @@ shared_1_0.addNewMiners = function(params, cb) {
             }
             let lastHeight = library.modules.blocks.getLastBlock().height;
             if(account.lockHeight > lastHeight) {
-                return cb("Account is locked", 11000);
+                return cb("Account is locked", errorCode.account.IS_LOCKING);
             }
             try {
                 var transaction = library.base.transaction.create({
@@ -572,13 +532,13 @@ shared_1_0.addNewMiners = function(params, cb) {
                     secondKeypair: secondKeypair
                 });
             } catch (e) {
-                return cb(e.toString(), 15001);
+                return cb(e.toString(), errorCode.miner.SET_MINER_IP_ERROR);
             }
             library.modules.transactions.receiveTransactions([transaction], cb);
         });
     }, function (err, transaction) {
         if(err) {
-            return cb(err.toString(), 15001);
+            return cb(err.toString(), errorCode.miner.SET_MINER_IP_ERROR);
         } else {
             return cb(null, 200, {transaction: transaction[0]});
         }

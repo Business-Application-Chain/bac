@@ -4,6 +4,7 @@ var ip = require('ip');
 var Sequelize = require('sequelize');
 var modules_loaded, library, self, privated = {}, shared_1_0 = {};
 var crypto = require('crypto');
+const errorCode = require('../utils/error-code');
 
 function MinerIp() {
     this.calculateFee = function (txObj, sender) {
@@ -216,30 +217,30 @@ shared_1_0.setMinerIp = function(params, cb) {
         secondSecret: params[3] || ''
     };
     if(!(query.mnemonic && query.ip && query.port)) {
-        return cb('miss must params', 11000);
+        return cb('miss must params', errorCode.server.MISSING_PARAMS);
     }
     let userIp = ip.toLong(query.ip);
     let userPort = query.port;
     if(typeof userPort !== "number") {
-        return cb('port must be number', 11000);
+        return cb('port must be number', errorCode.server.MISSING_PARAMS);
     }
     let keyPair = library.base.account.getKeypair(query.mnemonic);
     let publicKey = keyPair.getPublicKeyBuffer().toString('hex');
     library.balancesSequence.add(function (cb) {
         library.modules.accounts.getAccount({master_pub: publicKey}, function (err, account) {
             if (err) {
-                return cb(err.toString(), 11003);
+                return cb(err.toString(), errorCode.server.ACCOUNT_ERROR);
             }
             if (!account || !account.master_pub) {
-                return cb("Invalid account", 13007);
+                return cb("Invalid account", errorCode.transactions.INVALID_ACCOUNT);
             }
 
             if (account.secondsign && !query.secondSecret) {
-                return cb("Invalid second passphrase", 13008);
+                return cb("Invalid second passphrase", errorCode.transactions.INVALID_SECOND_PASSPHRASE);
             }
 
             if(!account.isDelegate) {
-                return cb("only miner can set ip", 13009);
+                return cb("only miner can set ip", errorCode.transactions.ADD_TRANSACTION_FAILURE);
             }
 
             var secondKeypair = null;
@@ -250,7 +251,7 @@ shared_1_0.setMinerIp = function(params, cb) {
             }
             let lastHeight = library.modules.blocks.getLastBlock().height;
             if(account.lockHeight > lastHeight) {
-                return cb("Account is locked", 11000);
+                return cb("Account is locked", errorCode.account.IS_LOCKING);
             }
             try {
                 var transaction = library.base.transaction.create({
@@ -262,13 +263,13 @@ shared_1_0.setMinerIp = function(params, cb) {
                     secondKeypair: secondKeypair
                 });
             } catch (e) {
-                return cb(e.toString(), 15001);
+                return cb(e.toString(), errorCode.dapp.SET_MINER_IP_ERROR);
             }
             library.modules.transactions.receiveTransactions([transaction], cb);
         });
     }, function (err, transaction) {
         if (err) {
-            return cb(err.toString(), 15001);
+            return cb(err.toString(), errorCode.dapp.SET_MINER_IP_ERROR);
         }
         cb(null, 200, {transaction: transaction[0]});
     });

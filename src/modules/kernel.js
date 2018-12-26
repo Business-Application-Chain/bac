@@ -1,22 +1,16 @@
 var util = require('util');
-var extend = require('extend');
 var async = require('async');
 var path = require('path');
 var fs = require('fs');
 var sandboxHelper = require('../utils/sandbox.js');
 var ip = require('ip');
 var request = require('request');
-var fatch = require('node-fetch');
 var _ = require('underscore');
-var zlib = require('zlib');
-var crypto = require('crypto');
-var bignum = require('../utils/bignum.js');
-var express = require('express');
-var router = express.Router();
 var Sequelize = require('sequelize');
 var bacLib = require('bac-lib');
 // private objects
 var modules_loaded, library, self, privated = {}, shared_1_0 = {}, peerIp = "";
+const errorCode = require('../utils/error-code');
 
 privated.headers = {};
 privated.loaded = false;
@@ -162,12 +156,10 @@ Kernel.prototype.getFromPeerNews = function (peer, options, cb) {
                 }
             }
             return cb && cb(err || ("Request status code " + response.statusCode));
-
         }
 
         response.headers.port = parseInt(response.headers.port);
         response.headers['share-port'] = parseInt(response.headers['share-port']);
-
         var report = library.schema.validate(response.headers, {
             type: 'object',
             properties: {
@@ -239,7 +231,6 @@ Kernel.prototype.getFromPeer = function (peer, options, cb) {
     request(req, function (err, response, body) {
         if (err || response.statusCode !== 200) {
             // library.log.Debug("Request", "Error", err);
-
             if (peer) {
                 if (err && (err.code == 'ETIMEOUT' || err.code == 'ESOCKETTIMEOUT' || err.code == 'ECONNREFUSED')) {
                     library.modules.peer.remove(peer.ip, peer.port, function (err) {
@@ -257,11 +248,9 @@ Kernel.prototype.getFromPeer = function (peer, options, cb) {
                     }
                 }
             }
-
             cb && cb(err || ("Request status code " + response.statusCode));
             return;
         }
-
         response.headers.port = parseInt(response.headers.port);
         response.headers['share-port'] = parseInt(response.headers['share-port']);
 
@@ -305,7 +294,6 @@ Kernel.prototype.getFromPeer = function (peer, options, cb) {
                 version: response.headers['version']
             });
         }
-
         return cb && cb(null, {body: body, peer: peer});
     });
 };
@@ -399,14 +387,11 @@ Kernel.prototype.onShouldVerify = function (signMsg) {
     library.socket.webSocket.send('201|kernel|shouldVerify|' + JSON.stringify(verifyRes));
 };
 
-Kernel.prototype.onAddressNewBlock = function (addMap) {
-
-};
 
 shared_1_0.list = function (req, cb) {
     library.modules.peer.list({limit: 100}, function (err, peers) {
         if (err) {
-            return cb(err, 16001);
+            return cb(err, errorCode.kernel.GET_PEER_LIST_FAILURE);
         } else {
             return cb(null, 200, peers);
         }
@@ -429,12 +414,11 @@ shared_1_0.getBlockHeight = function (req, cb) {
             return cb(null, 200, rows[0].height);
         }
         else {
-            // console.log("kernel getBlockHeight -> " + req[0]);
-            return cb("not find blocks", 11000);
+            return cb("not find blocks", errorCode.blocks.NOT_FIND_BLOCK);
         }
     }).catch(err => {
         console.log(err);
-        cb(null, 11000);
+        return cb(err, errorCode.server.SERVER_ERROR);
     });
 };
 
@@ -463,7 +447,7 @@ shared_1_0.addBlocks = function(params, cb) {
 shared_1_0.blocks = function (params, cb) {
     let lastBlockHash = params[0] || undefined;
     if (!lastBlockHash) {
-        return cb('params is error', 11000);
+        return cb('missing params', errorCode.server.MISSING_PARAMS);
     }
     let blocksLimit = 300;
     library.modules.blocks.loadBlocksData({
@@ -473,7 +457,7 @@ shared_1_0.blocks = function (params, cb) {
         plain: false
     }, function (err, data) {
         if (err) {
-            return cb(err, 16002);
+            return cb(err, errorCode.kernel.GET_BLOCKS_FAILURE);
         }
         return cb(null, 200, data);
     });
@@ -490,7 +474,7 @@ shared_1_0.blocks_common = function (params, cb) {
     let min = reqParams.min || 0;
     let ids = reqParams.ids || '';
     if (max === 0 || min === 0 || ids === '') {
-        return cb('params is error', 11000);
+        return cb('params is error', errorCode.server.MISSING_PARAMS);
     }
     ids = ids.split(',');
     let escapedIds = ids.map(function (id) {
@@ -505,7 +489,7 @@ shared_1_0.blocks_common = function (params, cb) {
         return cb(null, 200, commonBlock);
     }).catch((err) => {
         console.log(err);
-        cb(err, 11000);
+        cb(err, errorCode.server.SERVER_ERROR);
     });
 };
 
@@ -521,14 +505,14 @@ shared_1_0.addTransactions = function (params, cb) {
     } catch (e) {
         console.log("addTransactions is catch")
         console.log(e);
-        return cb(16004, "Invalid transaction body");
+        return cb("Invalid transaction body", errorCode.kernel.INVALID_TRANSACTION_BODY);
     }
     library.balancesSequence.add(function (cb) {
         library.modules.transactions.receiveTransactions([transaction], cb);
     }, function (err) {
         if (err) {
             // console.log(err);
-            return cb(err, 16005);
+            return cb(err, errorCode.kernel.ADD_TRANSACTION_FAILURE);
         } else {
             return cb(null, 200, "success");
         }
@@ -564,14 +548,14 @@ shared_1_0.transactions = function (req, cb) {
         if (peerIp && report) {
             library.modules.peer.state(ip.toLong(peerIp), req.headers.port, 0, 3600);
         }
-        return cb("Invalid transaction body", 16004);
+        return cb("Invalid transaction body", errorCode.kernel.INVALID_TRANSACTION_BODY);
     }
 
     library.balancesWorkQueue.add(function (cb) {
         library.modules.transactions.receiveTransactions([transaction], cb);
     }, function (err) {
         if (err) {
-            return cb(null, 16003);
+            return cb(null, errorCode.kernel.GET_TRANSACTION_LIST_FAILURE);
 
         } else {
             return cb(null, 200, "SUCCESS");

@@ -6,6 +6,7 @@ var bip39 = require('bip39');
 var bacLib = require('bac-lib');
 var library, self, privated = {}, shared_1_0 = {};
 var ed = require('ed25519');
+var errorCode = require('../utils/error-code');
 
 function Dapp() {
     this.calculateFee = function (txObj, sender) {
@@ -564,7 +565,7 @@ privated.findIssuersAddress = function (issuersAddress, cb) {
         }
     }).then((rows) => {
         if (!rows[0]) {
-            return cb("not find dapp address");
+            return cb({msg: "not find dapp address", code: errorCode.dapp.DAPP_NOT_FIND});
         } else {
             return cb();
         }
@@ -667,7 +668,7 @@ shared_1_0.upLoadDapp = function (params, cb) {
     let msg = params[3] || '';
     let secondSecret = params[4] || '';
     if (!(mnemonic && msg && className)) {
-        return cb("miss must params", 11000);
+        return cb("miss must params", errorCode.server.MISSING_PARAMS);
     }
     let keyPair = library.base.account.getKeypair(mnemonic);
     let publicKey = keyPair.getPublicKeyBuffer().toString('hex');
@@ -677,13 +678,13 @@ shared_1_0.upLoadDapp = function (params, cb) {
     library.balancesSequence.add(function (cb) {
         library.modules.accounts.getAccount(query, function (err, account) {
             if (err) {
-                return cb(err.toString(), 11003);
+                return cb(err.toString(), errorCode.server.ACCOUNT_ERROR);
             }
             if (!account || !account.master_pub) {
-                return cb("Invalid account", 13007);
+                return cb("Invalid account", errorCode.account.INVALID_ACCOUNT);
             }
             if (account.secondsign && !secondSecret) {
-                return cb("Invalid second passphrase", 13008);
+                return cb("Invalid second passphrase", errorCode.account.INVALID_SECOND_PASSPHRASE);
             }
             var secondKeypair = null;
             if (account.secondsign) {
@@ -693,11 +694,11 @@ shared_1_0.upLoadDapp = function (params, cb) {
             let lastBlock = library.modules.blocks.getLastBlock();
             let lastBlockHeight = lastBlock.height;
             if (account.lockHeight > lastBlockHeight) {
-                return cb("Account is locked", 11000);
+                return cb("Account is locked", errorCode.account.IS_LOCKING);
             }
             privated.checkAccount(account, function (err, issuersAddress) {
                 if (err) {
-                    cb(err, 11000);
+                    cb(err, errorCode.server.SERVER_ERROR);
                 } else {
                     library.buna.buna.testContract({
                         accountId: account.master_address,
@@ -705,10 +706,10 @@ shared_1_0.upLoadDapp = function (params, cb) {
                         className: className
                     }, gasLimit, function (err, dappData) {
                         if (err || dappData.hadError) {
-                            return cb(err || "合约缺少关键属性", 11000);
+                            return cb(err || "合约缺少关键属性", errorCode.dapp.DAPP_MISS_MUST_PARAMS);
                         } else {
                             if(dappData.gasUsed === -1) {
-                                return cb("gas is not enough", 11000);
+                                return cb("gas is not enough", errorCode.dapp.GAS_IN_NOT_ENOUGH);
                             }
                             if (dappData.name && dappData.symbol && dappData.decimals && dappData.totalAmount) {
                                 dappData.token.pop();
@@ -726,11 +727,11 @@ shared_1_0.upLoadDapp = function (params, cb) {
                                         issuersAddress: issuersAddress || " "
                                     });
                                 } catch (e) {
-                                    return cb(e.toString(), 13009);
+                                    return cb(e.toString(), errorCode.dapp.UPLOAD_DAPP_FAILURE);
                                 }
                                 library.modules.transactions.receiveTransactions([transaction], cb);
                             } else {
-                                return cb("合约不正确", 11111);
+                                return cb("合约不正确", errorCode.dapp.DAPP_IS_ERROR);
                             }
                         }
                     });
@@ -739,7 +740,7 @@ shared_1_0.upLoadDapp = function (params, cb) {
         });
     }, function (err, transaction) {
         if (err) {
-            return cb(err.toString(), 13009);
+            return cb(err.toString(), errorCode.dapp.UPLOAD_DAPP_FAILURE);
         }
         cb(null, 200, {transactionHash: transaction[0].hash, dappHash: transaction[0].asset.dapp.hash, fee: transaction[0].fee});
     })
@@ -754,20 +755,20 @@ shared_1_0.handleDapp = function (params, cb) {
     let secondSecret = params[5] || '';
 
     if (!(mnemonic || fun || dappHash)) {
-        return cb("miss must params", 11000);
+        return cb("miss must params", errorCode.server.MISSING_PARAMS);
     }
     let keyPair = library.base.account.getKeypair(mnemonic);
     let publicKey = keyPair.getPublicKeyBuffer().toString('hex');
     library.balancesSequence.add(function (cb) {
         library.modules.accounts.getAccount({master_pub: publicKey}, function (err, account) {
             if (err) {
-                return cb(err.toString(), 11003);
+                return cb(err.toString(), errorCode.server.SERVER_ERROR);
             }
             if (!account || !account.master_pub) {
-                return cb("Invalid account", 13007);
+                return cb("Invalid account", errorCode.transactions.INVALID_ACCOUNT);
             }
             if (account.secondsign && !secondSecret) {
-                return cb("Invalid second passphrase", 13008);
+                return cb("Invalid second passphrase", errorCode.transactions.INVALID_SECOND_PASSPHRASE);
             }
             var secondKeypair = null;
             if (account.secondsign) {
@@ -777,11 +778,11 @@ shared_1_0.handleDapp = function (params, cb) {
             let lastBlock = library.modules.blocks.getLastBlock();
             let lastBlockHeight = lastBlock.height;
             if (account.lockHeight > lastBlockHeight) {
-                return cb("Account is locked", 11000);
+                return cb("Account is locked", errorCode.account.IS_LOCKING);
             }
             privated.findIssuersAddress(dappHash, function (err) {
                 if (err) {
-                    return cb(err, 11000);
+                    return cb(err.msg, err.code);
                 } else {
                     try {
                         var transaction = library.base.transaction.create({
@@ -795,7 +796,7 @@ shared_1_0.handleDapp = function (params, cb) {
                             secondKeypair: secondKeypair,
                         });
                     } catch (e) {
-                        return cb(e.toString(), 13009);
+                        return cb(e.toString(), errorCode.server.SERVER_ERROR);
                     }
                     library.modules.transactions.receiveTransactions([transaction], cb);
                 }
@@ -803,7 +804,7 @@ shared_1_0.handleDapp = function (params, cb) {
         });
     }, function (err, transaction) {
         if (err) {
-            return cb(err.toString(), 13009);
+            return cb(err.toString(), errorCode.dapp.DO_DAPP_FAILURE);
         }
         cb(null, 200, {transactionHash: transaction[0].hash, transactionFee: transaction[0].fee});
     });
@@ -815,20 +816,20 @@ shared_1_0.transferDapp = function (params, cb) {
     let transferAddress = params[2] || '';
     let secondSecret = params[3] || '';
     if (!(mnemonic && dappHash && transferAddress)) {
-        return cb("miss must params", 11000);
+        return cb("miss must params", errorCode.server.MISSING_PARAMS);
     }
     let keyPair = library.base.account.getKeypair(mnemonic);
     let publicKey = keyPair.getPublicKeyBuffer().toString('hex');
     library.balancesSequence.add(function (cb) {
         library.modules.accounts.getAccount({master_pub: publicKey}, function (err, account) {
             if (err) {
-                return cb(err.toString(), 11003);
+                return cb(err.toString(), errorCode.server.SERVER_ERROR);
             }
             if (!account || !account.master_pub) {
-                return cb("Invalid account", 13007);
+                return cb("Invalid account", errorCode.transactions.INVALID_ACCOUNT);
             }
             if (account.secondsign && !secondSecret) {
-                return cb("Invalid second passphrase", 13008);
+                return cb("Invalid second passphrase", errorCode.transactions.INVALID_SECOND_PASSPHRASE);
             }
             var secondKeypair = null;
             if (account.secondsign) {
@@ -838,11 +839,11 @@ shared_1_0.transferDapp = function (params, cb) {
             let lastBlock = library.modules.blocks.getLastBlock();
             let lastBlockHeight = lastBlock.height;
             if (account.lockHeight > lastBlockHeight) {
-                return cb("Account is locked", 11000);
+                return cb("Account is locked", errorCode.account.IS_LOCKING);
             }
             privated.getAssetsAdmin(account.master_address, dappHash, function (err) {
                 if (err) {
-                    return cb("此账户不是该dapp的管理员", 11000);
+                    return cb("此账户不是该dapp的管理员", errorCode.dapp.IS_NOT_DAPP_ADMIN);
                 } else {
                     try {
                         var transaction = library.base.transaction.create({
@@ -855,7 +856,7 @@ shared_1_0.transferDapp = function (params, cb) {
                             secondKeypair: secondKeypair,
                         });
                     } catch (e) {
-                        return cb(e.toString(), 13009);
+                        return cb(e.toString(), errorCode.server.SERVER_ERROR);
                     }
                     library.modules.transactions.receiveTransactions([transaction], cb);
                 }
@@ -863,7 +864,7 @@ shared_1_0.transferDapp = function (params, cb) {
         });
     }, function (err, transaction) {
         if (err) {
-            return cb(err.toString(), 13009);
+            return cb(err.toString(), errorCode.dapp.TRANSFER_DAPP_FAILURE);
         }
         cb(null, 200, {transactionHash: transaction[0].hash});
     });
@@ -873,11 +874,11 @@ shared_1_0.searchDappBalance = function (params, cb) {
     let address = params[0] || '';
     let dappHash = params[1] || '';
     if (!address) {
-        return cb(11000, "缺少合约人地址");
+        return cb(errorCode.server.MISSING_PARAMS, "缺少合约人地址");
     }
     privated.searchDpaaBalance(address, dappHash, (err, rows) => {
         if (err) {
-            return cb(err, 11000);
+            return cb(err, errorCode.server.SERVER_ERROR);
         } else {
             return cb(null, 200, rows);
         }
@@ -902,20 +903,20 @@ shared_1_0.searchDappList = function (params, cb) {
             }).then(rows => {
                 return cb(null, 200, {data:rows, totalCount: number[0].number});
             }).catch(err => {
-                return cb(err, 11000);
+                return cb(err, errorCode.server.SERVER_ERROR);
             });
         } else {
             return cb(null, 200, {data:[], totalCount: 0});
         }
     }).catch((err) => {
-        return cb(err, 11000);
+        return cb(err, errorCode.server.SERVER_ERROR);
     });
 };
 
 shared_1_0.searchDappHash = function (params, cb) {
     let hash = params[0] || '';
     if(!hash) {
-        return cb("dapp hash is empty", 11000);
+        return cb("dapp hash is empty", errorCode.server.MISSING_PARAMS);
     } else {
         library.dbClient.query(`SELECT hash from dapp2assets WHERE hash like '%${hash}%' or transactionHash like '%${hash}%'`, {
             type: Sequelize.QueryTypes.SELECT,
@@ -925,7 +926,7 @@ shared_1_0.searchDappHash = function (params, cb) {
         }).then((rows) => {
             return cb(null, 200, rows);
         }).catch(err => {
-            return cb(err, 11000);
+            return cb(err, errorCode.server.SERVER_ERROR);
         });
     }
 };
@@ -936,7 +937,7 @@ shared_1_0.searchMineList = function (params, cb) {
     let size = params[2] || 10;
     let height = (page-1)*size;
     if(!address) {
-        return cb("缺少查询地址", 11000);
+        return cb("缺少查询地址", errorCode.server.MISSING_PARAMS);
     }
     library.dbClient.query('SELECT COUNT(*) AS number FROM `dapp2assets` WHERE `accountId`=$accountId AND status=0', {
         type: Sequelize.QueryTypes.SELECT,
@@ -955,7 +956,7 @@ shared_1_0.searchMineList = function (params, cb) {
             }).then((rows) => {
                 return cb(null, 200, {data: rows, totalCount: number[0].number});
             }).catch(err => {
-                return cb(err, 11000);
+                return cb(err, errorCode.server.SERVER_ERROR);
             });
         } else {
             return cb(null, 200, {data: [], totalCount: 0});
@@ -972,7 +973,7 @@ shared_1_0.searchDappHandle = function (params, cb) {
     let size = params[4] || 10;
     let height = (page - 1) * size;
     if (!(dappHash || transactionHash || address)) {
-        return cb("缺少参数", 11000);
+        return cb("缺少参数", errorCode.server.MISSING_PARAMS);
     }
     let data = {
         dappHash: dappHash,
@@ -983,7 +984,7 @@ shared_1_0.searchDappHandle = function (params, cb) {
     };
     privated.searchHandle(data, function (err, data) {
         if (err) {
-            return cb(err, 11000);
+            return cb(err, errorCode.server.SERVER_ERROR);
         } else {
             return cb(null, 200, data);
         }
@@ -1004,7 +1005,7 @@ shared_1_0.getDappInfo = function (params, cb) {
             return cb(null, 200, "");
         }
     }).catch((err) => {
-        cb("获取dapp详情失败", 11000);
+        return cb("获取dapp详情失败", errorCode.dapp.GET_DAPP_INFO_ERROR);
     });
 };
 // 创建合约费用

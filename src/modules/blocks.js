@@ -14,6 +14,7 @@ var blockStatus = require('../utils/blockStatus.js');
 var csvtojson = require('csvtojson');
 var	ip = require('ip');
 var Json2csv = require('json2csv').Parser;
+var errorCode = require('../utils/error-code');
 
 var header = ['b_hash', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward','b_generatorPublicKey','b_blockSignature', 'b_merkleRoot', 'b_difficulty', 'b_basic', 'b_decisionSignature', 'b_decisionAddress', 'b_minerHash',
     't_hash', 't_type','t_timestamp','t_senderPublicKey', 't_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature', 's_publicKey', 'd_address',
@@ -667,7 +668,6 @@ Blocks.prototype.getLastBlock = function() {
     return privated.lastBlock;
 };
 
-
 Blocks.prototype.loadBlocksPart = function (filter, cb) {
     self.loadBlocksData(filter, function (err, rows) {
         let blocks = [];
@@ -1218,7 +1218,7 @@ shared_1_0.blocks = function(params, cb) {
     };
     privated.getBlocks(option, function (err, rows) {
         if(err) {
-            return cb(err, 12001);
+            return cb(err, errorCode.blocks.GET_BLOCK_FAILURE);
         } else {
             return cb(null, 200, rows);
         }
@@ -1228,7 +1228,7 @@ shared_1_0.blocks = function(params, cb) {
 shared_1_0.block = function(params, cb) {
     let bId = params[0] || 0;
     if(!bId) {
-        return cb('missing block id', 11000);
+        return cb('missing block id', errorCode.server.MISSING_PARAMS);
     }
     if (isNaN(bId)) {
         let tra = library.modules.transactions.getUnconfirmedTransactionHash(bId);
@@ -1238,23 +1238,23 @@ shared_1_0.block = function(params, cb) {
         }
         privated.getTransactionsOrBlock(bId, function (err, result) {
             if (err) {
-                return cb(err.message, 12001);
+                return cb(err.message, errorCode.blocks.GET_BLOCK_FAILURE);
             }
             if (result)
                 return cb(null, 200, result);
             else {
-                return cb('not find transaction', 13004);
+                return cb('not find transaction', errorCode.transactions.CAN_NOT_FIND_TRANSACTION);
             }
         });
     } else {
         privated.serachBlocksUseNumber(bId, function (err, result) {
             if (err) {
-                return cb(err.message, 12001);
+                return cb(err.message, errorCode.blocks.GET_BLOCK_FAILURE);
             }
             if (result)
                 return cb(null, 200, result);
             else {
-                return cb('not find block height', 13004);
+                return cb('not find block height', errorCode.transactions.CAN_NOT_FIND_BLOCK);
             }
         });
     }

@@ -530,7 +530,7 @@ shared_1_0.burnAssets = function(params, cb) {
     let msg = params[3] || '';
     let secondSecret = params[4] || undefined;
     if(amount <= 0 || mnemonic === '' || assetsHash === ''){
-        return cb("miss must params", 11000);
+        return cb("miss must params", errorCode.server.MISSING_PARAMS);
     }
 
     let keyPair = library.base.account.getKeypair(mnemonic);
@@ -543,10 +543,10 @@ shared_1_0.burnAssets = function(params, cb) {
                 return cb(err.toString(), 11000);
             }
             if(!account || !account.master_pub) {
-                return cb("Invalid account", 13007);
+                return cb("Invalid account", errorCode.transactions.INVALID_ACCOUNT);
             }
             if (account.secondsign && !secondSecret) {
-                return cb("Invalid second passphrase", 13008);
+                return cb("Invalid second passphrase", errorCode.transactions.INVALID_SECOND_PASSPHRASE);
             }
             var secondKeypair = null;
             if (account.secondsign) {
@@ -555,7 +555,7 @@ shared_1_0.burnAssets = function(params, cb) {
             }
             let lastHeight = library.modules.blocks.getLastBlock().height;
             if(account.lockHeight > lastHeight) {
-                return cb("Account is locked", 11000);
+                return cb("Account is locked", errorCode.account.IS_LOCKING);
             }
 
             library.modules.assets.getAssets(assetsHash, function (err, assets) {

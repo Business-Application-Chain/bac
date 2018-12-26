@@ -9,6 +9,7 @@ var async = require('async');
 var util = require('util');
 var sandboxHelper = require('../utils/sandbox.js');
 var Sequelize = require('sequelize');
+var errorCode = require('../utils/error-code');
 
 var modules, library, self, privated = {}, shared = {}, shared_1_0 = {};
 
@@ -382,7 +383,7 @@ shared_1_0.contacts = function(params, cb) {
     // let address = params[0];
     privated.getContacts(address, function (err, data) {
         if(err) {
-            return cb(err, 14004);
+            return cb(err, errorCode.contacts.GET_CONTACT_LIST_FAILURE);
         }
         return cb(null, 200, data);
     });
@@ -393,7 +394,7 @@ shared_1_0.count = function(params, cb) {
     let address = library.modules.accounts.generateAddressByPubKey(publicKey);
     privated.getContactsCount(address, function (err, data) {
         if(err) {
-            return cb(err, 14005);
+            return cb(err, errorCode.contacts.GET_CONTACT_COUNT_FAILURE);
         }
         return cb(null, 200, data.number);
     });
@@ -410,13 +411,13 @@ shared_1_0.addContact = function(params, cb) {
     let username = '';
     let address = '';
     if(!(data.mnemonic && data.publicKey)) {
-        return cb("miss secret or publicKey", 11000);
+        return cb("miss secret or publicKey", errorCode.server.MISSING_PARAMS);
     }
     let keyPair = library.base.account.getKeypair(data.mnemonic);
 
     if (data.publicKey) {
         if (keyPair.getPublicKeyBuffer().toString('hex') !== data.publicKey) {
-            return cb("Invalid passphrase", 13005);
+            return cb("Invalid passphrase", errorCode.transactions.INVALID_PASSPHRASE);
         }
     }
     // var followingAddress = data.following.substring(1, data.following.length);
@@ -431,23 +432,23 @@ shared_1_0.addContact = function(params, cb) {
     library.balancesSequence.add(function (cb) {
         library.modules.accounts.getAccount(query, function (err, following) {
             if (err) {
-                return cb(err.toString(), 14001);
+                return cb(err.toString(), errorCode.contacts.GET_CONTACT_ACCOUNT_FAILURE);
             }
             if (!following) {
-                return cb("follow account not found", 14002);
+                return cb("follow account not found", errorCode.contacts.CONTACT_ACCOUNT_NOT_FOUND);
             }
             followingAddress = "+" + following.master_address;
             username = following.username;
             address = following.master_address;
             library.modules.accounts.getAccount({master_pub: data.publicKey}, function (err, account) {
                 if (err) {
-                    return cb(err.toString(), 11000);
+                    return cb(err.toString(), errorCode.server.MISSING_PARAMS);
                 }
                 if (!account) {
-                    return cb("Invalid account", 13007);
+                    return cb("Invalid account", errorCode.transactions.INVALID_ACCOUNT);
                 }
                 if (account.secondsign && !data.secondSecret) {
-                    return cb("Invalid second passphrase", 13008);
+                    return cb("Invalid second passphrase", errorCode.transactions.INVALID_SECOND_PASSPHRASE);
                 }
                 if (account.secondsign && data.secondSecret) {
                     var secondHash = crypto.createHash('sha256').update(data.secondSecret, 'utf8').digest();
@@ -455,7 +456,7 @@ shared_1_0.addContact = function(params, cb) {
                 }
                 let lastHeight = library.modules.blocks.getLastBlock().height;
                 if(account.lockHeight > lastHeight) {
-                    return cb("Account is locked", 11000);
+                    return cb("Account is locked", errorCode.account.IS_LOCKING);
                 }
                 try {
                     var transaction = library.base.transaction.create({
@@ -467,14 +468,14 @@ shared_1_0.addContact = function(params, cb) {
                         username: account.username
                     });
                 } catch (e) {
-                    return cb(e.toString(), 14003);
+                    return cb(e.toString(), errorCode.contacts.ADD_CONTACT_FAILURE);
                 }
                 library.modules.transactions.receiveTransactions([transaction], cb);
             });
         });
     }, function (err, transaction) {
         if (err) {
-            return cb(err.toString(), 14003);
+            return cb(err.toString(), errorCode.contacts.ADD_CONTACT_FAILURE);
         }
 
         // cb(null, 200, {transaction: transaction[0], user: {username: username, address: address}});

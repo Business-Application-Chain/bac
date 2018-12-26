@@ -1,18 +1,12 @@
-var util = require('util');
-var extend = require('extend');
 var async = require('async');
-var path = require('path');
-var fs = require('fs');
 var sandboxHelper = require('../utils/sandbox.js');
 var crypto = require('crypto');
 var ed = require('ed25519');
-var bignum = require('../utils/bignum.js');
 var TransactionTypes = require('../utils/transaction-types.js');
 var Sequelize = require('sequelize');
 var modules_loaded, library, self, privated = {}, shared = {}, genesisblock = null, shared_1_0 = {};
-var constants = require('../utils/constants');
-var bacLib = require('bac-lib');
 var ByteBuffer = require("bytebuffer");
+var errorCode = require('../utils/error-code');
 
 privated.hiddenTransactions = [];
 privated.unconfirmedTransactions = [];
@@ -421,7 +415,6 @@ Transactions.prototype.callApi = function (call, rpcjson, args, peerIp, cb) {
     }
 };
 
-
 Transactions.prototype.getUnconfirmedTransactionById = function (id) {
     var index = privated.unconfirmedTransactionsIdIndex[id];
     return privated.unconfirmedTransactions[index];
@@ -581,6 +574,7 @@ Transactions.prototype.undoUnconfirmed = function (txObj, cb) {
         library.base.transaction.undoUnconfirmed(txObj, sender, cb);
     });
 };
+
 Transactions.prototype.getUnconfirmedTransaction = function (id) {
     var index = privated.unconfirmedTransactionsIdIndex[id];
     return privated.unconfirmedTransactions[index];
@@ -682,10 +676,9 @@ Transactions.prototype.getUnconfirmedTransactionHash = function (hash) {
 shared_1_0.transaction = function (params, cb) {
     let tHash = params[0] || undefined;
     if (!tHash) {
-        return cb('missing params', 11000);
+        return cb('missing params', errorCode.server.MISSING_PARAMS);
     }
     let index = privated.unconfirmedTransactionsIdIndex[tHash];
-    console.log(index);
 
     let unconfirmedTransaction = privated.unconfirmedTransactions[index];
     if (unconfirmedTransaction) {
@@ -706,7 +699,7 @@ shared_1_0.transaction = function (params, cb) {
 shared_1_0.byBlockHash = function (params, cb) {
     let bHash = params[0] || undefined;
     if (!bHash) {
-        return cb('missing params', 11000);
+        return cb('missing params', errorCode.server.MISSING_PARAMS);
     }
     privated.getByBlockHash(bHash, function (err, data) {
         if (err) {
@@ -742,18 +735,9 @@ shared_1_0.getAllTransactions = function (params, cb) {
     filter.limit = size;
     privated.getAllTransactions(filter, function (err, data) {
         if (err) {
-            return cb(err, 11000);
+            return cb(err, errorCode.server.MISSING_PARAMS);
         }
         let send = [];
-        // let transactions = self.getUnconfirmedTransactionList(true);
-        // if (height === 0) {
-        //     for (let i = 0; i < transactions.length; i++) {
-        //         transactions[i].isUnconfirmed = true;
-        //         if (transactions[i]) {
-        //             send.push(transactions[i]);
-        //         }
-        //     }
-        // }
         data.forEach(function (item) {
             send.push(item);
         });
@@ -772,7 +756,7 @@ shared_1_0.transactions = function (params, cb) {
 
     privated.getUserTransactions(filter, function (err, data, count) {
         if (err) {
-            return cb(err, 13001);
+            return cb(err, errorCode.transactions.GET_TRANSACTIONS_FAILURE);
         }
         let transactions = self.getUnconfirmedTransactionList(true);
         let send = [];
@@ -814,12 +798,12 @@ shared_1_0.addTransaction = function (params, cb) {
     var msg = params[5] || '';
     var multisigAccountPublicKey = params[6] || undefined;
     if (!(amount && publicKey && recipientId && mnemonic)) {
-        return cb("miss must params", 11000);
+        return cb("miss must params", errorCode.server.MISSING_PARAMS);
     }
     let keyPair = library.base.account.getKeypair(mnemonic);
     if (publicKey) {
         if (keyPair.getPublicKeyBuffer().toString('hex') !== publicKey) {
-            return cb("Invalid passphrase", 13005);
+            return cb("Invalid passphrase", errorCode.transactions.INVALID_PASSPHRASE);
         }
     }
     var query = {};
@@ -836,7 +820,7 @@ shared_1_0.addTransaction = function (params, cb) {
                 return cb(err.toString());
             }
             if (!recipient && query.username) {
-                return cb("Recipient not found", 13006);
+                return cb("Recipient not found", errorCode.transactions.RECIPIENT_NOT_FOUND);
             }
             recipientId = recipient ? recipient.master_address : query.master_address;
             var recipientUsername = recipient ? recipient.username : null;
@@ -854,7 +838,7 @@ shared_1_0.addTransaction = function (params, cb) {
                     }
                     let lastHeight = library.modules.blocks.getLastBlock().height;
                     if (account.lockHeight > lastHeight) {
-                        return cb("Account is locked", 11000);
+                        return cb("Account is locked", errorCode.account.IS_LOCKING);
                     }
                     if (account.multisignatures.indexOf(keypair.publicKey.toString('hex')) < 0) {
                         return cb("Account does not belong to multisignature group");
@@ -901,11 +885,11 @@ shared_1_0.addTransaction = function (params, cb) {
                         return cb(err.toString());
                     }
                     if (!account || !account.master_pub) {
-                        return cb("Invalid account", 13007);
+                        return cb("Invalid account", errorCode.transactions.INVALID_ACCOUNT);
                     }
 
                     if (account.secondsign && !secondSecret) {
-                        return cb("Invalid second passphrase", 13008);
+                        return cb("Invalid second passphrase", errorCode.transactions.INVALID_SECOND_PASSPHRASE);
                     }
 
                     var secondKeypair = null;
@@ -917,7 +901,7 @@ shared_1_0.addTransaction = function (params, cb) {
                     let lastBlock = library.modules.blocks.getLastBlock();
                     let lastBlockHeight = lastBlock.height;
                     if (account.lockHeight > lastBlockHeight) {
-                        return cb("Account is locked", 11000);
+                        return cb("Account is locked", errorCode.account.IS_LOCKING);
                     }
                     try {
                         var transaction = library.base.transaction.create({
@@ -930,7 +914,7 @@ shared_1_0.addTransaction = function (params, cb) {
                             message: msg
                         });
                     } catch (e) {
-                        return cb(e.toString(), 13009);
+                        return cb(e.toString(), errorCode.transactions.ADD_TRANSACTION_FAILURE);
                     }
                     library.modules.transactions.receiveTransactions([transaction], cb);
                 });
@@ -938,7 +922,7 @@ shared_1_0.addTransaction = function (params, cb) {
         });
     }, function (err, transaction) {
         if (err) {
-            return cb(err.toString(), 13009);
+            return cb(err.toString(), errorCode.transactions.ADD_TRANSACTION_FAILURE);
         }
         cb(null, 200, {transactionHash: transaction[0].hash});
     });

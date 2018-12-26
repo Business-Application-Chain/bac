@@ -12,6 +12,7 @@ var Diff = require('../utils/diff.js');
 var bip39 = require('bip39');
 var util = require('util');
 var bacLib = require('bac-lib');
+var errorCode = require('../utils/error-code');
 // var Mnemonic = require('bac-mnemonic');
 
 // private objects
@@ -539,7 +540,7 @@ Accounts.prototype.getAccountLock = function(address, cb) {
     }).then((data) => {
         cb(null, data[0].lockHeight);
     }).catch((err) => {
-        cb(err);
+        return cb({message: err, code: errorCode.server.SERVER_ERROR});
     })
 };
 
@@ -627,7 +628,7 @@ Accounts.prototype.onLoginMiner = function() {
 
 Accounts.prototype.getAccountKey = function() {
     return accountKey;
-}
+};
 
 Accounts.prototype.getAccounts = function (filter, fields, cb) {
     library.base.account.getAll(filter, fields, cb);
@@ -661,7 +662,7 @@ shared_1_0.getBalance = function(params, cb) {
     }
     self.getAccount({master_address: address}, function (err, account) {
         if (err) {
-            return cb(err.toString(), 21003);
+            return cb(err.toString(), errorCode.server.SERVER_ERROR);
         }
         var balance = account ? account.balance : 0;
         // var unconfirmedBalance = account ? account.balance_unconfirmed : 0;
@@ -675,10 +676,10 @@ shared_1_0.getPublicKey = function(params, cb) {
     let address = params[0];
     self.getAccount({master_address: address}, function (err, account) {
         if (err) {
-            return cb(err.toString(), 11003);
+            return cb(err.toString(), errorCode.account.NOT_FIND_ADDRESS);
         }
         if (!account || !account.master_pub) {
-            return cb("Account does not have a public key", 11000);
+            return cb("Account does not have a public key", errorCode.account.NOT_FIND_ADDRESS);
         }
         cb(null, 200, account.master_pub);
     });
@@ -708,10 +709,10 @@ shared_1_0.getAccount = function(params, cb) {
         }, function (result) {
             self.getAccount({master_address: address}, function (err, account) {
                 if (err) {
-                    return cb({msg:err.toString(), code:11003});
+                    return cb({message: err.toString(), code: errorCode.server.SERVER_ERROR});
                 }
                 if (!account) {
-                    return cb({msg:"Account not found", code: 15003});
+                    return cb({message: "Account not found", code: errorCode.account.ACCOUNT_NOT_FOUND});
                 }
                 cb(null, 200, {
                     account: {
@@ -732,7 +733,7 @@ shared_1_0.getAccount = function(params, cb) {
         }
     ], function (err, data) {
         if(err) {
-            return cb(err.msg, err.code);
+            return cb(err.message, err.code);
         }
         return cb(null, 200, data);
     });
@@ -750,25 +751,25 @@ shared_1_0.addUsername = function(params, cb) {
         secondSecret: params[3] || ''
     };
     if(!(query.secret && query.username && query.publicKey)) {
-        return cb('miss must params', 11000);
+        return cb('miss must params', errorCode.server.MISSING_PARAMS);
     }
     let keyPair = library.base.account.getKeypair(query.secret);
     if (query.publicKey) {
         if (keyPair.getPublicKeyBuffer().toString('hex') !== query.publicKey) {
-            return cb("Invalid passphrase", 13005);
+            return cb("Invalid passphrase", errorCode.transactions.INVALID_PASSPHRASE);
         }
     }
     library.balancesSequence.add(function (cb) {
         self.getAccount({master_pub: query.publicKey}, function (err, account) {
             if (err) {
-                return cb(err.toString(), 11003);
+                return cb(err.toString(), errorCode.server.SERVER_ERROR);
             }
             if (!account || !account.master_pub) {
-                return cb("Invalid account", 13007);
+                return cb("Invalid account", errorCode.transactions.INVALID_ACCOUNT);
             }
 
             if (account.secondsign && !query.secondSecret) {
-                return cb("Invalid second passphrase", 13008);
+                return cb("Invalid second passphrase", errorCode.transactions.INVALID_SECOND_PASSPHRASE);
             }
 
             var secondKeypair = null;
@@ -779,7 +780,7 @@ shared_1_0.addUsername = function(params, cb) {
             }
             let lastHeight = library.modules.blocks.getLastBlock().height;
             if(account.lockHeight > lastHeight) {
-                return cb("Account is locked", 11000);
+                return cb("Account is locked", errorCode.account.IS_LOCKING);
             }
 
             try {
@@ -791,13 +792,13 @@ shared_1_0.addUsername = function(params, cb) {
                     secondKeypair: secondKeypair
                 });
             } catch (e) {
-                return cb(e.toString(), 15001);
+                return cb(e.toString(), errorCode.account.ADD_USERNAME_FAILURE);
             }
             library.modules.transactions.receiveTransactions([transaction], cb);
         });
     }, function (err, transaction) {
         if (err) {
-            return cb(err.toString(), 15001);
+            return cb(err.toString(), errorCode.account.ADD_USERNAME_FAILURE);
         }
 
         cb(null, 200, {transaction: transaction[0]});
@@ -807,7 +808,7 @@ shared_1_0.addUsername = function(params, cb) {
 shared_1_0.open = function(params, cb) {
     let mnemonic = params[0] || undefined;
     if(!mnemonic) {
-        return cb('params is error', 11000);
+        return cb('params is error', errorCode.server.MISSING_PARAMS);
     }
     privated.openAccount(mnemonic, function (err, account) {
         var accountData = null;
@@ -837,7 +838,7 @@ shared_1_0.open = function(params, cb) {
             }
             return cb(null, 200, {account: accountData});
         } else {
-            return cb(err, 15002);
+            return cb(err, errorCode.account.OPEN_USER_FAILURE);
         }
     });
 };
@@ -845,7 +846,7 @@ shared_1_0.open = function(params, cb) {
 shared_1_0.getPrivateKey = function(params, cb) {
     let mnemonic = params[0] || undefined;
     if(!mnemonic) {
-        return cb('missing params', 11000);
+        return cb('missing params', errorCode.server.MISSING_PARAMS);
     }
     let keyPair = library.base.account.getKeypair(mnemonic);
     let privateKey = keyPair.d.toBuffer(32);
@@ -867,7 +868,7 @@ shared_1_0.lockHeight = function(params, cb) {
     var lockHeight = params[1] || 0;
     let secondSecret = params[2] || '';
     if(!(mnemonic && lockHeight)) {
-        return cb('miss must params', 11000);
+        return cb('miss must params', errorCode.server.MISSING_PARAMS);
     }
     let keyPair = library.base.account.getKeypair(mnemonic);
     let publicKey = keyPair.getPublicKeyBuffer().toString('hex');
@@ -881,14 +882,14 @@ shared_1_0.lockHeight = function(params, cb) {
     library.balancesSequence.add(function (cb) {
         library.modules.accounts.getAccount(query, function (err, account) {
             if (err) {
-                return cb(err.toString(), 11003);
+                return cb(err.toString(), errorCode.server.ACCOUNT_ERROR);
             }
             if (!account || !account.master_pub) {
-                return cb("Invalid account", 13007);
+                return cb("Invalid account", errorCode.server.INVALID_ACCOUNT);
             }
 
             if (account.secondsign && !secondSecret) {
-                return cb("Invalid second passphrase", 13008);
+                return cb("Invalid second passphrase", errorCode.server.INVALID_SECOND_PASSPHRASE);
             }
 
             var secondKeypair = null;
@@ -899,10 +900,11 @@ shared_1_0.lockHeight = function(params, cb) {
             }
             let lastHeight = library.modules.blocks.getLastBlock().height;
             if(account.lockHeight_unconfirmed > lastHeight) {
-                return cb("已经提交锁仓申请，请勿重复提交", 11000);
+                // return cb("已经提交锁仓申请，请勿重复提交", 11000);
+                return cb("is request lock, don't repeat", errorCode.account.WILL_LOCK);
             }
             if(account.lockHeight > lastHeight) {
-                return cb("Account is locked", 11000);
+                return cb("Account is locked", errorCode.account.IS_LOCKING);
             }
             try {
                 var transaction = library.base.transaction.create({
@@ -913,13 +915,13 @@ shared_1_0.lockHeight = function(params, cb) {
                     secondKeypair: secondKeypair
                 });
             } catch (e) {
-                return cb(e.toString(), 15001);
+                return cb(e.toString(), errorCode.server.SERVER_ERROR);
             }
             library.modules.transactions.receiveTransactions([transaction], cb);
         })
     }, function (err, transaction) {
         if (err) {
-            return cb(err.toString(), 15001);
+            return cb(err.toString(), errorCode.server.SERVER_ERROR);
         }
         let blockHeight = library.modules.blocks.getLastBlock().height;
         cb(null, 200, {height: lockHeight, d_value: lockHeight - blockHeight});
@@ -931,13 +933,13 @@ shared_1_0.getAccountLock = function(params, cb) {
     let blockHeight = library.modules.blocks.getLastBlock().height;
     self.getAccountLock(address, function (err, height) {
         if(err) {
-            cb(err);
+            return cb(err.messages, err.code);
         } else {
             let d_value = 0;
             if(height) {
                 d_value = height - blockHeight;
             }
-            cb(null, 200, {height: height, d_value: d_value < 0 ? 0:d_value });
+            return cb(null, 200, {height: height, d_value: d_value < 0 ? 0:d_value });
         }
     });
 };
