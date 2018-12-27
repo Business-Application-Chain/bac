@@ -598,11 +598,8 @@ Transactions.prototype.onSendUnconfirmedTrs = function () {
     privated.unconfirmedTransactions.forEach(item => {
         if(item)
             unconfirmedTrs.push(item);
-        else {
-            privated.unconfirmedTransactions.pop();
-            console.log(privated.unconfirmedTransactions);
-        }
     });
+    privated.unconfirmedTransactions = unconfirmedTrs;
     library.log.Info("unconfirmed transactions number", unconfirmedTrs.length);
     let send = [];
     let maxCount = unconfirmedTrs.length > 1000 ? 1000 : unconfirmedTrs.length;
