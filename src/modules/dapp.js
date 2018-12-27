@@ -740,6 +740,9 @@ shared_1_0.upLoadDapp = function (params, cb) {
         });
     }, function (err, transaction) {
         if (err) {
+            if(typeof err === "object") {
+                return cb(err.message, err.code);
+            }
             return cb(err.toString(), errorCode.dapp.UPLOAD_DAPP_FAILURE);
         }
         cb(null, 200, {transactionHash: transaction[0].hash, dappHash: transaction[0].asset.dapp.hash, fee: transaction[0].fee});
@@ -804,6 +807,9 @@ shared_1_0.handleDapp = function (params, cb) {
         });
     }, function (err, transaction) {
         if (err) {
+            if(typeof err === 'object') {
+                return cb(err.message, err.code);
+            }
             return cb(err.toString(), errorCode.dapp.DO_DAPP_FAILURE);
         }
         cb(null, 200, {transactionHash: transaction[0].hash, transactionFee: transaction[0].fee});
@@ -864,6 +870,9 @@ shared_1_0.transferDapp = function (params, cb) {
         });
     }, function (err, transaction) {
         if (err) {
+            if(typeof err === 'object') {
+                return cb(err.message, err.code);
+            }
             return cb(err.toString(), errorCode.dapp.TRANSFER_DAPP_FAILURE);
         }
         cb(null, 200, {transactionHash: transaction[0].hash});
@@ -973,7 +982,7 @@ shared_1_0.searchDappHandle = function (params, cb) {
     let size = params[4] || 10;
     let height = (page - 1) * size;
     if (!(dappHash || transactionHash || address)) {
-        return cb("缺少参数", errorCode.server.MISSING_PARAMS);
+        return cb("miss must params", errorCode.server.MISSING_PARAMS);
     }
     let data = {
         dappHash: dappHash,
@@ -1005,7 +1014,7 @@ shared_1_0.getDappInfo = function (params, cb) {
             return cb(null, 200, "");
         }
     }).catch((err) => {
-        return cb("获取dapp详情失败", errorCode.dapp.GET_DAPP_INFO_ERROR);
+        return cb("get dapp info is error", errorCode.dapp.GET_DAPP_INFO_ERROR);
     });
 };
 // 创建合约费用

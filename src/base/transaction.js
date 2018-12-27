@@ -142,8 +142,7 @@ Transaction.prototype.objectNormalize = function (txObj) {
             signSignature: {
                 type: 'string',
             },
-            asset: {
-            },
+            asset: {},
             message: {
                 type: 'string'
             }
@@ -156,7 +155,7 @@ Transaction.prototype.objectNormalize = function (txObj) {
     }
 
     try {
-        if(typeof txObj.asset === "string") {
+        if (typeof txObj.asset === "string") {
             txObj.asset = JSON.parse(txObj.asset);
         }
         txObj = privated.types[txObj.type].objectNormalize.call(this, txObj);
@@ -365,7 +364,10 @@ Transaction.prototype.verify = function (txObj, sender, requester, cb) {
     if (!valid) {
         console.log('errrrrrrrrrrrrrrrrrrrr');
         console.log(txObj);
-        return setImmediate(cb, "Failed to verify signature");
+        return setImmediate(cb, {
+            message: "Failed to verify signature",
+            code: errorCode.transactions.VERIFY_TRANSACTION_ERROR
+        });
     }
 
     // Verify second signature
@@ -376,7 +378,10 @@ Transaction.prototype.verify = function (txObj, sender, requester, cb) {
             return setImmediate(cb, err.toString());
         }
         if (!valid) {
-            return setImmediate(cb, "Failed to verify second signature: " + txObj.hash);
+            return setImmediate(cb, {
+                message: "Failed to verify second signature: " + txObj.hash,
+                code: errorCode.transactions.USER_SECOND_SIGN_ERROR
+            });
         }
     }
 
@@ -399,48 +404,40 @@ Transaction.prototype.verify = function (txObj, sender, requester, cb) {
     if (txObj.signatures) {
         for (var d = 0; d < txObj.signatures.length; d++) {
             valid = false;
-
             for (var s = 0; s < multisignatures.length; s++) {
                 if (txObj.requesterPublicKey && multisignatures[s] === txObj.requesterPublicKey) {
                     continue;
                 }
-
                 if (this.verifySignature(txObj, multisignatures[s], txObj.signatures[d])) {
                     valid = true;
                 }
             }
-
             if (!valid) {
                 return setImmediate(cb, "Failed to verify multisignature: " + txObj.hash);
             }
         }
     }
-
     // Check sender
     if (txObj.senderId !== sender.master_address) {
         return setImmediate(cb, "Invalid sender address: " + txObj.hash);
     }
-
     // Calculate fee
     var fee = privated.types[txObj.type].calculateFee.call(this, txObj, sender);
     // var fee = privated.types[txObj.type].calculateFee(txObj, sender) || false;
     if (txObj.fee !== fee) {
         return setImmediate(cb, "Invalid transaction type/fee: " + txObj.hash);
     }
-
     // Check amount
     if (txObj.amount < 0 || txObj.amount > 100000000 * constants.fixedPoint || String(txObj.amount).indexOf('.') >= 0 || txObj.amount.toString().indexOf('e') >= 0) {
         return setImmediate(cb, "Invalid transaction amount: " + txObj.hash);
     }
-
     // Check timestamp
     if (txObj.timestamp > Date.now()) { // means the time is later than now
         return setImmediate(cb, "Invalid transaction timestamp");
     }
-
     // Spec
     // txObj.asset = JSON.parse(txObj.asset);
-    if(typeof txObj.asset === "string") {
+    if (typeof txObj.asset === "string") {
         txObj.asset = JSON.parse(txObj.asset)
     }
     privated.types[txObj.type].verify.call(this, txObj, sender, function (err) {
@@ -533,13 +530,19 @@ Transaction.prototype.apply = function (txObj, blockObj, sender, cb) {
     }
 
     if (!this.ready(txObj, sender)) {
-        return setImmediate(cb, {message: "Transaction is not ready " + txObj.hash, code: errorCode.server.TRANSACTION_NOT_READY});
+        return setImmediate(cb, {
+            message: "Transaction is not ready " + txObj.hash,
+            code: errorCode.server.TRANSACTION_NOT_READY
+        });
     }
 
     var amount = txObj.amount + txObj.fee;
 
     if (sender.balance < amount && txObj.blockHash !== genesisblock.block.hash) {
-        return setImmediate(cb, {message: "Account [apply-sender] does not have enough token" + txObj.hash, code: errorCode.server.NOT_ENOUGH_TOKEN})
+        return setImmediate(cb, {
+            message: "Account [apply-sender] does not have enough token" + txObj.hash,
+            code: errorCode.server.NOT_ENOUGH_TOKEN
+        })
     }
 
     this.scope.account.merge(sender.master_address, {
@@ -569,7 +572,10 @@ Transaction.prototype.apply = function (txObj, blockObj, sender, cb) {
 
 Transaction.prototype.undoUnconfirmed = function (trs, sender, cb) {
     if (!privated.types[trs.type]) {
-        return setImmediate(cb, {message: "Unknown transaction type " + trs.type, code: errorCode.server.TRANSACTION_NOT_TYPE});
+        return setImmediate(cb, {
+            message: "Unknown transaction type " + trs.type,
+            code: errorCode.server.TRANSACTION_NOT_TYPE
+        });
     }
 
     var amount = trs.amount + trs.fee;
@@ -635,25 +641,40 @@ Transaction.prototype.applyUnconfirmed = function (txObj, sender, requester, cb)
     }
 
     if (!txObj.requesterPublicKey && sender.second_pub && !txObj.signSignature && txObj.blockHash != genesisblock.block.hash) {
-        return setImmediate(cb, "Failed second signature: " + txObj.hash);
+        return setImmediate(cb, {
+            message: "Failed second signature: " + txObj.hash,
+            code: errorCode.transactions.FAILED_SIGN_SIGNATURE
+        });
     }
 
     if (!txObj.requesterPublicKey && !sender.second_pub && (txObj.signSignature && txObj.signSignature.length > 0)) {
-        return setImmediate(cb, "Account [applyUnconfirmed-sender] does not have a second public key");
+        return setImmediate(cb, {
+            message: "Account [applyUnconfirmed-sender] does not have a second public key",
+            code: errorCode.transactions.NOT_SECOND_PUBLIC_KEY
+        });
     }
 
     if (txObj.requesterPublicKey && !txObj.signSignature) {
-        return setImmediate(cb, "Failed second signature: " + txObj.hash);
+        return setImmediate(cb, {
+            message: "Failed second signature: " + txObj.hash,
+            code: errorCode.transactions.NOT_SECOND_PUBLIC_KEY
+        });
     }
 
     if (txObj.requesterPublicKey && !requester.second_pub && (txObj.signSignature && txObj.signSignature.length > 0)) {
-        return setImmediate(cb, "Account [applyUnconfirmed-requester] does not have a second public key");
+        return setImmediate(cb, {
+            message: "Account [applyUnconfirmed-requester] does not have a second public key",
+            code: errorCode.transactions.NOT_SECOND_PUBLIC_KEY
+        });
     }
 
     var amount = txObj.amount + txObj.fee;
 
-    if (sender.balance_unconfirmed < amount && txObj.blockHash != genesisblock.block.hash) {
-        return setImmediate(cb, "Account [applyUnconfirmed-sender] does not have enough token: " + txObj.hash);
+    if (sender.balance_unconfirmed < amount && txObj.blockHash !== genesisblock.block.hash) {
+        return setImmediate(cb, {
+            message: "Account [applyUnconfirmed-sender] does not have enough token: " + txObj.hash,
+            code: errorCode.server.NOT_ENOUGH_TOKEN
+        });
     }
 
     this.scope.account.merge(sender.master_address, {balance_unconfirmed: -amount}, function (err, sender) {

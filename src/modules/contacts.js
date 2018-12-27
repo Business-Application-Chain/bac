@@ -475,7 +475,10 @@ shared_1_0.addContact = function(params, cb) {
         });
     }, function (err, transaction) {
         if (err) {
-            return cb(err.toString(), errorCode.contacts.ADD_CONTACT_FAILURE);
+            if(typeof err === 'object') {
+                return cb(err.message, err.code);
+            }
+            return cb(err.toString(), errorCode.transactions.ADD_CONTACT_FAILURE);
         }
 
         // cb(null, 200, {transaction: transaction[0], user: {username: username, address: address}});
@@ -549,7 +552,6 @@ shared.getContacts = function (req, cb) {
 shared_1_0.getFee = function (params, cb) {
     cb(null, 200, {fee: 1 * constants.fixedPoint})
 };
-
 
 // Export
 module.exports = Contacts;

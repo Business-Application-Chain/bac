@@ -237,6 +237,9 @@ shared_1_0.addSignature = function(params, cb) {
         });
     }, function (err, transaction) {
         if (err) {
+            if(typeof err === 'object') {
+                return cb(err.message, err.code);
+            }
             return cb(err.toString(), errorCode.account.ADD_SIGNATURES_FAILURE);
         }
         cb(null, 200, {transaction: transaction[0]});

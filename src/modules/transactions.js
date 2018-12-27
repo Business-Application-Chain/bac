@@ -170,14 +170,6 @@ privated.list = function (filter, cb) {
     if (filter.offset >= 0) {
         fields.offset = filter.offset;
     }
-    // if (filter.orderBy) {
-    //     filter.orderBy =
-    // }
-    // if (sortBy) {
-    //     if (sortFields.indexOf(sortBy) < 0) {
-    //         return cb("Invalid sort field");
-    //     }
-    // }
     if (filter.limit > 100) {
         return cb("Invalid limit. Maximum is 100");
     }
@@ -826,107 +818,53 @@ shared_1_0.addTransaction = function (params, cb) {
             }
             recipientId = recipient ? recipient.master_address : query.master_address;
             var recipientUsername = recipient ? recipient.username : null;
+            library.modules.accounts.getAccount({master_pub: keyPair.getPublicKeyBuffer().toString('hex')}, function (err, account) {
+                if (err) {
+                    return cb(err.toString());
+                }
+                if (!account || !account.master_pub) {
+                    return cb("Invalid account", errorCode.transactions.INVALID_ACCOUNT);
+                }
 
-            if (multisigAccountPublicKey && multisigAccountPublicKey !== keyPair.getPublicKeyBuffer().toString('hex')) {
-                library.modules.accounts.getAccount({publicKey: multisigAccountPublicKey}, function (err, account) {
-                    if (err) {
-                        return cb(err.toString());
-                    }
-                    if (!account || !account.publicKey) {
-                        return cb("Multisignature account not found");
-                    }
-                    if (!account || !account.multisignatures) {
-                        return cb("Account does not have multisignatures enabled");
-                    }
-                    let lastHeight = library.modules.blocks.getLastBlock().height;
-                    if (account.lockHeight > lastHeight) {
-                        return cb("Account is locked", errorCode.account.IS_LOCKING);
-                    }
-                    if (account.multisignatures.indexOf(keypair.publicKey.toString('hex')) < 0) {
-                        return cb("Account does not belong to multisignature group");
-                    }
-                    library.modules.accounts.getAccount({master_pub: keypair.publicKey}, function (err, requester) {
-                        if (err) {
-                            return cb(err.toString());
-                        }
-                        if (!requester || !requester.master_pub) {
-                            return cb("Invalid requester");
-                        }
-                        if (requester.secondsign && !body.secondSecret) {
-                            return cb("Invalid second passphrase");
-                        }
-                        if (requester.master_pub === account.master_pub) {
-                            return cb("Invalid requester");
-                        }
-                        var secondKeypair = null;
-                        if (requester.secondsign) {
-                            var secondHash = crypto.createHash('sha256').update(secondSecret, 'utf8').digest();
-                            secondKeypair = ed.MakeKeypair(secondHash);
-                        }
-                        try {
-                            var transaction = library.base.transaction.create({
-                                type: TransactionTypes.SEND,
-                                amount: amount,
-                                sender: account,
-                                recipientId: recipientId,
-                                recipientUsername: recipientUsername,
-                                keypair: keypair,
-                                requester: keypair,
-                                secondKeypair: secondKeypair,
-                                message: msg
-                            });
-                        } catch (e) {
-                            return cb(e.toString());
-                        }
-                        library.modules.transactions.receiveTransactions([transaction], cb);
+                if (account.secondsign && !secondSecret) {
+                    return cb("Invalid second passphrase", errorCode.transactions.INVALID_SECOND_PASSPHRASE);
+                }
+
+                var secondKeypair = null;
+
+                if (account.secondsign) {
+                    var secondHash = crypto.createHash('sha256').update(secondSecret, 'utf8').digest();
+                    secondKeypair = ed.MakeKeypair(secondHash);
+                }
+                let lastBlock = library.modules.blocks.getLastBlock();
+                let lastBlockHeight = lastBlock.height;
+                if (account.lockHeight > lastBlockHeight) {
+                    return cb("Account is locked", errorCode.account.IS_LOCKING);
+                }
+                try {
+                    var transaction = library.base.transaction.create({
+                        type: TransactionTypes.SEND,
+                        amount: amount,
+                        sender: account,
+                        recipientId: recipientId,
+                        keypair: keyPair,
+                        secondKeypair: secondKeypair,
+                        message: msg
                     });
-                });
-            } else {
-                library.modules.accounts.getAccount({master_pub: keyPair.getPublicKeyBuffer().toString('hex')}, function (err, account) {
-                    if (err) {
-                        return cb(err.toString());
-                    }
-                    if (!account || !account.master_pub) {
-                        return cb("Invalid account", errorCode.transactions.INVALID_ACCOUNT);
-                    }
-
-                    if (account.secondsign && !secondSecret) {
-                        return cb("Invalid second passphrase", errorCode.transactions.INVALID_SECOND_PASSPHRASE);
-                    }
-
-                    var secondKeypair = null;
-
-                    if (account.secondsign) {
-                        var secondHash = crypto.createHash('sha256').update(secondSecret, 'utf8').digest();
-                        secondKeypair = ed.MakeKeypair(secondHash);
-                    }
-                    let lastBlock = library.modules.blocks.getLastBlock();
-                    let lastBlockHeight = lastBlock.height;
-                    if (account.lockHeight > lastBlockHeight) {
-                        return cb("Account is locked", errorCode.account.IS_LOCKING);
-                    }
-                    try {
-                        var transaction = library.base.transaction.create({
-                            type: TransactionTypes.SEND,
-                            amount: amount,
-                            sender: account,
-                            recipientId: recipientId,
-                            keypair: keyPair,
-                            secondKeypair: secondKeypair,
-                            message: msg
-                        });
-                    } catch (e) {
-                        return cb(e.toString(), errorCode.transactions.ADD_TRANSACTION_FAILURE);
-                    }
-                    library.modules.transactions.receiveTransactions([transaction], cb);
-                });
-            }
+                } catch (e) {
+                    return cb(e.toString(), errorCode.transactions.ADD_TRANSACTION_FAILURE);
+                }
+                library.modules.transactions.receiveTransactions([transaction], cb);
+            });
         });
     }, function (err, transaction) {
         if (err) {
+            if(typeof err === 'object') {
+                return cb(err.message, err.code);
+            }
             return cb(err.toString(), errorCode.transactions.ADD_TRANSACTION_FAILURE);
         }
-        cb(null, 200, {transactionHash: transaction[0].hash});
+        return cb(null, 200, {transactionHash: transaction[0].hash});
     });
 };
 

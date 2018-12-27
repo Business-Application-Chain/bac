@@ -798,9 +798,11 @@ shared_1_0.addUsername = function(params, cb) {
         });
     }, function (err, transaction) {
         if (err) {
+            if(typeof err === 'object') {
+                return cb(err.message, err.code);
+            }
             return cb(err.toString(), errorCode.account.ADD_USERNAME_FAILURE);
         }
-
         cb(null, 200, {transaction: transaction[0]});
     });
 };
@@ -921,7 +923,10 @@ shared_1_0.lockHeight = function(params, cb) {
         })
     }, function (err, transaction) {
         if (err) {
-            return cb(err.toString(), errorCode.server.SERVER_ERROR);
+            if(typeof err === 'object') {
+                return cb(err.message, err.code);
+            }
+            return cb(err.toString(), errorCode.account.LOCAL_FAILURE);
         }
         let blockHeight = library.modules.blocks.getLastBlock().height;
         cb(null, 200, {height: lockHeight, d_value: lockHeight - blockHeight});
@@ -933,7 +938,7 @@ shared_1_0.getAccountLock = function(params, cb) {
     let blockHeight = library.modules.blocks.getLastBlock().height;
     self.getAccountLock(address, function (err, height) {
         if(err) {
-            return cb(err.messages, err.code);
+            return cb(err.message, err.code);
         } else {
             let d_value = 0;
             if(height) {
