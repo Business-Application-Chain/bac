@@ -1,9 +1,18 @@
 import axios from 'axios'
 import config from '../config.js'
 import Toast from '~/components/ui/toast/index'
+import error from '~/js/error.js'
 
 const url = config.url
 const ioUrl = `${url}rpc`
+
+const getLang = () => {
+    let lang = localStorage.getItem('lang')
+    if (lang != 'zh' && lang != 'en') {
+        lang = 'en'
+    }
+    return lang
+}
 
 export default {
     post ({jsonrpc = '1.0', api = '', method = '', params = []}) {
@@ -23,7 +32,7 @@ export default {
             if(res.data.code == 200) {
                 return res.data.result
             } else {
-                Toast.error(res.data.error)
+                Toast.error(error[res.data.code][getLang()])
                 return null
             }
         }).catch(err => {
