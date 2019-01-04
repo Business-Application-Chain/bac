@@ -268,7 +268,7 @@ privated.getByHash = function (hash, cb) {
         if (!rows.length) {
             return cb({
                 msg: ("Can't find transaction: " + hash),
-                code: 23004
+                code: errorCode.transactions.CAN_NOT_FIND_TRANSACTION
             });
         }
 
@@ -277,7 +277,7 @@ privated.getByHash = function (hash, cb) {
     }, function (err) {
         cb({
             msg: err,
-            code: 23005
+            code: errorCode.server.SERVER_ERROR
         });
     });
 };
@@ -289,14 +289,14 @@ privated.getByBlockHash = function (hash, cb) {
         if (!rows.length) {
             return cb({
                 msg: ("Can't find transaction: " + hash),
-                code: 23003
+                code: errorCode.transactions.CAN_NOT_FIND_TRANSACTION
             });
         }
         return cb(null, rows);
     }).catch((err) => {
         return cb({
             msg: err,
-            code: 23002
+            code: errorCode.server.SERVER_ERROR
         });
     });
 };
