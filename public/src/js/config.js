@@ -8,5 +8,5 @@ export default {
     os: 'vue',
     port: 9000,
     'share-port': 1,
-    facutIp: 'http://13.229.137.120:1885/facut/'
+    facutIp: 'http://172.31.10.46:1885/facut/'
 }
