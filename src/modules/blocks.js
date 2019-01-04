@@ -17,7 +17,8 @@ var Json2csv = require('json2csv').Parser;
 var errorCode = require('../utils/error-code');
 
 var header = ['b_hash', 'b_version', 'b_timestamp', 'b_height', 'b_previousBlock', 'b_numberOfTransactions', 'b_totalAmount', 'b_totalFee','b_reward','b_generatorPublicKey','b_blockSignature', 'b_merkleRoot', 'b_difficulty', 'b_basic', 'b_decisionSignature', 'b_decisionAddress', 'b_minerHash',
-    't_hash', 't_type','t_timestamp','t_senderPublicKey', 't_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature', 's_publicKey', 'd_address',
+    't_hash', 't_type','t_timestamp','t_senderPublicKey', 't_senderId','t_recipientId','t_senderUsername','t_recipientUsername','t_amount','t_fee','t_signature','t_signSignature', 
+    's_publicKey', 'd_address',
     'da_hash', 'da_issuersAddress','da_className', 'da_abi', 'da_tokenList', 'da_gasPrice', 'da_gasLimit', 'da_gasUsed',
     'do_dappHash', 'do_fun', 'do_params', 'do_gasLimit', 'do_gasPrice',
     'i_name', 'i_desc','i_issuersAddress', 'dt_dappHash',
