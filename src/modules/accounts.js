@@ -309,7 +309,7 @@ function Username() {
     };
 
     this.applyUnconfirmed = function (txObj, sender, cb) {
-        if (sender.username || sender.username_unconfirmed) {
+        if (sender.username) {
             return setImmediate(cb, "Account is already has a username");
         }
 
@@ -324,9 +324,9 @@ function Username() {
             if (err) {
                 return cb(err);
             }
-            if (account && account.username_unconfirmed) {
-                return cb("Username is already existed");
-            }
+            // if (account) {
+            //     return cb("Username is already existed");
+            // }
 
             self.setAccountAndGet({
                 master_address: sender.master_address,
