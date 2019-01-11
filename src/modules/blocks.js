@@ -942,6 +942,7 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                 // setImmediate(cb, err);
                 if(err) {
                     console.log('undoUnconfirmedList done is err', err);
+                    console.log(block);
                     return cb(err);
                 } else {
                     library.modules.transactions.applyUnconfirmedList(unconfirmedTransactions, function () {
@@ -1017,6 +1018,7 @@ Blocks.prototype.processBlock = function(block, broadcast, cb) {
                                     setImmediate(cb);
                                 } else {
                                     library.modules.delegates.fork(block, 2);
+                                    library.modules.transactions.removeUnconfirmedTransactionByHash(transaction.hash);
                                     return setImmediate(cb, "Transaction already exists: " + transaction.hash);
                                 }
                             });
