@@ -1,6 +1,6 @@
 {
   "address": "0.0.0.0",
-  "port": 7259,
+  "port": 8080,
   "echoLogLevel": "Debug",
   "outputLogLevel": "Info",
   "sharePort": true,
