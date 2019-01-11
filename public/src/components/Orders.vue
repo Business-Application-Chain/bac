@@ -44,12 +44,6 @@
             }
         },
 
-        watch:{
-            '$route' () {
-                
-            }
-        },
-
         methods: {
             go (id) {
                 this.$router.replace({

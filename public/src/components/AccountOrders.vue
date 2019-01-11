@@ -42,6 +42,13 @@
         created () {
             this.getOrders()
         },
+
+        watch: {
+            address () {
+                this.getOrders()
+            }
+        },
+
         methods: {
             getOrders () {
                 api.transactions.transactions([this.address, this.curPage, 10]).then(res => {

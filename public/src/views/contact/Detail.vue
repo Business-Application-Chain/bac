@@ -71,6 +71,7 @@
         
         beforeRouteUpdate (to, from, next) {
             // console.log(from, to )
+            console.log('beforeRouteUpdate')
             this.id = to.params.id
             this.fetch()
             next()
