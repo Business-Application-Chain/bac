@@ -309,7 +309,7 @@ privated.addUnconfirmedTransaction = function (txObj, sender, cb) {
         }
 
         privated.unconfirmedTransactions.push(txObj);
-        var index = privated.unconfirmedTransactions.length - 1;
+        let index = privated.unconfirmedTransactions.length - 1;
         privated.unconfirmedTransactionsIdIndex[txObj.hash] = index;
 
         setImmediate(cb);
@@ -408,7 +408,7 @@ Transactions.prototype.callApi = function (call, rpcjson, args, peerIp, cb) {
 };
 
 Transactions.prototype.getUnconfirmedTransactionById = function (id) {
-    var index = privated.unconfirmedTransactionsIdIndex[id];
+    let index = privated.unconfirmedTransactionsIdIndex[id];
     return privated.unconfirmedTransactions[index];
 };
 
@@ -467,7 +467,7 @@ Transactions.prototype.getUnconfirmedTransactionList = function (reverse) {
 };
 
 Transactions.prototype.removeUnconfirmTransactionById = function (id) {
-    var index = privated.unconfirmedTransactionsIdIndex[id];
+    let index = privated.unconfirmedTransactionsIdIndex[id];
     delete privated.unconfirmedTransactionsIdIndex[id];
     privated.unconfirmedTransactions[index] = false;
 };
@@ -568,13 +568,13 @@ Transactions.prototype.undoUnconfirmed = function (txObj, cb) {
 };
 
 Transactions.prototype.getUnconfirmedTransaction = function (id) {
-    var index = privated.unconfirmedTransactionsIdIndex[id];
+    let index = privated.unconfirmedTransactionsIdIndex[id];
     return privated.unconfirmedTransactions[index];
 };
 
 Transactions.prototype.removeUnconfirmedTransaction = function (id) {
     console.log("remove Unconfirmed Transaction; id -> ", id);
-    var index = privated.unconfirmedTransactionsIdIndex[id];
+    let index = privated.unconfirmedTransactionsIdIndex[id];
     privated.unconfirmedTransactions[index] = false;
     delete privated.unconfirmedTransactionsIdIndex[id];
 };
@@ -596,10 +596,15 @@ Transactions.prototype.onSendUnconfirmedTrs = function () {
     let unconfirmedTrs = [];
     console.log(privated.unconfirmedTransactions);
     privated.unconfirmedTransactions.forEach(item => {
-        if(item)
+        if(item) {
             unconfirmedTrs.push(item);
+            let index = privated.unconfirmedTransactions.length - 1;
+            privated.unconfirmedTransactionsIdIndex[item.hash] = index;
+        }
     });
+
     privated.unconfirmedTransactions = unconfirmedTrs;
+
     library.log.Info("unconfirmed transactions number", unconfirmedTrs.length);
     let send = [];
     let maxCount = unconfirmedTrs.length > 1000 ? 1000 : unconfirmedTrs.length;
