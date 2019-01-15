@@ -595,16 +595,16 @@ Transactions.prototype.revertUnconfirmedTransactions = function (transactions) {
 Transactions.prototype.onSendUnconfirmedTrs = function () {
     let unconfirmedTrs = [];
     console.log(privated.unconfirmedTransactions);
-    privated.unconfirmedTransactions.forEach(item => {
+    for(let item of privated.unconfirmedTransactions) {
         if(item) {
             unconfirmedTrs.push(item);
         }
-    });
+    }
     privated.unconfirmedTransactions = unconfirmedTrs;
-    privated.unconfirmedTransactions.forEach(item => {
-        let index = privated.unconfirmedTransactions.length - 1;
-        privated.unconfirmedTransactionsIdIndex[item.hash] = index;
-    })
+    privated.unconfirmedTransactionsIdIndex = {};
+    for(let i = 0; i < privated.unconfirmedTransactions.length; i++) {
+        privated.unconfirmedTransactionsIdIndex[privated.unconfirmedTransactions[i].hash] = i;
+    }
 
     library.log.Info("unconfirmed transactions number", unconfirmedTrs.length);
     let send = [];
