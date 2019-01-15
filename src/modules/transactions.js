@@ -598,12 +598,13 @@ Transactions.prototype.onSendUnconfirmedTrs = function () {
     privated.unconfirmedTransactions.forEach(item => {
         if(item) {
             unconfirmedTrs.push(item);
-            let index = privated.unconfirmedTransactions.length - 1;
-            privated.unconfirmedTransactionsIdIndex[item.hash] = index;
         }
     });
-
     privated.unconfirmedTransactions = unconfirmedTrs;
+    privated.unconfirmedTransactions.forEach(item => {
+        let index = privated.unconfirmedTransactions.length - 1;
+        privated.unconfirmedTransactionsIdIndex[item.hash] = index;
+    })
 
     library.log.Info("unconfirmed transactions number", unconfirmedTrs.length);
     let send = [];

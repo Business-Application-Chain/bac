@@ -1,2 +1,3 @@
-let ip = require('ip');
-console.log(ip.fromLong(2887713617))
+let a = [1,2,3,4,5,6,7,8,9];
+a = [];
+console.log(a)
