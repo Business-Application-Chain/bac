@@ -423,7 +423,6 @@ Transaction.prototype.verify = function (txObj, sender, requester, cb) {
     }
     // Calculate fee
     var fee = privated.types[txObj.type].calculateFee.call(this, txObj, sender);
-    // var fee = privated.types[txObj.type].calculateFee(txObj, sender) || false;
     if (txObj.fee !== fee) {
         return setImmediate(cb, "Invalid transaction type/fee: " + txObj.hash);
     }
@@ -816,7 +815,7 @@ Transaction.prototype.dbSave = function (txObj, t) {
         type: Sequelize.QueryTypes.INSERT,
         transaction: t
     }).then(function () {
-        privated.types[txObj.type].save.call(this, txObj, cb);
+        privated.types[txObj.type].save.call(this, txObj);
     });
 };
 

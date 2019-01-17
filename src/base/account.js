@@ -777,7 +777,6 @@ Account.prototype.toHex = function (raw) {
     return raw;
 };
 
-
 Account.prototype.findOne = function (filter, fields, cb) {
     if (typeof(fields) == 'function') { // Here is just for cases that only send-in 2 params
         cb = fields;
