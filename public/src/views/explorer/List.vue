@@ -168,7 +168,7 @@
 
             },
             loadBlocksMore ($state) {
-                api.blocks.blocks([this.blocksList[this.blocksList.length - 1].height, 50]).then(res => {
+                api.blocks.blocks([this.blocksList[this.blocksList.length - 1].b_height, 50]).then(res => {
                     if (res === null) return;
                     if (res.length == 50) {
                         $state.loaded()
