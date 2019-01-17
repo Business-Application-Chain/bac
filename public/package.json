@@ -29,6 +29,7 @@
     "lodash": "^4.17.10",
     "node-sass": "^4.9.1",
     "sass-loader": "^7.0.1",
+    "uglifyjs-webpack-plugin": "^2.1.1",
     "vue-click-outside": "^1.0.7",
     "vue-codemirror-lite": "^1.0.4",
     "vue-i18n": "^8.0.0",
